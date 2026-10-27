@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Doctor Brief</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <link rel="stylesheet" href="bobby-pages.css">
+</head>
+<body data-page="briefing" data-title-key="briefPageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand"></div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+
+            <!-- The finished message (hidden until "Create Doctor Message") -->
+            <div id="briefOutput" class="hidden summary-wrapper bb-result">
+                <div class="card-header">
+                    <div>
+                        <h2 class="summary-title" data-bt="outH3">Generated Doctor Message</h2>
+                        <p class="subtitle" data-bt="outP">Review the message, enter your doctor's email and press Send.</p>
+                    </div>
+                    <span class="form-status" data-bt="ready">Ready</span>
+                </div>
+
+                <textarea class="modern-textarea bb-message" id="copyMessageArea" rows="12"></textarea>
+
+                <div class="form-group bb-field" style="margin-top: 16px;">
+                    <label for="theemail" data-bt="lblEmail">Doctor's email address</label>
+                    <input class="modern-input" type="email" id="theemail" placeholder="doctor@hospital.com" autocomplete="email">
+                </div>
+
+                <div class="bb-actions">
+                    <button type="button" id="sendEmailBtn" class="btn-primary" onclick="sendDoctorEmail()" data-bt="sendBtn">📨 Send to Doctor</button>
+                    <button type="button" id="copyTextBtn" class="btn-secondary" onclick="copyGeneratedMessage()" data-bt="copyBtn">📋 Copy Message</button>
+                    <button type="button" class="btn-secondary" onclick="openGmailDraft()" data-bt="gmailBtn">✉️ Open in Gmail</button>
+                </div>
+                <div id="emailStatus" class="bb-status hidden"></div>
+                <p class="hint" style="margin-top: 10px;" data-bt="outHint">The email is sent from the Neutrix team account. "Open in Gmail" lets you send it from your own Gmail instead.</p>
+            </div>
+
+            <form id="briefForm" class="patient-card">
+                <div class="card-header">
+                    <div>
+                        <h2 data-bt="cardH3">Clinical Summary Details</h2>
+                        <p class="subtitle" data-bt="cardP">Provide details regarding current health conditions since discharge.</p>
+                    </div>
+                    <span class="form-status" data-bt="badge">Patient Portal</span>
+                </div>
+
+                <div class="form-group bb-field">
+                    <label for="mainConcern" data-bt-html="lbl1">Primary Medical Concern <span class="field-hint">(Required)</span></label>
+                    <textarea class="modern-textarea" id="mainConcern" rows="3" data-bt-ph="ph1" placeholder="What is the main reason for contacting the doctor today?" required></textarea>
+                </div>
+
+                <div class="form-group bb-field">
+                    <label for="briefSymptoms" data-bt="lbl2">New or Noticeable Symptoms</label>
+                    <textarea class="modern-textarea" id="briefSymptoms" rows="3" data-bt-ph="ph2" placeholder="Describe any new changes, pain levels, or visual signs..."></textarea>
+                </div>
+
+                <div class="form-group bb-field choice-group">
+                    <label class="choice-label" data-bt="lbl3">Were recovery medicines taken exactly as advised?</label>
+                    <div class="bb-radios">
+                        <label class="bb-radio"><input type="radio" name="briefMeds" value="Yes" checked><span data-bt="yes">Yes</span></label>
+                        <label class="bb-radio"><input type="radio" name="briefMeds" value="No"><span data-bt="no">No</span></label>
+                        <label class="bb-radio"><input type="radio" name="briefMeds" value="Partially"><span data-bt="partly">Partially</span></label>
+                    </div>
+                </div>
+
+                <div class="form-group bb-field">
+                    <label for="questions" data-bt="lbl4">Specific Questions for the Doctor</label>
+                    <textarea class="modern-textarea" id="questions" rows="3" data-bt-ph="ph4" placeholder="List any queries about care adjustments, dosages, or side effects..."></textarea>
+                </div>
+
+                <button id="createBriefBtn" type="submit" class="btn-primary action-btn" data-bt="createBtn">Create Doctor Message</button>
+            </form>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-bt="sideTitle">HOW IT WORKS</h3>
+                <span class="mrn-badge">🧑‍⚕️</span>
+            </div>
+
+            <ol class="info-list">
+                <li data-bt="tip1">Fill in your main concern and any symptoms.</li>
+                <li data-bt="tip2">Press "Create Doctor Message" and check the message.</li>
+                <li data-bt="tip3">Type your doctor's email and press "Send to Doctor".</li>
+            </ol>
+
+            <a href="tracking.html"><button class="btn-secondary back-btn" type="button" data-bt="toTracker">📈 Recovery Tracker</button></a>
+
+            <div class="chart-divider"></div>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-bt="urgentTitle">🚨 Emergency?</div>
+                <div class="caregiver-phone" data-bt="urgentText">Do not wait for an email reply. Call your doctor or go to the nearest hospital.</div>
+            </div>
+
+            <footer class="ehr-disclaimer disclaimer">
+                <p data-bt-html="disc"><em>Neutrix prepares communication for the doctor. It does not diagnose, prescribe, or replace medical advice.</em></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js"></script>
+    <script src="tracker&briefing.js"></script>
+    <script>
+        // ---------- Bobby's English / Malayalam text ----------
+        const BT = {
+            English: {
+                badge: 'Patient Portal',
+                outH3: 'Generated Doctor Message',
+                outP: 'Review the message, enter your doctor\'s email and press Send. You can edit the text before sending.',
+                outHint: 'The email is sent from the Neutrix team account. "Open in Gmail" lets you send it from your own Gmail instead.',
+                ready: 'Ready',
+                lblEmail: 'Doctor\'s email address',
+                sendBtn: '📨 Send to Doctor',
+                copyBtn: '📋 Copy Message',
+                gmailBtn: '✉️ Open in Gmail',
+                copied: '✅ Copied!',
+                sending: 'Sending…',
+                badEmail: 'Please enter a valid doctor email address.',
+                serverDown: 'Could not reach the Neutrix server. Make sure the backend is running.',
+                cardH3: 'Clinical Summary Details',
+                cardP: 'Provide details regarding current health conditions since discharge.',
+                lbl1: 'Primary Medical Concern <span class="field-hint">(Required)</span>',
+                ph1: 'What is the main reason for contacting the doctor today?',
+                lbl2: 'New or Noticeable Symptoms',
+                ph2: 'Describe any new changes, pain levels, or visual signs...',
+                lbl3: 'Were recovery medicines taken exactly as advised?',
+                lbl4: 'Specific Questions for the Doctor',
+                ph4: 'List any queries about care adjustments, dosages, or side effects...',
+                yes: 'Yes', no: 'No', partly: 'Partially',
+                createBtn: 'Create Doctor Message',
+                sideTitle: 'HOW IT WORKS',
+                tip1: 'Fill in your main concern and any symptoms.',
+                tip2: 'Press "Create Doctor Message" and check the message.',
+                tip3: 'Type your doctor\'s email and press "Send to Doctor".',
+                toTracker: '📈 Recovery Tracker',
+                urgentTitle: '🚨 Emergency?',
+                urgentText: 'Do not wait for an email reply. Call your doctor or go to the nearest hospital.',
+                disc: '<em>Neutrix prepares communication for the doctor. It does not diagnose, prescribe, or replace medical advice.</em>'
+            },
+            Malayalam: {
+                badge: 'പേഷ്യന്റ് പോർട്ടൽ',
+                outH3: 'തയ്യാറാക്കിയ ഡോക്ടർ സന്ദേശം',
+                outP: 'സന്ദേശം പരിശോധിക്കുക, ഡോക്ടറുടെ ഇമെയിൽ നൽകി അയക്കുക. അയക്കുന്നതിന് മുമ്പ് വാചകം മാറ്റാം.',
+                outHint: 'ന്യൂട്രിക്സ് ടീം അക്കൗണ്ടിൽ നിന്നാണ് ഇമെയിൽ അയക്കുന്നത്. സ്വന്തം ജിമെയിലിൽ നിന്ന് അയക്കാൻ "Open in Gmail" ഉപയോഗിക്കുക.',
+                ready: 'തയ്യാർ',
+                lblEmail: 'ഡോക്ടറുടെ ഇമെയിൽ വിലാസം',
+                sendBtn: '📨 ഡോക്ടർക്ക് അയക്കുക',
+                copyBtn: '📋 സന്ദേശം പകർത്തുക',
+                gmailBtn: '✉️ ജിമെയിലിൽ തുറക്കുക',
+                copied: '✅ പകർത്തി!',
+                sending: 'അയക്കുന്നു…',
+                badEmail: 'ശരിയായ ഡോക്ടർ ഇമെയിൽ വിലാസം നൽകുക.',
+                serverDown: 'ന്യൂട്രിക്സ് സെർവറുമായി ബന്ധപ്പെടാനായില്ല. ബാക്കെൻഡ് പ്രവർത്തിക്കുന്നുണ്ടെന്ന് ഉറപ്പാക്കുക.',
+                cardH3: 'ക്ലിനിക്കൽ സംഗ്രഹ വിവരങ്ങൾ',
+                cardP: 'ഡിസ്ചാർജിന് ശേഷമുള്ള നിലവിലെ ആരോഗ്യസ്ഥിതിയെക്കുറിച്ചുള്ള വിവരങ്ങൾ നൽകുക.',
+                lbl1: 'പ്രധാന മെഡിക്കൽ പ്രശ്നം <span class="field-hint">(ആവശ്യമാണ്)</span>',
+                ph1: 'ഇന്ന് ഡോക്ടറെ ബന്ധപ്പെടുന്നതിനുള്ള പ്രധാന കാരണം എന്താണ്?',
+                lbl2: 'പുതിയതോ ശ്രദ്ധയിൽപ്പെട്ടതോ ആയ ലക്ഷണങ്ങൾ',
+                ph2: 'എന്തെങ്കിലും പുതിയ മാറ്റങ്ങൾ, വേദനയുടെ അളവ് അല്ലെങ്കിൽ മറ്റ് ലക്ഷണങ്ങൾ വിവരിക്കുക...',
+                lbl3: 'നിർദ്ദേശിച്ച പ്രകാരം കൃത്യമായി മരുന്നുകൾ കഴിച്ചിരുന്നോ?',
+                lbl4: 'ഡോക്ടറോടുള്ള പ്രത്യേക ചോദ്യങ്ങൾ',
+                ph4: 'പരിചരണ മാറ്റങ്ങൾ, ഡോസേജുകൾ അല്ലെങ്കിൽ പാർശ്വഫലങ്ങൾ എന്നിവയെക്കുറിച്ചുള്ള ചോദ്യങ്ങൾ ഇവിടെ രേഖപ്പെടുത്തുക...',
+                yes: 'അതെ', no: 'ഇല്ല', partly: 'ഭാഗികമായി',
+                createBtn: 'ഡോക്ടർ സന്ദേശം തയ്യാറാക്കുക',
+                sideTitle: 'ഇത് എങ്ങനെ',
+                tip1: 'പ്രധാന പ്രശ്നവും ലക്ഷണങ്ങളും എഴുതുക.',
+                tip2: '"ഡോക്ടർ സന്ദേശം തയ്യാറാക്കുക" അമർത്തി സന്ദേശം പരിശോധിക്കുക.',
+                tip3: 'ഡോക്ടറുടെ ഇമെയിൽ നൽകി "ഡോക്ടർക്ക് അയക്കുക" അമർത്തുക.',
+                toTracker: '📈 റിക്കവറി ട്രാക്കർ',
+                urgentTitle: '🚨 അടിയന്തരാവസ്ഥ?',
+                urgentText: 'ഇമെയിൽ മറുപടിക്കായി കാത്തിരിക്കരുത്. ഡോക്ടറെ വിളിക്കുക അല്ലെങ്കിൽ അടുത്തുള്ള ആശുപത്രിയിൽ പോകുക.',
+                disc: '<em>ന്യൂട്രിക്സ് ഡോക്ടർക്കുള്ള സന്ദേശം തയ്യാറാക്കുക മാത്രം ചെയ്യുന്നു. ഇത് രോഗനിർണയം നടത്തുകയോ മരുന്ന് നിർദ്ദേശിക്കുകയോ ഡോക്ടറുടെ ഉപദേശത്തിന് പകരമാവുകയോ ചെയ്യുന്നില്ല.</em>'
+            }
+        };
+        const bt = key => (BT[neutrixLang] || BT.English)[key] ?? BT.English[key];
+
+        function applyBobbyText() {
+            document.querySelectorAll('[data-bt]').forEach(el => { el.textContent = bt(el.dataset.bt); });
+            document.querySelectorAll('[data-bt-html]').forEach(el => { el.innerHTML = bt(el.dataset.btHtml); });
+            document.querySelectorAll('[data-bt-ph]').forEach(el => { el.placeholder = bt(el.dataset.btPh); });
+        }
+        document.addEventListener('neutrix:langchange', applyBobbyText);
+        applyBobbyText();
+
+        // ---------- Build the doctor message (always in English, for the doctor) ----------
+        const issue = window.neutrixActiveIssue || {};
+        const patientName = localStorage.getItem('neutrix_patient_name') || '';
+
+        document.getElementById('briefForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const concern = document.getElementById('mainConcern').value.trim();
+            const symptoms = document.getElementById('briefSymptoms').value.trim() || 'None reported';
+            const meds = document.querySelector('input[name="briefMeds"]:checked').value;
+            const questions = document.getElementById('questions').value.trim() || 'None';
+            const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            const lines = [
+                'Dear Doctor,',
+                '',
+                `I am writing with an update on my recovery after discharge.`,
+                '',
+                `Patient: ${patientName || 'Not stated'}`,
+                `Condition: ${issue.title || 'Not stated'}`
+            ];
+            if (issue.hospital) lines.push(`Hospital / doctor: ${issue.hospital}`);
+            lines.push(
+                `Date: ${today}`,
+                '',
+                `MAIN CONCERN:\n${concern}`,
+                '',
+                `NEW OR NOTICEABLE SYMPTOMS:\n${symptoms}`,
+                '',
+                `MEDICINES TAKEN AS ADVISED: ${meds}`,
+                '',
+                `QUESTIONS FOR THE DOCTOR:\n${questions}`,
+                '',
+                'Thank you for your time.',
+                patientName ? `Regards,\n${patientName}` : 'Regards'
+            );
+
+            document.getElementById('copyMessageArea').value = lines.join('\n');
+            document.getElementById('emailStatus').classList.add('hidden');
+            document.getElementById('briefOutput').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        function emailSubject() {
+            return `Patient update${patientName ? ' – ' + patientName : ''}${issue.title ? ' (' + issue.title + ')' : ''}`;
+        }
+
+        function showEmailStatus(kind, text) {
+            const box = document.getElementById('emailStatus');
+            box.className = `bb-status ${kind === 'ok' ? 'alert-success' : 'alert-warning'}`;
+            box.textContent = text;
+        }
+
+        // ---------- Send through the backend (team Gmail) ----------
+        async function sendDoctorEmail() {
+            const to = document.getElementById('theemail').value.trim();
+            const body = document.getElementById('copyMessageArea').value;
+            const btn = document.getElementById('sendEmailBtn');
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
+                showEmailStatus('error', bt('badEmail'));
+                document.getElementById('theemail').focus();
+                return;
+            }
+            btn.disabled = true;
+            btn.textContent = bt('sending');
+            try {
+                const res = await fetch(`${API_BASE}/api/send-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, subject: emailSubject(), body, patient_name: patientName })
+                });
+                if (!res.ok) throw new Error(`Server error ${res.status}`);
+                const data = await res.json();
+                showEmailStatus(data.ok ? 'ok' : 'error', (data.ok ? '✅ ' : '⚠️ ') + data.message);
+                if (data.ok) {
+                    try { localStorage.setItem('neutrixDoctorEmail', to); } catch (e) {}
+                }
+            } catch (err) {
+                showEmailStatus('error', '⚠️ ' + bt('serverDown'));
+            } finally {
+                btn.disabled = false;
+                btn.textContent = bt('sendBtn');
+            }
+        }
+
+        // Remember the doctor's email for next time
+        try {
+            const saved = localStorage.getItem('neutrixDoctorEmail');
+            if (saved) document.getElementById('theemail').value = saved;
+        } catch (e) {}
+
+        // ---------- Copy ----------
+        function copyGeneratedMessage() {
+            const text = document.getElementById('copyMessageArea').value;
+            const btn = document.getElementById('copyTextBtn');
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = bt('copied');
+                setTimeout(() => { btn.textContent = bt('copyBtn'); }, 2000);
+            }).catch(() => {
+                document.getElementById('copyMessageArea').select();
+                document.execCommand('copy');
+            });
+        }
+
+        // ---------- Backup: open a Gmail draft with everything filled in ----------
+        function openGmailDraft() {
+            const to = document.getElementById('theemail').value.trim();
+            const body = document.getElementById('copyMessageArea').value;
+            const url = 'https://mail.google.com/mail/?view=cm&fs=1'
+                + '&to=' + encodeURIComponent(to)
+                + '&su=' + encodeURIComponent(emailSubject())
+                + '&body=' + encodeURIComponent(body);
+            window.open(url, '_blank', 'noopener');
+        }
+    </script>
+    <script src="chat.js"></script>
+</body>
+</html>

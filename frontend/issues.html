@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | My Medical Issues</title>
+    <script>
+        // Only logged-in users can see this page
+        if (localStorage.getItem('neutrix_authenticated') !== 'true') {
+            window.location.replace('signin.html');
+        }
+    </script>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <style>
+        .issues-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .issue-count { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+
+        .issue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .issue-card {
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--hospital-teal);
+            border-radius: var(--radius-md);
+            background: var(--bg-workspace);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+        .issue-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .issue-card.active { border-left-color: var(--hospital-indigo); }
+
+        .issue-top { display: flex; gap: 12px; align-items: flex-start; }
+        .issue-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--pill-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .issue-title { font-size: 16px; font-weight: 700; color: var(--text-primary); line-height: 1.3; word-break: break-word; }
+        .issue-meta { font-size: 12.5px; color: var(--text-muted); }
+        .issue-notes {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .issue-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .issue-tag {
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: var(--pill-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .issue-tag.good { background: rgba(13, 148, 136, 0.12); color: var(--hospital-teal); border-color: transparent; }
+        .issue-tag.last { background: rgba(59, 130, 246, 0.12); color: var(--hospital-indigo); border-color: transparent; }
+
+        .issue-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 6px; }
+        .issue-actions .open-btn { flex: 1; padding: 10px 14px; }
+        .issue-actions .btn-secondary { padding: 10px 14px; }
+        .issue-actions .btn-remove { padding: 10px 12px; }
+
+        .add-card {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            background: transparent;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 14px;
+            transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+        .add-card:hover { border-color: var(--hospital-teal); color: var(--hospital-teal); background: rgba(13, 148, 136, 0.05); }
+        .add-card .plus {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--hospital-teal);
+            color: #ffffff;
+            font-size: 30px;
+            line-height: 52px;
+            text-align: center;
+        }
+
+        /* Add / edit modal */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 2000;
+        }
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
+            width: 100%;
+            max-width: 520px;
+            max-height: calc(100vh - 32px);
+            overflow-y: auto;
+            padding: 28px;
+            animation: chatPop 0.2s ease-out;
+        }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+        .form-error { color: var(--alert-red); font-size: 12.5px; margin-top: 6px; }
+
+        .welcome-name { color: var(--hospital-teal); }
+    </style>
+</head>
+<body data-page="issues" data-title-key="pageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+                <button class="ctrl-btn" id="signOutBtn" type="button" data-it="signOut">🚪 Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+            <div class="card-header">
+                <div>
+                    <h2 data-it="title">🗂 My Medical Issues</h2>
+                    <p class="subtitle" id="welcomeLine"></p>
+                </div>
+                <span class="form-status" id="issueCountBadge">0</span>
+            </div>
+
+            <div class="issues-toolbar">
+                <p class="hint" style="margin: 0;" data-it="hint"></p>
+                <button id="addIssueBtn" class="btn-success" type="button" data-it="addBtn">＋ Add Medical Issue</button>
+            </div>
+
+            <div id="issueGrid" class="issue-grid"></div>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-it="howTitle">HOW IT WORKS</h3>
+                <span class="mrn-badge">V1</span>
+            </div>
+
+            <ol class="info-list">
+                <li data-it="step1"></li>
+                <li data-it="step2"></li>
+                <li data-it="step3"></li>
+                <li data-it="step4"></li>
+            </ol>
+
+            <div class="chart-divider"></div>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <!-- Add / edit issue -->
+    <div id="issueModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+        <form id="issueForm" class="modal-card" novalidate>
+            <div class="card-header" style="margin-bottom: 18px;">
+                <div>
+                    <h2 id="modalTitle"></h2>
+                    <p class="subtitle" data-it="modalSub"></p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="fTitle"><span data-it="fTitle"></span> <span class="req">*</span></label>
+                <input id="fTitle" class="modern-input" maxlength="80" data-itp="fTitlePh">
+                <div id="fTitleError" class="form-error hidden" data-it="fTitleError"></div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label for="fCategory" data-it="fCategory"></label>
+                    <select id="fCategory" class="modern-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="fDate" data-it="fDate"></label>
+                    <input id="fDate" type="date" class="modern-input">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="fHospital" data-it="fHospital"></label>
+                <input id="fHospital" class="modern-input" maxlength="80" data-itp="fHospitalPh">
+            </div>
+
+            <div class="form-group">
+                <label for="fNotes" data-it="fNotes"></label>
+                <textarea id="fNotes" class="modern-textarea" rows="3" maxlength="300" data-itp="fNotesPh"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button id="cancelBtn" class="btn-secondary" type="button" data-it="cancel"></button>
+                <button id="saveBtn" class="btn-success" type="submit"></button>
+            </div>
+        </form>
+    </div>
+
+    <script src="common.js"></script>
+    <script src="issues.js"></script>
+</body>
+</html>

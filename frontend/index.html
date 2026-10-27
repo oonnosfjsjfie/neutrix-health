@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Dashboard</title>
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <style>
+        /* Hero header, like the website */
+        .dash-hero { text-align: left; padding: 6px 0 26px; border-bottom: 1px solid var(--border-color); margin-bottom: 26px; }
+        .dash-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+        .dash-eyebrow .live { color: var(--text-primary); }
+        .dash-title {
+            font-family: "Georgia", "Times New Roman", serif;
+            font-weight: 400;
+            font-size: 48px;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            margin: 10px 0 10px;
+        }
+        .dash-sub { font-size: 16px; color: var(--text-secondary); }
+        @media (max-width: 640px) { .dash-title { font-size: 34px; } }
+
+        /* Tool cards, like the website's showcase cards */
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .dash-tile {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            background: var(--card-bg);
+            text-decoration: none;
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            animation: nxReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .dash-tile:hover {
+            transform: translateY(-4px);
+            border-color: var(--text-primary);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+        .tile-visual {
+            height: 86px;
+            border-radius: 12px;
+            background: #121212;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        .tile-icon { font-size: 32px; filter: drop-shadow(0 0 0 transparent); transition: filter 0.3s ease; }
+        .dash-tile:hover .tile-icon { filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.8)); }
+        .tile-arrow { color: #888888; font-size: 18px; transition: transform 0.2s ease, color 0.2s ease; }
+        .dash-tile:hover .tile-arrow { transform: translateX(4px); color: #ffffff; }
+        .tile-num { font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; }
+        .tile-title { font-weight: 700; font-size: 16px; line-height: 1.3; }
+        .tile-desc { font-size: 13px; color: var(--text-secondary); }
+        .tile-owner { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: auto; }
+
+        .welcome-name { font-style: italic; }
+        .issue-summary .field-value { word-break: break-word; }
+    </style>
+</head>
+<body data-page="dashboard" data-title-key="pageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+                <button class="ctrl-btn" id="signOutBtn" type="button" data-dt="signOut">🚪 Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+            <div class="dash-hero">
+                <span class="dash-eyebrow">NEUTRIX HEALTH • <span class="live" data-dt="eyebrow">YOUR RECOVERY DASHBOARD</span></span>
+                <h1 class="dash-title" id="welcomeLine"></h1>
+                <p class="dash-sub" data-dt="heroSub">Small signals. Clear recovery.</p>
+            </div>
+
+            <div class="section-title" data-dt="toolsSection">Your Recovery Tools</div>
+            <div class="dash-grid" id="toolTiles"></div>
+            <p id="lockedHint" class="hint hidden" style="margin-top: 14px;"></p>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-dt="issueTitle">THIS ISSUE</h3>
+                <span class="mrn-badge" id="issueIcon">🩺</span>
+            </div>
+
+            <div class="issue-summary">
+                <div class="clinical-field">
+                    <span class="field-label" data-dt="issueName">Issue</span>
+                    <div class="field-value highlight" id="issueNameValue"></div>
+                </div>
+                <div class="clinical-field" id="issueDateField">
+                    <span class="field-label" data-dt="issueDate">Since</span>
+                    <div class="field-value" id="issueDateValue"></div>
+                </div>
+                <div class="clinical-field" id="issueHospitalField">
+                    <span class="field-label" data-dt="issueHospital">Hospital / doctor</span>
+                    <div class="field-value" id="issueHospitalValue"></div>
+                </div>
+                <div class="clinical-field" id="issueNotesField">
+                    <span class="field-label" data-dt="issueNotes">Notes</span>
+                    <div class="field-value" id="issueNotesValue"></div>
+                </div>
+            </div>
+
+            <a href="issues.html"><button class="btn-secondary back-btn" type="button" data-dt="switchIssue">🗂 Switch medical issue</button></a>
+
+            <div class="chart-divider"></div>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js"></script>
+    <script>
+        const DASH_TEXT = {
+            English: {
+                pageTitle: 'Neutrix | Dashboard',
+                title: '⚡ Neutrix Dashboard',
+                welcome: 'Welcome back, <span class="welcome-name">{name}</span>.',
+                eyebrow: 'YOUR RECOVERY DASHBOARD',
+                heroSub: 'Small signals. Clear recovery. Pick a tool below to continue.',
+                badge: 'Recovery',
+                toolsSection: 'Your Recovery Tools',
+                signOut: '🚪 Sign Out',
+                issueTitle: 'THIS ISSUE',
+                issueName: 'Issue',
+                issueDate: 'Since',
+                issueHospital: 'Hospital / doctor',
+                issueNotes: 'Notes',
+                switchIssue: '🗂 Switch medical issue',
+                by: 'By {who}',
+                lockedHint: '🔒 Open AI Discharge Summary and upload your reports to unlock the Reports Portal, Medicine Plan and Check-ups.'
+            },
+            Malayalam: {
+                pageTitle: 'ന്യൂട്രിക്സ് | ഡാഷ്ബോർഡ്',
+                title: '⚡ ന്യൂട്രിക്സ് ഡാഷ്ബോർഡ്',
+                welcome: 'വീണ്ടും സ്വാഗതം, <span class="welcome-name">{name}</span>.',
+                eyebrow: 'നിങ്ങളുടെ സുഖപ്രാപ്തി ഡാഷ്ബോർഡ്',
+                heroSub: 'ചെറിയ സൂചനകൾ. വ്യക്തമായ സുഖപ്രാപ്തി. തുടരാൻ താഴെ ഒരു ടൂൾ തിരഞ്ഞെടുക്കുക.',
+                badge: 'സുഖപ്രാപ്തി',
+                toolsSection: 'നിങ്ങളുടെ സുഖപ്രാപ്തി ടൂളുകൾ',
+                signOut: '🚪 സൈൻ ഔട്ട്',
+                issueTitle: 'ഈ പ്രശ്നം',
+                issueName: 'പ്രശ്നം',
+                issueDate: 'മുതൽ',
+                issueHospital: 'ആശുപത്രി / ഡോക്ടർ',
+                issueNotes: 'കുറിപ്പുകൾ',
+                switchIssue: '🗂 മറ്റൊരു പ്രശ്നം തിരഞ്ഞെടുക്കുക',
+                by: '{who}',
+                lockedHint: '🔒 റിപ്പോർട്ട് പോർട്ടലും മരുന്ന് പ്ലാനും തുറക്കാൻ AI ഡിസ്ചാർജ് സംഗ്രഹത്തിൽ നിങ്ങളുടെ റിപ്പോർട്ടുകൾ അപ്‌ലോഡ് ചെയ്യുക.'
+            }
+        };
+
+        const TILES = [
+            { href: 'summary.html', icon: '🧠', who: 'Ajay', ai: true,
+              en: ['AI Discharge Summary', 'Upload reports and bills, get a simple AI summary'],
+              ml: ['AI ഡിസ്ചാർജ് സംഗ്രഹം', 'റിപ്പോർട്ടുകളും ബില്ലുകളും അപ്‌ലോഡ് ചെയ്ത് ലളിതമായ AI സംഗ്രഹം നേടുക'] },
+            { href: 'report.html', icon: '📋', who: 'Ajay', ai: true, needs: 'report',
+              en: ['AI Patient Reports Portal', 'Your summary, medicine plan and check-ups'],
+              ml: ['AI രോഗി റിപ്പോർട്ട് പോർട്ടൽ', 'നിങ്ങളുടെ സംഗ്രഹം, മരുന്ന് പ്ലാൻ, പരിശോധനകൾ'] },
+            { href: 'medplan.html', icon: '💊', who: 'Ajay / Lingesh', ai: true, needs: 'report',
+              en: ['Medicine Plan & Schedule', 'Your medicine plan and a daily checklist to tick off'],
+              ml: ['മരുന്ന് പ്ലാനും ഷെഡ്യൂളും', 'നിങ്ങളുടെ മരുന്ന് പ്ലാനും ടിക്ക് ചെയ്യാവുന്ന ദൈനംദിന ചെക്ക്‌ലിസ്റ്റും'] },
+            { href: 'checkups.html', icon: '📅', who: 'Ajay', ai: true, needs: 'report',
+              en: ['Upcoming Check-ups', 'Your follow-up visits and tests, with dates'],
+              ml: ['വരാനിരിക്കുന്ന പരിശോധനകൾ', 'നിങ്ങളുടെ തുടർ സന്ദർശനങ്ങളും പരിശോധനകളും, തീയതി സഹിതം'] },
+            { href: 'improvements.html', icon: '🌱', who: 'Ajay', ai: true, needs: 'progress',
+              en: ['My Improvements', 'See how your new reports compare with the earlier ones'],
+              ml: ['എന്റെ പുരോഗതി', 'പുതിയ റിപ്പോർട്ടുകൾ മുൻ റിപ്പോർട്ടുകളുമായി താരതമ്യം ചെയ്ത് കാണുക'] },
+            { href: 'tracking.html', icon: '📈', who: 'Bobby',
+              en: ['Recovery Tracker', 'Log temperature, BP, sugar and symptoms'],
+              ml: ['സുഖപ്രാപ്തി ട്രാക്കർ', 'താപനില, BP, ഷുഗർ, ലക്ഷണങ്ങൾ രേഖപ്പെടുത്തുക'] },
+            { href: 'briefing.html', icon: '🧑‍⚕️', who: 'Bobby',
+              en: ['Doctor Brief', 'Write a clear update and email it to your doctor'],
+              ml: ['ഡോക്ടർ ബ്രീഫ്', 'വ്യക്തമായ ഒരു സന്ദേശം തയ്യാറാക്കി ഡോക്ടർക്ക് ഇമെയിൽ ചെയ്യുക'] }
+        ];
+
+        function dt(key, vars = {}) {
+            let text = (DASH_TEXT[neutrixLang] || DASH_TEXT.English)[key] ?? DASH_TEXT.English[key] ?? key;
+            for (const name in vars) text = text.replaceAll(`{${name}}`, vars[name]);
+            return text;
+        }
+        function escHtml(s) {
+            return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        }
+
+        function renderTiles(containerId, tiles) {
+            const box = document.getElementById(containerId);
+            box.innerHTML = '';
+            const unlocked = {
+                report: !!storeGet('neutrixReport'),
+                progress: (storeGet('neutrixFollowups') || []).some(f => f.comparison)
+            };
+            const lockedHint = document.getElementById('lockedHint');
+            lockedHint.textContent = dt('lockedHint');
+            lockedHint.classList.toggle('hidden', unlocked.report);
+
+            tiles.filter(tile => !tile.needs || unlocked[tile.needs]).forEach((tile, index) => {
+                const [title, desc] = neutrixLang === 'Malayalam' ? tile.ml : tile.en;
+                const a = document.createElement('a');
+                a.href = tile.href;
+                a.className = 'dash-tile' + (tile.ai ? ' ai' : '');
+                a.style.animationDelay = `${index * 0.05}s`;
+                a.innerHTML = `
+                    <div class="tile-visual"><span class="tile-icon">${tile.icon}</span><span class="tile-arrow">→</span></div>
+                    <div class="tile-num">${String(index + 1).padStart(2, '0')}</div>
+                    <div class="tile-title">${escHtml(title)}</div>
+                    <div class="tile-desc">${escHtml(desc)}</div>
+                    <div class="tile-owner">${escHtml(dt('by', { who: tile.who }))}</div>`;
+                box.appendChild(a);
+            });
+        }
+
+        function setField(fieldId, valueId, value) {
+            document.getElementById(fieldId).classList.toggle('hidden', !value);
+            document.getElementById(valueId).textContent = value || '';
+        }
+
+        function renderDashboard() {
+            document.querySelectorAll('[data-dt]').forEach(el => { el.textContent = dt(el.dataset.dt); });
+            document.title = dt('pageTitle');
+
+            const name = localStorage.getItem('neutrix_patient_name') || 'User';
+            document.getElementById('welcomeLine').innerHTML = dt('welcome', { name: escHtml(name) });
+
+            renderTiles('toolTiles', TILES);
+
+
+            const issue = window.neutrixActiveIssue;
+            if (!issue) return;
+            document.getElementById('issueIcon').textContent = issue.icon || '🩺';
+            document.getElementById('issueNameValue').textContent = issue.title;
+
+            let dateText = '';
+            if (issue.startDate) {
+                const [y, m, d] = issue.startDate.split('-').map(Number);
+                dateText = new Date(y, m - 1, d).toLocaleDateString(localeFor(), { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+            setField('issueDateField', 'issueDateValue', dateText);
+            setField('issueHospitalField', 'issueHospitalValue', issue.hospital);
+            setField('issueNotesField', 'issueNotesValue', issue.notes);
+        }
+
+        document.getElementById('signOutBtn').addEventListener('click', () => {
+            localStorage.removeItem('neutrix_authenticated');
+            localStorage.removeItem('neutrixActiveIssue');
+            window.location.href = 'signin.html';
+        });
+
+        document.addEventListener('neutrix:langchange', renderDashboard);
+        renderDashboard();
+    </script>
+    <script src="chat.js"></script>
+</body>
+</html>

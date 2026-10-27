@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Medicine Plan</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        .scroll-box { max-height: 520px; overflow-y: auto; padding-right: 8px; }
+    </style>
+</head>
+<body data-page="medplan" data-title-key="planPageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+
+            <div id="emptyView" class="empty-state hidden">
+                <div class="empty-icon">💊</div>
+                <h2 data-i18n="emptyTitle"></h2>
+                <p data-i18n="schedEmptyText"></p>
+                <a href="summary.html"><button class="btn-primary" type="button" data-i18n="schedEmptyBtn"></button></a>
+            </div>
+
+            <div id="planView" class="hidden">
+                <div class="card-header">
+                    <div>
+                        <h2 data-i18n="planTitle"></h2>
+                        <p class="subtitle" data-i18n="planSubtitle"></p>
+                    </div>
+                    <span class="form-status" data-i18n="aiBadge"></span>
+                </div>
+
+                <div class="output-block ai" style="margin-top: 0;">
+                    <div id="planContent" class="output-text md-content scroll-box"></div>
+                    <button id="planRefreshBtn" class="btn-secondary refresh-btn" type="button" data-i18n="refreshBtn"></button>
+                </div>
+            </div>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-i18n="sideMedsTitle"></h3>
+                <span class="mrn-badge">💊</span>
+            </div>
+            <p class="hint" data-i18n="planHint"></p>
+
+            <div class="chart-divider"></div>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+
+            <div class="side-action">
+                <p class="hint" data-i18n="scheduleHint"></p>
+                <a href="schedule.html"><button id="scheduleBtn" class="btn-success action-btn big-action" type="button" data-i18n="createScheduleBtn"></button></a>
+            </div>
+
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js"></script>
+    <script src="ai-sections.js"></script>
+    <script>
+        const planRecord = loadReport();
+
+        // "Create My Schedule" the first time, "Open My Schedule" after that
+        function updateScheduleButton() {
+            const saved = storeGet('neutrixSchedule');
+            const exists = !!(saved && planRecord && saved.reportId === planRecord.createdAt);
+            const btn = document.getElementById('scheduleBtn');
+            btn.dataset.i18n = exists ? 'openScheduleBtn' : 'createScheduleBtn';
+            btn.textContent = t(btn.dataset.i18n);
+        }
+
+        if (!planRecord) {
+            document.getElementById('emptyView').classList.remove('hidden');
+        } else {
+            document.getElementById('planView').classList.remove('hidden');
+            loadAiSection({
+                storeKey: 'neutrixPlan', url: '/api/medicine-plan', field: 'plan',
+                el: document.getElementById('planContent'), loadingKey: 'planLoading',
+                record: planRecord, refreshBtn: document.getElementById('planRefreshBtn')
+            });
+            updateScheduleButton();
+            document.addEventListener('neutrix:langchange', updateScheduleButton);
+        }
+    </script>
+    <script src="chat.js"></script>
+</body>
+</html>

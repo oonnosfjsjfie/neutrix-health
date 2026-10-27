@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Upcoming Check-ups</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        .scroll-box { max-height: 560px; overflow-y: auto; padding-right: 8px; }
+
+        /* Check-up date cards */
+        .ck-intro { font-size: 13.5px; color: var(--text-secondary); margin-bottom: 14px; }
+        .ck-list { display: flex; flex-direction: column; gap: 10px; }
+        .ck-item {
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--hospital-teal);
+            border-radius: var(--radius-md);
+            background: var(--card-bg);
+        }
+        .ck-item.passed { border-left-color: #b45309; }
+        .ck-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; flex-wrap: wrap; }
+        .ck-date-box {
+            min-width: 70px;
+            text-align: center;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: rgba(13, 148, 136, 0.12);
+            color: var(--hospital-teal);
+            font-weight: 800;
+            line-height: 1.15;
+            flex-shrink: 0;
+        }
+        .ck-item.passed .ck-date-box { background: rgba(180, 83, 9, 0.12); color: #b45309; }
+        .ck-date-box .ck-day { font-size: 22px; }
+        .ck-date-box .ck-month { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .ck-main { flex: 1; min-width: 180px; }
+        .ck-title { font-weight: 700; font-size: 15px; color: var(--text-primary); }
+        .ck-sub { font-size: 12.5px; color: var(--text-muted); }
+        .ck-status {
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: var(--pill-bg);
+            color: var(--text-secondary);
+        }
+        .ck-more { padding: 8px 14px; font-size: 13px; flex-shrink: 0; }
+        .ck-details { padding: 4px 18px 14px 100px; border-top: 1px dashed var(--border-color); }
+        .ck-details ul { margin-top: 10px; }
+        .ck-after { margin-top: 20px; }
+        .ck-side-warn {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-left: 4px solid var(--alert-red);
+            border-radius: 6px;
+            background: rgba(220, 38, 38, 0.08);
+            font-size: 14px;
+        }
+        .ck-side-warn h2, .ck-side-warn h3 { font-size: 15px; color: var(--alert-red); margin: 0 0 8px; border: none; padding: 0; }
+        .ck-side-warn ul { padding-left: 18px; margin-bottom: 0; }
+        @media (max-width: 640px) { .ck-details { padding-left: 18px; } }
+    </style>
+</head>
+<body data-page="checkups" data-title-key="checkupsPageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+
+            <div id="emptyView" class="empty-state hidden">
+                <div class="empty-icon">📅</div>
+                <h2 data-i18n="emptyTitle"></h2>
+                <p data-i18n="emptyText"></p>
+                <a href="summary.html"><button class="btn-primary" type="button" data-i18n="emptyBtn"></button></a>
+            </div>
+
+            <div id="checkupView" class="hidden">
+                <div class="card-header">
+                    <div>
+                        <h2 data-i18n="checkupTitle"></h2>
+                        <p class="subtitle" data-i18n="checkupsSubtitle"></p>
+                    </div>
+                    <span class="form-status" data-i18n="aiBadge"></span>
+                </div>
+
+                <div class="output-block ai" style="margin-top: 0;">
+                    <div id="checkupContent" class="output-text md-content scroll-box"></div>
+                    <button id="checkupRefreshBtn" class="btn-secondary refresh-btn" type="button" data-i18n="refreshBtn"></button>
+                </div>
+
+                <p class="hint" style="margin-top: 16px;" data-i18n="planHint"></p>
+            </div>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-i18n="checkupTipsTitle"></h3>
+                <span class="mrn-badge">📅</span>
+            </div>
+
+            <ol class="info-list">
+                <li data-i18n="checkupTip1"></li>
+                <li data-i18n="checkupTip2"></li>
+                <li data-i18n="checkupTip3"></li>
+            </ol>
+
+            <!-- "Go to the hospital sooner if" (filled by checkups.js) -->
+            <div id="ckSideWarnings" class="ck-side-warn md-content hidden"></div>
+
+            <div class="chart-divider"></div>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js"></script>
+    <script src="ai-sections.js"></script>
+    <script src="checkups.js"></script>
+    <script>
+        const checkupRecord = loadReport();
+        if (!checkupRecord) {
+            document.getElementById('emptyView').classList.remove('hidden');
+        } else {
+            document.getElementById('checkupView').classList.remove('hidden');
+            loadAiSection({
+                storeKey: 'neutrixCheckups', url: '/api/checkups', field: 'checkups',
+                el: document.getElementById('checkupContent'), loadingKey: 'checkupLoading',
+                record: checkupRecord, refreshBtn: document.getElementById('checkupRefreshBtn'),
+                render: renderCheckups
+            });
+        }
+    </script>
+    <script src="chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,489 @@
+/* =====================================================
+   Neutrix website look for the app pages.
+   Loaded after theme.css and pages.css, so it only changes
+   how things look. No class names or features change.
+   ===================================================== */
+
+:root {
+    --bg-page: #f9f8f6;
+    --bg-card: #ffffff;
+    --bg-dark-section: #0c0c0c;
+
+    /* The app's own variables, mapped to the website palette */
+    --hospital-navy: #0c0c0c;
+    --hospital-indigo: #191919;
+    --hospital-teal: #191919;
+    --bg-workspace: #f9f8f6;
+    --card-bg: #ffffff;
+    --text-primary: #191919;
+    --text-secondary: #666460;
+    --text-muted: #999690;
+    --border-color: #e5e3df;
+    --border-light: #eeece8;
+    --input-bg: #ffffff;
+    --pill-bg: #f1efeb;
+    --pill-hover: #e8e5e0;
+    --alert-red: #dc2626;
+    --success-green: #10b981;
+    --accent-blue: #3b82f6;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.04);
+    --on-primary: #ffffff;
+}
+
+[data-theme="dark"] {
+    --bg-page: #0c0c0c;
+    --bg-card: #161616;
+    --bg-dark-section: #050505;
+
+    --hospital-navy: #050505;
+    --hospital-indigo: #ffffff;
+    --hospital-teal: #ffffff;
+    --bg-workspace: #0f0f0f;
+    --card-bg: #161616;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --text-muted: #6b6b6b;
+    --border-color: #262626;
+    --border-light: #1f1f1f;
+    --input-bg: #0f0f0f;
+    --pill-bg: #222222;
+    --pill-hover: #2c2c2c;
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --on-primary: #0c0c0c;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+}
+
+/* ---------- Top bar ---------- */
+.ehr-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(249, 248, 246, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 32px;
+}
+[data-theme="dark"] .ehr-navbar { background: rgba(12, 12, 12, 0.88); }
+.nav-container { max-width: 1300px; }
+
+.brand-logo-link { display: flex; align-items: center; text-decoration: none; }
+.brand-logo-svg { height: 44px; width: auto; display: block; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); }
+
+.cross-icon { background: #000000; border-radius: 10px; }
+.brand-title { color: var(--text-primary); }
+.brand-sub { color: var(--text-muted); }
+
+.system-controls { gap: 8px; }
+.ctrl-btn,
+[data-theme="dark"] .ctrl-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.ctrl-btn:hover {
+    background: var(--text-primary);
+    color: var(--bg-page);
+    border-color: var(--text-primary);
+    opacity: 1;
+}
+
+/* ---------- Page layout ---------- */
+.ehr-workspace {
+    max-width: 1300px;
+    margin: 40px auto;
+    gap: 28px;
+}
+
+.ehr-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 36px;
+}
+.chart-card { border-top: 1px solid var(--border-color); }
+
+.card-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 22px;
+    margin-bottom: 24px;
+}
+.card-header h2,
+.empty-state h2 {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-weight: 400;
+    font-size: 34px;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+.subtitle { color: var(--text-secondary); font-size: 15px; margin-top: 4px; }
+
+/* Small uppercase labels, like the website's section labels */
+.section-title,
+.chart-header h3,
+.field-label,
+.output-block h3.block-title,
+.slot-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.section-title,
+.output-block h3.block-title { border-bottom: 1px solid var(--border-light); }
+
+.form-status,
+.mrn-badge {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.hint { color: var(--text-muted); }
+.chart-divider { background: var(--border-color); }
+.caregiver-alert-box { background: var(--bg-workspace); border-left: 3px solid var(--text-primary); border-radius: var(--radius-md); }
+.ehr-disclaimer { border-top: 1px solid var(--border-color); }
+
+/* ---------- Buttons: pills ---------- */
+.btn-primary,
+.btn-success {
+    background: var(--text-primary);
+    color: var(--on-primary);
+    border: 1px solid var(--text-primary);
+    border-radius: 30px;
+    padding: 13px 26px;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.btn-primary:hover,
+.btn-success:hover {
+    background: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+.btn-primary:disabled,
+.btn-success:disabled { opacity: 0.55; transform: none; }
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    padding: 12px 22px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.btn-secondary:hover { border-color: var(--text-primary); transform: translateY(-1px); }
+
+.btn-remove { border-radius: 20px; }
+.action-btn { border-radius: 30px; box-shadow: none; }
+
+/* The main call-to-action pulses gently, like "Launch Patient Portal" */
+#processBtn,
+#compareBtn,
+#updateBtn,
+#scheduleBtn { animation: ctaPulse 2.8s infinite ease-in-out; }
+@keyframes ctaPulse {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.35); }
+    70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+/* ---------- Inputs ---------- */
+.modern-input, .modern-select, .modern-textarea {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--input-bg);
+}
+.modern-input:focus, .modern-select:focus, .modern-textarea:focus {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+.drop-zone {
+    border: 1.5px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-workspace);
+}
+.drop-zone:hover, .drop-zone:focus, .drop-zone.dragover {
+    border-color: var(--text-primary);
+    background: var(--pill-bg);
+}
+.drop-title span { color: var(--text-primary); }
+
+.file-chip,
+.saved-item {
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--text-primary);
+    border-radius: var(--radius-md);
+    background: var(--card-bg);
+}
+.saved-item.bill { border-left-color: #b45309; }
+.saved-item.later { border-left-color: var(--accent-blue); }
+.saved-badge { border: 1px solid var(--border-color); background: transparent; }
+.add-more-panel { border: 1px dashed var(--border-color); border-radius: var(--radius-lg); background: var(--bg-workspace); }
+
+/* ---------- AI text boxes ---------- */
+.output-block {
+    background: var(--bg-workspace);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+.output-block.ai { border-left: 3px solid var(--text-primary); }
+
+.md-content h1,
+.md-content h2 {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-weight: 400;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+.md-content h2 { font-size: 22px; border-bottom: 1px solid var(--border-color); }
+.md-content h3, .md-content h4 { color: var(--text-primary); }
+.md-content th { background: var(--pill-bg); }
+.md-content blockquote { border-left-color: var(--text-primary); background: var(--pill-bg); }
+
+/* ---------- Status messages ---------- */
+.alert-success { background: rgba(16, 185, 129, 0.1); color: #047857; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); }
+.alert-warning { background: rgba(245, 158, 11, 0.1); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); }
+[data-theme="dark"] .alert-success { color: #6ee7b7; }
+[data-theme="dark"] .alert-warning { color: #fcd34d; }
+
+/* ---------- Lists, cards and tags ---------- */
+.clinical-tag { background: var(--pill-bg); color: var(--text-primary); border-radius: 20px; }
+.med-pill-item { border-left: 3px solid var(--text-primary); background: var(--bg-workspace); border-radius: 8px; }
+.field-value.highlight { color: var(--text-primary); }
+
+.history-item { background: var(--card-bg); border-left-color: var(--text-primary); }
+.history-item.compare { border-left-color: var(--accent-blue); }
+.history-item.selected { background: var(--pill-bg); border-color: var(--text-primary); }
+.history-item:hover { border-color: var(--text-primary); }
+.hist-latest { background: var(--text-primary); color: var(--on-primary); }
+.hist-icon { background: #121212; color: #ffffff; border-radius: 10px; }
+
+/* Check-up date cards */
+.ck-item { border-left-color: var(--text-primary); border-radius: var(--radius-md); }
+.ck-date-box { background: #121212; color: #ffffff; border-radius: 10px; }
+.ck-item.passed .ck-date-box { background: #b45309; color: #ffffff; }
+
+/* Medicine schedule */
+.progress-bar-fill { background: var(--text-primary); }
+.progress-percentage { color: var(--text-primary); }
+.dose-row { background: var(--card-bg); border-left: 3px solid var(--text-primary); border-radius: var(--radius-md); }
+.dose-row:hover { border-color: var(--text-primary); }
+.dose-row.taken { border-left-color: var(--success-green); background: rgba(16, 185, 129, 0.08); }
+.dose-check { accent-color: var(--success-green); }
+.week-day.selected { background: var(--pill-bg); }
+.week-dot.full { background: var(--success-green); border-color: var(--success-green); color: #ffffff; }
+.week-dot.partial { border-color: var(--success-green); color: var(--success-green); }
+.day-arrow { border-radius: 30px; }
+
+/* ---------- Floating chat (dark, like the website's dark sections) ---------- */
+.chat-fab {
+    background: #0c0c0c;
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border: 1px solid #2a2a2a;
+}
+[data-theme="dark"] .chat-fab { background: #ffffff; color: #0c0c0c; }
+.chat-panel { border-radius: 20px; }
+.chat-panel-header { background: #0c0c0c; border-bottom: 1px solid #262626; }
+.chat-msg.user { background: var(--text-primary); color: var(--on-primary); }
+.chat-msg.ai { background: var(--card-bg); }
+
+/* ---------- Scroll-in animation (from the website) ---------- */
+.ehr-card { animation: nxReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.chart-card { animation-delay: 0.08s; }
+@keyframes nxReveal {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ehr-card, #processBtn, #compareBtn, #updateBtn, #scheduleBtn { animation: none; }
+}
+
+@media (max-width: 640px) {
+    .ehr-navbar { padding: 10px 16px; }
+    .ehr-card { padding: 24px; }
+    .card-header h2, .empty-state h2 { font-size: 26px; }
+    .brand-logo-svg { height: 36px; }
+}
+
+/* Dark boxes stay visible on dark cards */
+[data-theme="dark"] .tile-visual,
+[data-theme="dark"] .hist-icon,
+[data-theme="dark"] .ck-date-box { border: 1px solid #2a2a2a; }
+
+/* =====================================================
+   Website layout (built by common.js): pill menu, centred hero,
+   dark side column, scroll progress, footer
+   ===================================================== */
+
+/* Scroll progress bar + back-to-top pill */
+.nx-scroll-progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+    background: var(--text-primary); z-index: 1001;
+    transition: width 0.1s linear;
+}
+.nx-top-btn {
+    position: fixed; bottom: 30px; left: 30px; z-index: 95;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color); color: var(--text-primary);
+    padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    opacity: 0; visibility: hidden; transform: translateY(15px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+[data-theme="dark"] .nx-top-btn { background: rgba(24, 24, 24, 0.75); }
+.nx-top-btn.visible { opacity: 1; visibility: visible; transform: none; }
+.nx-top-btn:hover { background: var(--text-primary); color: var(--bg-page); }
+
+/* Top bar: logo, pill menu, then plain text controls on the right */
+.nx-site .nav-container { justify-content: flex-start; gap: 24px; }
+.nx-site .system-controls { margin-left: auto; gap: 4px; }
+.nx-site .ehr-navbar [data-nav] { display: none !important; }
+.nx-nav-links {
+    display: flex; gap: 6px;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 4px 8px; border-radius: 20px;
+    overflow-x: auto; scrollbar-width: none;
+}
+.nx-nav-links::-webkit-scrollbar { display: none; }
+[data-theme="dark"] .nx-nav-links { background: rgba(255, 255, 255, 0.05); }
+.nx-nav-item {
+    text-decoration: none; color: var(--text-secondary);
+    font-size: 13px; font-weight: 500; white-space: nowrap;
+    padding: 6px 14px; border-radius: 16px; transition: all 0.25s ease;
+}
+.nx-nav-item:hover { color: var(--text-primary); }
+.nx-nav-item.active { background: var(--text-primary); color: var(--bg-page); font-weight: 600; }
+.nx-site .ctrl-btn,
+.nx-site [data-theme="dark"] .ctrl-btn {
+    border-color: transparent; background: none; padding: 7px 10px;
+}
+.nx-site .ctrl-btn:hover { background: none; color: var(--text-primary); border-color: transparent; }
+.nx-site #signOutBtn { border: 1px solid var(--border-color); border-radius: 20px; padding: 7px 14px; }
+
+/* Centred hero heading */
+.nx-hero {
+    max-width: 900px; margin: 0 auto;
+    padding: 72px 24px 36px; text-align: center;
+    animation: nxReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.nx-eyebrow {
+    font-size: 11px; font-weight: 800; letter-spacing: 2px;
+    color: var(--text-muted); text-transform: uppercase;
+}
+.nx-eyebrow-live { color: var(--text-primary); }
+.nx-hero-title {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-weight: 400; font-size: 58px; line-height: 1.1; letter-spacing: -1.5px;
+    margin: 14px 0 16px;
+}
+.nx-hero-sub { font-size: 18px; color: var(--text-secondary); max-width: 680px; margin: 0 auto; }
+
+/* The dashboard's own welcome heading, centred the same way */
+.nx-hero .dash-hero { text-align: center; border: none; padding: 0; margin: 0; }
+.nx-hero .dash-title { font-size: 58px; letter-spacing: -1.5px; margin: 14px 0 16px; }
+.nx-hero .dash-sub { font-size: 18px; }
+
+/* The heading now lives in the hero, so the card's own header is hidden */
+.nx-has-hero .ehr-card:not(.chart-card) .card-header { display: none; }
+
+/* Content area under the hero */
+.nx-site .ehr-workspace {
+    max-width: 1200px;
+    margin: 0 auto 90px;
+    grid-template-columns: 1fr 380px;
+    align-items: start;
+}
+
+/* Side column = a dark card, like the website's dark sections */
+.nx-site .chart-card {
+    --card-bg: #181818;
+    --bg-workspace: #141414;
+    --input-bg: #141414;
+    --text-primary: #ffffff;
+    --text-secondary: #a8a8a8;
+    --text-muted: #777777;
+    --border-color: #282828;
+    --border-light: #222222;
+    --pill-bg: #232323;
+    --pill-hover: #2c2c2c;
+    --on-primary: #0c0c0c;
+    background: #0c0c0c;
+    color: #ffffff;
+    border: 1px solid #1f1f1f;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+    position: sticky;
+    top: 90px;
+}
+.nx-site .chart-card .alert-warning { color: #fcd34d; }
+.nx-site .chart-card .alert-success { color: #6ee7b7; }
+.nx-site .chart-card .history-list { max-height: 560px; }
+
+/* Footer */
+.nx-footer {
+    background: var(--bg-page);
+    border-top: 1px solid var(--border-color);
+    padding: 70px 24px 40px;
+    position: relative;
+    overflow: hidden;
+}
+.nx-footer .footer-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 2; }
+.nx-footer .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1.6fr; gap: 32px; }
+.nx-footer .footer-col { display: flex; flex-direction: column; gap: 10px; }
+.nx-footer .col-title { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 6px; }
+.nx-footer .footer-col a { color: var(--text-secondary); font-size: 13px; text-decoration: none; transition: color 0.2s; }
+.nx-footer .footer-col a:hover { color: var(--text-primary); }
+.nx-footer .copyright { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+.nx-footer-logo .brand-logo-svg { height: 48px; }
+.nx-footer-note p { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.nx-footer .footer-watermark {
+    position: absolute; bottom: -30px; left: 0; right: 0;
+    font-family: "Georgia", serif; font-size: 120px; font-weight: 900;
+    color: rgba(0, 0, 0, 0.03); white-space: nowrap; text-align: center;
+    pointer-events: none; z-index: 1;
+}
+[data-theme="dark"] .nx-footer .footer-watermark { color: rgba(255, 255, 255, 0.03); }
+.nx-site { padding-bottom: 0; }
+
+@media (max-width: 1024px) {
+    .nx-site .ehr-workspace { grid-template-columns: 1fr; margin: 0 16px 60px; }
+    .nx-site .chart-card { position: static; }
+    .nx-footer .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px) {
+    .nx-site .nav-container { flex-wrap: wrap; gap: 10px; }
+    .nx-nav-links { order: 3; width: 100%; }
+}
+@media (max-width: 640px) {
+    .nx-hero { padding: 44px 16px 24px; }
+    .nx-hero-title, .nx-hero .dash-title { font-size: 36px; letter-spacing: -0.8px; }
+    .nx-hero-sub { font-size: 15px; }
+    .nx-top-btn { left: 16px; bottom: 16px; }
+}
+
+/* Beat the page's own inline styles for the check-up date boxes */
+.ck-list .ck-item .ck-date-box { background: #121212; color: #ffffff; }
+.ck-list .ck-item.passed .ck-date-box { background: #b45309; color: #ffffff; }
+.ck-list .ck-item { border-left-color: var(--text-primary); }

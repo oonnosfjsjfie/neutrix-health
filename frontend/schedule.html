@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | My Medicine Schedule</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <!-- PDF creation (works with Malayalam text too) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .scroll-box { max-height: 440px; overflow-y: auto; padding-right: 8px; }
+    </style>
+</head>
+<body data-page="schedule" data-title-key="schedulePageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <a class="ctrl-btn nav-link hidden" data-nav="upload" href="summary.html" data-i18n="navUpload">🏠 Upload</a>
+                <a class="ctrl-btn nav-link hidden" data-nav="report" href="report.html" data-i18n="navReport">📋 Summary</a>
+                <a class="ctrl-btn nav-link hidden" data-nav="schedule" href="schedule.html" data-i18n="navSchedule">💊 My Schedule</a>
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+
+            <div id="schedEmpty" class="empty-state hidden">
+                <div class="empty-icon">💊</div>
+                <h2 data-i18n="schedEmptyTitle"></h2>
+                <p data-i18n="schedEmptyText"></p>
+                <a href="summary.html"><button class="btn-primary" type="button" data-i18n="schedEmptyBtn"></button></a>
+            </div>
+
+            <!-- Shown while the schedule is being made automatically -->
+            <div id="schedLoading" class="hidden">
+                <div class="card-header">
+                    <div>
+                        <h2 data-i18n="schedTitle"></h2>
+                        <p class="subtitle" data-i18n="schedAutoSubtitle"></p>
+                    </div>
+                </div>
+                <p id="schedLoadingText" class="loading-line"></p>
+                <button id="schedRetryBtn" class="btn-primary hidden" type="button" data-i18n="retryBtn"></button>
+            </div>
+
+            <div id="schedView" class="hidden">
+                <div class="card-header">
+                    <div>
+                        <h2 data-i18n="schedTitle"></h2>
+                        <p class="subtitle" data-i18n="schedSubtitle"></p>
+                    </div>
+                    <span class="form-status" id="todayBadge"></span>
+                </div>
+
+                <div class="day-nav">
+                    <button id="prevDay" class="btn-secondary day-arrow" type="button">◀</button>
+                    <div class="day-label">
+                        <div id="dayLabel"></div>
+                        <span id="todayChip" class="clinical-tag" data-i18n="today"></span>
+                    </div>
+                    <button id="nextDay" class="btn-secondary day-arrow" type="button">▶</button>
+                </div>
+                <button id="jumpToday" class="btn-text hidden" type="button" data-i18n="goToday"></button>
+
+                <div class="progress-section">
+                    <div class="progress-info">
+                        <span data-i18n="progressLabel"></span>
+                        <span class="progress-percentage" id="progressCount"></span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div id="futureNote" class="alert-warning hidden" data-i18n="futureDay"></div>
+                <div id="doneBanner" class="alert-success hidden" data-i18n="doneAll"></div>
+
+                <div id="slotList"></div>
+
+                <!-- Intake report PDF -->
+                <div class="report-download">
+                    <p class="hint" data-i18n="downloadReportHint"></p>
+                    <button id="downloadReportBtn" class="btn-success action-btn" type="button" data-i18n="downloadReportBtn"></button>
+                    <p id="downloadStatus" class="hint" style="margin-top: 8px;"></p>
+                </div>
+            </div>
+
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div id="schedSide" class="hidden">
+                <div class="chart-header">
+                    <h3 data-i18n="weekTitle"></h3>
+                    <span class="mrn-badge">7</span>
+                </div>
+                <p class="hint" data-i18n="weekHint"></p>
+                <div id="weekStrip" class="week-strip"></div>
+
+                <div class="chart-divider"></div>
+
+                <div class="chart-header">
+                    <h3 data-i18n="sideMedsTitle"></h3>
+                </div>
+                <div id="medList" class="meds-preview-list"></div>
+
+                <div class="clinical-field" style="margin-top: 16px;">
+                    <span class="field-label" data-i18n="startedOn"></span>
+                    <div class="field-value" id="startedOn"></div>
+                </div>
+
+                <div class="chart-divider"></div>
+
+                <div class="link-box">
+                    <p class="hint" data-i18n="bookmarkHint"></p>
+                    <input id="pageLink" class="modern-input" readonly>
+                    <button id="copyLinkBtn" class="btn-primary" type="button" data-i18n="copyLink"></button>
+                    <p id="linkStatus" class="hint" style="margin-top: 8px;"></p>
+                </div>
+
+                <div class="chart-divider"></div>
+            </div>
+
+            <a href="medplan.html"><button class="btn-secondary back-btn" type="button" data-i18n="backToPlanBtn" style="margin: 0 0 20px;"></button></a>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js"></script>
+    <script>
+        // Make the daily schedule automatically.
+        // - First visit: build it from the reports
+        // - Reports changed since: rebuild it; if the medicines changed, a new version
+        //   starts today, so earlier days keep the medicines that were taken then
+        const schedRecord = loadReport();
+
+        function startSchedulePage() {
+            document.getElementById('schedLoading').classList.add('hidden');
+            const script = document.createElement('script');
+            script.src = 'schedule.js';
+            document.body.appendChild(script);
+        }
+
+        function doseKey(d) {
+            return `${d.medicine}|${d.strength}|${d.dose}|${d.slot}|${d.duration}`.toLowerCase();
+        }
+
+        async function fetchDoses() {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 120000);
+            try {
+                const res = await fetch(`${API_BASE}/api/schedule`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        report_text: fullReportText(schedRecord),
+                        bill_text: schedRecord.billText || '',
+                        language: neutrixLang
+                    }),
+                    signal: controller.signal
+                });
+                if (!res.ok) throw new Error(`Server error ${res.status}`);
+                const data = await res.json();
+                if (data.ok === false) throw new Error(data.message);
+                return data.doses;
+            } catch (err) {
+                throw err.name === 'AbortError' ? new Error(t('askTimeout')) : err;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        function showLoading(key) {
+            document.getElementById('schedLoading').classList.remove('hidden');
+            document.getElementById('schedRetryBtn').classList.add('hidden');
+            document.getElementById('schedLoadingText').textContent = t(key);
+        }
+
+        // First visit: a new schedule
+        async function buildSchedule() {
+            showLoading('scheduleLoading');
+            try {
+                const doses = await fetchDoses();
+                const today = dayKey(new Date());
+                storeSet('neutrixSchedule', {
+                    reportId: schedRecord.createdAt,
+                    version: reportVersion(schedRecord),
+                    createdAt: new Date().toISOString(),
+                    startDate: today,
+                    versions: [{ from: today, doses: doses.map((d, i) => ({ ...d, id: 'v0d' + i })) }],
+                    ticks: {}
+                });
+                startSchedulePage();
+            } catch (err) {
+                document.getElementById('schedLoadingText').textContent = err.message;
+                document.getElementById('schedRetryBtn').classList.remove('hidden');
+            }
+        }
+
+        // Reports changed: update the medicines from today onwards
+        async function updateSchedule(saved) {
+            showLoading('schedUpdating');
+            try {
+                const doses = await fetchDoses();
+                const versions = scheduleVersions(saved);
+                const today = dayKey(new Date());
+                const current = dosesForDay(saved, today);
+
+                const same = doses.length === current.length &&
+                    doses.map(doseKey).sort().join() === current.map(doseKey).sort().join();
+
+                if (!same) {
+                    const n = versions.length;
+                    const newDoses = doses.map((d, i) => ({ ...d, id: `v${n}d${i}` }));
+
+                    // Keep today's ticks for medicines that are still in the plan
+                    const todayTicks = (saved.ticks || {})[today] || {};
+                    const carried = {};
+                    newDoses.forEach(nd => {
+                        const old = current.find(od => od.medicine === nd.medicine && od.slot === nd.slot && todayTicks[od.id]);
+                        if (old) carried[nd.id] = todayTicks[old.id];
+                    });
+                    if (!saved.ticks) saved.ticks = {};
+                    saved.ticks[today] = carried;
+
+                    // A version that started today is replaced; otherwise a new one starts today
+                    const last = versions[versions.length - 1];
+                    if (last.from === today && versions.length > 1) versions[versions.length - 1] = { from: today, doses: newDoses };
+                    else if (last.from === today) last.doses = newDoses;
+                    else versions.push({ from: today, doses: newDoses });
+                }
+                saved.version = reportVersion(schedRecord);
+                storeSet('neutrixSchedule', saved);
+            } catch (err) {
+                // Couldn't update now: keep the current schedule and try again next time
+            }
+            startSchedulePage();
+        }
+
+        document.getElementById('schedRetryBtn').addEventListener('click', buildSchedule);
+
+        if (!schedRecord) {
+            document.getElementById('schedEmpty').classList.remove('hidden');
+        } else {
+            const saved = storeGet('neutrixSchedule');
+            const sameIssueReports = saved && saved.reportId === schedRecord.createdAt &&
+                scheduleVersions(saved).some(v => v.doses.length);
+
+            if (!sameIssueReports) {
+                buildSchedule();
+            } else if ((saved.version || reportVersion(schedRecord, true)) !== reportVersion(schedRecord)) {
+                updateSchedule(saved);
+            } else {
+                startSchedulePage();
+            }
+        }
+    </script>
+    <script src="chat.js"></script>
+</body>
+</html>

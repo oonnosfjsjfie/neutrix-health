@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Recovery Tracker</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <link rel="stylesheet" href="bobby-pages.css">
+</head>
+<body data-page="tracking" data-title-key="trackerPageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand"></div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+            <!-- Saved summary + warning (filled by tracker&briefing.js) -->
+            <div id="trackerSummary" class="hidden summary-wrapper bb-result"></div>
+            <div id="warningOutput"></div>
+
+            <form id="recoveryForm" class="patient-card">
+                <div class="card-header">
+                    <div>
+                        <h2 data-bt="cardH3">Today’s Vitals & Readings</h2>
+                        <p class="subtitle" data-bt="cardP">Fill in all available parameters below.</p>
+                    </div>
+                    <span class="form-status" data-bt="badge">Patient Portal</span>
+                </div>
+
+                <div class="bb-grid">
+                    <div class="form-group bb-field">
+                        <label for="temp" data-bt-html="lblTemp">Temperature (°F)</label>
+                        <input class="modern-input" type="number" id="temp" step="0.1" min="90.0" max="110.0" value="98.6">
+                    </div>
+                    <div class="form-group bb-field">
+                        <label for="bp" data-bt-html="lblBp">Blood Pressure <span class="field-hint">(e.g., 120/80)</span></label>
+                        <input class="modern-input" type="text" id="bp" placeholder="120/80">
+                    </div>
+                    <div class="form-group bb-field">
+                        <label for="sugar" data-bt-html="lblSugar">Blood Sugar (mg/dL)</label>
+                        <input class="modern-input" type="number" id="sugar" min="0" max="600" value="100">
+                    </div>
+                    <div class="form-group bb-field">
+                        <label for="weight" data-bt-html="lblWeight">Weight (kg)</label>
+                        <input class="modern-input" type="number" id="weight" step="0.1" min="0.0" max="300.0" value="60.0">
+                    </div>
+                </div>
+
+                <div class="form-group bb-field">
+                    <label for="trackerSymptoms" data-bt-html="lblSymptoms">New or Noticeable Symptoms <span class="field-hint">(e.g., chest pain, high fever, cough)</span></label>
+                    <textarea class="modern-textarea" id="trackerSymptoms" data-secondary-id="symptomInput" rows="3"
+                              data-bt-ph="phSymptoms" placeholder="Describe any discomfort, changes, or unusual signs..."></textarea>
+                </div>
+
+                <div class="form-group bb-field choice-group">
+                    <label class="choice-label" data-bt="lblMeds">Did the patient take today’s prescribed medicines?</label>
+                    <div class="bb-radios">
+                        <label class="bb-radio"><input type="radio" name="medsRadio" value="Yes" checked><span data-bt="yes">Yes</span></label>
+                        <label class="bb-radio"><input type="radio" name="medsRadio" value="No"><span data-bt="no">No</span></label>
+                        <label class="bb-radio"><input type="radio" name="medsRadio" value="Partially"><span data-bt="partly">Partially</span></label>
+                    </div>
+                </div>
+
+                <button onclick="topFunction()" id="checkWarningBtn" type="submit" class="btn-primary action-btn" data-bt="btn">Save Recovery Details</button>
+            </form>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-bt="sideTitle">DAILY TRACKING</h3>
+                <span class="mrn-badge">📈</span>
+            </div>
+
+            <ol class="info-list">
+                <li data-bt="tip1">Fill this in at the same time each day.</li>
+                <li data-bt="tip2">Leave a box empty if you could not measure it.</li>
+                <li data-bt="tip3">Write any new symptom, even if it seems small.</li>
+            </ol>
+
+            <a href="briefing.html"><button class="btn-secondary back-btn" type="button" data-bt="toBrief">🧑‍⚕️ Message my doctor</button></a>
+
+            <div class="chart-divider"></div>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+
+            <footer class="ehr-disclaimer disclaimer">
+                <p data-bt-html="disc"><strong>Medical Disclaimer:</strong> Neutrix is an informational tool designed to help organize home health tracking records. It does not provide medical diagnoses, clinical treatment plans, or replace direct consultations with qualified healthcare providers.</p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js"></script>
+    <script src="tracker&briefing.js"></script>
+    <script>
+        // Bobby's English / Malayalam text, switched by the main language button
+        const BT = {
+            English: {
+                badge: 'Patient Portal',
+                cardH3: 'Today’s Vitals & Readings',
+                cardP: 'Fill in all available parameters below.',
+                lblTemp: 'Temperature (°F)',
+                lblBp: 'Blood Pressure <span class="field-hint">(e.g., 120/80)</span>',
+                lblSugar: 'Blood Sugar (mg/dL)',
+                lblWeight: 'Weight (kg)',
+                lblSymptoms: 'New or Noticeable Symptoms <span class="field-hint">(e.g., chest pain, high fever, cough)</span>',
+                phSymptoms: 'Describe any discomfort, changes, or unusual signs...',
+                lblMeds: 'Did the patient take today’s prescribed medicines?',
+                yes: 'Yes', no: 'No', partly: 'Partially',
+                btn: 'Save Recovery Details',
+                sideTitle: 'DAILY TRACKING',
+                tip1: 'Fill this in at the same time each day.',
+                tip2: 'Leave a box empty if you could not measure it.',
+                tip3: 'Write any new symptom, even if it seems small.',
+                toBrief: '🧑‍⚕️ Message my doctor',
+                disc: '<strong>Medical Disclaimer:</strong> Neutrix is an informational tool designed to help organize home health tracking records. It does not provide medical diagnoses, clinical treatment plans, or replace direct consultations with qualified healthcare providers.'
+            },
+            Malayalam: {
+                badge: 'പേഷ്യന്റ് പോർട്ടൽ',
+                cardH3: 'ഇന്നത്തെ വൈറ്റൽസും റീഡിംഗുകളും',
+                cardP: 'താഴെ ലഭ്യമായ എല്ലാ വിവരങ്ങളും പൂരിപ്പിക്കുക.',
+                lblTemp: 'താപനില (°F)',
+                lblBp: 'രക്തസമ്മർദ്ദം <span class="field-hint">(e.g., 120/80)</span>',
+                lblSugar: 'ബ്ലഡ് ഷുഗർ (mg/dL)',
+                lblWeight: 'ശരീരഭാരം (kg)',
+                lblSymptoms: 'പുതിയതോ ശ്രദ്ധയിൽപ്പെട്ടതോ ആയ ലക്ഷണങ്ങൾ <span class="field-hint">(e.g., നെഞ്ചുവേദന, കടുത്ത പനി, ചുമ)</span>',
+                phSymptoms: 'എന്തെങ്കിലും അസ്വസ്ഥതകളോ മാറ്റങ്ങളോ അസാധാരണമായ ലക്ഷണങ്ങളോ വിവരിക്കുക...',
+                lblMeds: 'രോഗി ഇന്ന് നിർദ്ദേശിച്ച മരുന്നുകൾ കഴിച്ചിരുന്നോ?',
+                yes: 'അതെ', no: 'ഇല്ല', partly: 'ഭാഗികമായി',
+                btn: 'വിവരങ്ങൾ സംരക്ഷിക്കുക',
+                sideTitle: 'ദൈനംദിന ട്രാക്കിംഗ്',
+                tip1: 'എല്ലാ ദിവസവും ഒരേ സമയത്ത് ഇത് പൂരിപ്പിക്കുക.',
+                tip2: 'അളക്കാൻ കഴിഞ്ഞില്ലെങ്കിൽ ആ കോളം ഒഴിച്ചിടുക.',
+                tip3: 'ചെറുതാണെന്ന് തോന്നിയാലും പുതിയ ലക്ഷണങ്ങൾ എഴുതുക.',
+                toBrief: '🧑‍⚕️ ഡോക്ടർക്ക് സന്ദേശം അയക്കുക',
+                disc: '<strong>മെഡിക്കൽ നിരാകരണം:</strong> രോഗവിവരങ്ങൾ വീട്ടിൽ ട്രാക്ക് ചെയ്തു സൂക്ഷിക്കാൻ സഹായിക്കുന്ന ഒരു വിവരദായക സംവിധാനം മാത്രമാണ് ന്യൂട്രിക്സ്. ഇത് മെഡിക്കൽ രോഗനിർണ്ണയങ്ങളോ ക്ലിനിക്കൽ ചികിത്സാ പദ്ധതികളോ നൽകുന്നില്ല, കൂടാതെ യോഗ്യതയുള്ള ഒരു ആരോഗ്യ പരിരക്ഷാ ദാതാവുമായുള്ള നേരിട്ടുള്ള കൂടിയാലോചനകൾക്ക് പകരമാവുകയുമില്ല.'
+            }
+        };
+        function applyBobbyText() {
+            const d = BT[neutrixLang] || BT.English;
+            document.querySelectorAll('[data-bt]').forEach(el => { el.textContent = d[el.dataset.bt]; });
+            document.querySelectorAll('[data-bt-html]').forEach(el => { el.innerHTML = d[el.dataset.btHtml]; });
+            document.querySelectorAll('[data-bt-ph]').forEach(el => { el.placeholder = d[el.dataset.btPh]; });
+        }
+        document.addEventListener('neutrix:langchange', applyBobbyText);
+        applyBobbyText();
+    </script>
+    <script src="chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Your Summary</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        /* Compact scrolling boxes for long AI text */
+        .scroll-box {
+            max-height: 440px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        .summary-box { margin-top: 4px; }
+    </style>
+</head>
+<body data-page="report" data-title-key="reportPageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <a class="ctrl-btn nav-link hidden" data-nav="upload" href="summary.html" data-i18n="navUpload">🏠 Upload</a>
+                <a class="ctrl-btn nav-link hidden" data-nav="report" href="report.html" data-i18n="navReport">📋 Summary</a>
+                <a class="ctrl-btn nav-link hidden" data-nav="schedule" href="schedule.html" data-i18n="navSchedule">💊 My Schedule</a>
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+
+            <div id="emptyView" class="empty-state hidden">
+                <div class="empty-icon">📄</div>
+                <h2 data-i18n="emptyTitle"></h2>
+                <p data-i18n="emptyText"></p>
+                <a href="summary.html"><button class="btn-primary" type="button" data-i18n="emptyBtn"></button></a>
+            </div>
+
+            <div id="reportView" class="hidden">
+                <div class="card-header">
+                    <div>
+                        <h2 data-i18n="reportTitle"></h2>
+                        <p class="subtitle" data-i18n="reportSubtitle"></p>
+                    </div>
+                    <span class="form-status" data-i18n="aiBadge"></span>
+                </div>
+
+                <!-- Shown when an older version is open -->
+                <div id="oldVersionBar" class="alert-warning hidden" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px;">
+                    <span id="oldVersionText"></span>
+                    <button id="backToCurrentBtn" class="btn-secondary" type="button" data-i18n="verBackToCurrent" style="padding: 6px 12px;"></button>
+                </div>
+
+                <!-- Summary in a compact scrolling box -->
+                <div class="output-block ai summary-box">
+                    <div id="reportSummary" class="output-text md-content scroll-box"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-i18n="historyTitle"></h3>
+                <span class="mrn-badge" id="versionCount">1</span>
+            </div>
+
+            <!-- Summary history -->
+            <div id="historyBlock" class="hidden">
+                <p class="hint" data-i18n="portalHistoryHint"></p>
+                <div id="historyList" class="history-list"></div>
+                <div class="chart-divider"></div>
+            </div>
+
+            <div id="detailsBlock" class="hidden">
+                <div class="chart-header"><h3 data-i18n="detailsTitle"></h3></div>
+                <div class="clinical-field">
+                    <span class="field-label" data-i18n="detailDischarge"></span>
+                    <div class="field-value" id="detailDischargeName"></div>
+                </div>
+                <div class="clinical-field">
+                    <span class="field-label" data-i18n="detailBill"></span>
+                    <div class="field-value" id="detailBillName"></div>
+                </div>
+                <div class="clinical-field">
+                    <span class="field-label" data-i18n="detailGenerated"></span>
+                    <div class="field-value" id="detailGeneratedOn"></div>
+                </div>
+                <div class="clinical-field">
+                    <span class="field-label" data-i18n="detailLanguage"></span>
+                    <div class="field-value highlight" id="detailLanguageValue"></div>
+                </div>
+                <div class="chart-divider"></div>
+            </div>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+
+            <a href="summary.html"><button class="btn-secondary back-btn" type="button" data-i18n="backBtn"></button></a>
+
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js"></script>
+    <script src="report.js"></script>
+    <script src="chat.js"></script>
+</body>
+</html>

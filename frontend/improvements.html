@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | My Improvements</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        .scroll-box { max-height: 520px; overflow-y: auto; padding-right: 8px; }
+        .compare-meta { font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; }
+    </style>
+</head>
+<body data-page="improvements" data-title-key="improvePageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+
+            <div id="emptyView" class="empty-state hidden">
+                <div class="empty-icon">📈</div>
+                <h2 data-i18n="improveEmptyTitle"></h2>
+                <p data-i18n="improveEmptyText"></p>
+                <a href="summary.html"><button class="btn-primary" type="button" data-i18n="improveEmptyBtn"></button></a>
+            </div>
+
+            <div id="improveView" class="hidden">
+                <div class="card-header">
+                    <div>
+                        <h2 data-i18n="improveTitle"></h2>
+                        <p class="subtitle" data-i18n="improveSubtitle"></p>
+                    </div>
+                    <span class="form-status" data-i18n="aiBadge"></span>
+                </div>
+
+                <div class="section-title" id="viewKind"></div>
+                <div class="output-block ai" style="margin-top: 0;">
+                    <div id="viewMeta" class="compare-meta"></div>
+                    <div id="viewContent" class="output-text md-content scroll-box"></div>
+                </div>
+
+                <p class="hint" style="margin-top: 20px;" data-i18n="improveNote"></p>
+                <a href="summary.html"><button class="btn-success action-btn" type="button" data-i18n="improveAddBtn" style="margin-top: 6px;"></button></a>
+            </div>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-i18n="historyTitle"></h3>
+                <span class="mrn-badge" id="reportCount">0</span>
+            </div>
+            <p class="hint" data-i18n="historyHint"></p>
+            <div id="historyList" class="history-list"></div>
+
+            <div class="chart-divider"></div>
+
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js"></script>
+    <script src="improvements.js"></script>
+    <script src="chat.js"></script>
+</body>
+</html>

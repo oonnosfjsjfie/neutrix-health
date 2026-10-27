@@ -1,0 +1,64 @@
+/* =====================================================
+   Recovery Tracker + Doctor Brief (Bobby's pages)
+   Form pieces in the same look as the rest of the website.
+   ===================================================== */
+.bb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.bb-field { margin-bottom: 18px; }
+.bb-grid .bb-field { margin-bottom: 0; }
+.bb-grid + .bb-field { margin-top: 18px; }
+.bb-field label,
+.bb-field .choice-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.bb-field .field-hint { font-weight: 600; letter-spacing: 0.5px; text-transform: none; opacity: 0.8; }
+.bb-field .modern-input,
+.bb-field .modern-textarea { width: 100%; font-size: 14.5px; font-family: inherit; }
+.bb-field .modern-textarea { resize: vertical; min-height: 84px; font-family: inherit; }
+
+/* Yes / No / Partially pills */
+.bb-radios { display: flex; gap: 10px; flex-wrap: wrap; }
+.bb-radio {
+    position: relative;
+    display: inline-flex !important;
+    align-items: center;
+    padding: 10px 22px;
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    color: var(--text-primary) !important;
+    margin: 0 !important;
+    transition: all 0.2s ease;
+}
+.bb-radio input { position: absolute; opacity: 0; pointer-events: none; }
+.bb-radio:hover { border-color: var(--text-primary); }
+.bb-radio:has(input:checked) { background: var(--text-primary); color: var(--on-primary, #fff) !important; border-color: var(--text-primary); }
+
+/* Result boxes above the form */
+.bb-result { margin-bottom: 26px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
+.bb-result h3 { font-size: 18px; margin: 14px 0 10px; color: var(--text-primary); }
+.bb-result p { margin: 4px 0; color: var(--text-secondary); }
+.bb-result p strong { color: var(--text-primary); }
+/* the tracker script colours its alerts inline: keep them readable in dark mode */
+[data-theme="dark"] .bb-result .alert-success { background: rgba(16, 185, 129, 0.12) !important; color: #6ee7b7 !important; }
+[data-theme="dark"] .bb-result .alert-warning { background: rgba(245, 158, 11, 0.12) !important; color: #fcd34d !important; }
+[data-theme="dark"] .bb-result .alert-danger  { background: rgba(220, 38, 38, 0.15) !important; color: #fca5a5 !important; }
+.bb-result .alert-success, .bb-result .alert-warning, .bb-result .alert-danger { border-radius: 12px !important; }
+
+.bb-message { width: 100%; min-height: 260px; font-size: 14px; line-height: 1.6; font-family: inherit; resize: vertical; }
+.bb-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.bb-actions button { flex: 1 1 160px; }
+.bb-status { margin-top: 14px; padding: 12px 14px; font-size: 14px; font-weight: 600; }
+
+@media (max-width: 640px) {
+    .bb-grid { grid-template-columns: 1fr; }
+}

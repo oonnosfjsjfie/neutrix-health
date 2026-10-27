@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix Health | Getting Started & Product Hub</title>
+    <link rel="stylesheet" href="home.css">
+</head>
+<body>
+
+    <!-- Option 1: Clean High-Contrast Top Scroll Progress Bar -->
+    <div class="top-scroll-progress" id="scrollProgress"></div>
+
+    <!-- Bottom Edge Blur Overlay Effect -->
+    <div class="bottom-blur-overlay"></div>
+
+    <!-- Floating "Back to Top" Glassmorphism Pill -->
+    <button type="button" class="back-to-top-btn" id="backToTopBtn" aria-label="Back to top">
+        ↑ Top
+    </button>
+
+    <!-- Top Navigation Bar -->
+    <header class="px-nav">
+        <div class="nav-wrapper">
+            <div class="nav-left">
+                <a href="home.html" class="nav-brand">
+                    <!-- Embedded Vector SVG Logo -->
+                    <img class="brand-logo-svg" src="assets/neutrix-logo.png" alt="Neutrix Health">
+                </a>
+                <nav class="nav-links">
+                    <a href="#overview" class="nav-item">Overview</a>
+                    <a href="#metrics" class="nav-item">Impact</a>
+                    <a href="#features" class="nav-item">Features</a>
+                    <a href="#workflow" class="nav-item">Architecture</a>
+                    <a href="#team" class="nav-item">Team</a>
+                    <a href="#safety" class="nav-item">Safety</a>
+                </nav>
+            </div>
+            
+            <div class="nav-right">
+                <button type="button" id="themeToggleBtn" class="btn-text-nav">☀️ Theme</button>
+                <!-- Opens the patient dashboard in a new tab -->
+                <a href="issues.html" target="_blank" rel="noopener" class="btn-pill dark">Dashboard ↗</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="hub-wrapper">
+
+        <!-- Section 1: Hero Banner -->
+        <section class="hero-section scroll-reveal">
+            <div class="hero-container">
+                <span class="hero-eyebrow">
+                    <span class="tagline-static">NEUTRIX HEALTH • </span>
+                    <span id="rotatingTagline" class="tagline-rotating">AI RECOVERY COMPANION</span>
+                </span>
+
+                <h1 class="hero-title">Small signals.<br>Clear recovery.</h1>
+                <p class="hero-subtitle">Converting complex hospital discharge summaries and prescriptions into simple, clear, and actionable home recovery plans.</p>
+
+                <div class="hero-cta-group">
+                    <a href="issues.html" target="_blank" rel="noopener" class="btn-hero-primary glow-pulse">Launch Patient Portal →</a>
+                    <a href="#features" class="btn-hero-secondary">Explore Core Features</a>
+                </div>
+
+                <!-- Showcase Cards Grid -->
+                <div class="hero-cards-grid">
+                    <div class="hero-card tilt-card scroll-reveal">
+                        <div class="card-visual-header">
+                            <svg class="card-svg-graphic" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="300" height="120" rx="8" fill="#121212"/>
+                                <rect x="20" y="25" width="180" height="12" rx="6" fill="#ffffff" class="glow-element" opacity="0.9"/>
+                                <rect x="20" y="48" width="120" height="8" rx="4" fill="#666666"/>
+                                <rect x="20" y="64" width="220" height="8" rx="4" fill="#333333"/>
+                                <rect x="20" y="80" width="90" height="18" rx="9" fill="#ffffff"/>
+                                <text x="35" y="93" font-size="9" font-weight="bold" fill="#000">AI SUMMARY</text>
+                            </svg>
+                        </div>
+                        <div class="card-tag">01</div>
+                        <h3>AI Discharge Explainer</h3>
+                        <p>Translates hospital summaries into plain Malayalam or English instructions.</p>
+                    </div>
+
+                    <div class="hero-card tilt-card scroll-reveal">
+                        <div class="card-visual-header">
+                            <svg class="card-svg-graphic" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="300" height="120" rx="8" fill="#121212"/>
+                                <rect x="20" y="20" width="75" height="24" rx="12" fill="#222222" stroke="#444" stroke-width="1"/>
+                                <text x="32" y="35" font-size="9" fill="#fff" font-family="monospace">08:00 AM</text>
+                                <rect x="105" y="20" width="75" height="24" rx="12" fill="#222222" stroke="#444" stroke-width="1"/>
+                                <text x="117" y="35" font-size="9" fill="#fff" font-family="monospace">08:00 PM</text>
+                                <circle cx="210" cy="32" r="10" fill="#10b981" class="glow-element"/>
+                                <path d="M205 32 L208 35 L215 28" stroke="#fff" stroke-width="2" fill="none"/>
+                                <rect x="20" y="65" width="260" height="35" rx="6" fill="#1c1c1c"/>
+                                <text x="32" y="86" font-size="11" font-weight="bold" fill="#fff">Paracetamol 500mg • After Food</text>
+                            </svg>
+                        </div>
+                        <div class="card-tag">02</div>
+                        <h3>DoseGuard Manager</h3>
+                        <p>Structured daily schedule for medicines, dosage timing, and food guidance.</p>
+                    </div>
+
+                    <div class="hero-card tilt-card scroll-reveal">
+                        <div class="card-visual-header">
+                            <svg class="card-svg-graphic" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="300" height="120" rx="8" fill="#121212"/>
+                                <circle cx="45" cy="40" r="16" fill="#ef4444" opacity="0.2"/>
+                                <circle cx="45" cy="40" r="8" fill="#ef4444" class="glow-element"/>
+                                <text x="75" y="38" font-size="12" font-weight="bold" fill="#ffffff">Safety Alert Check</text>
+                                <text x="75" y="52" font-size="9" fill="#888888">Rule Engine Monitoring Active</text>
+                                <rect x="20" y="75" width="260" height="26" rx="6" fill="#2a0808" stroke="#7f1d1d" stroke-width="1"/>
+                                <text x="32" y="92" font-size="10" font-weight="bold" fill="#fca5a5">⚠️ Chest Pain → Emergency Care (112)</text>
+                            </svg>
+                        </div>
+                        <div class="card-tag">03</div>
+                        <h3>Red-Flag Safety</h3>
+                        <p>Automatic symptom evaluation to catch dangerous warning signs early.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Problem & Solution -->
+        <section id="overview" class="doc-block dark-bg scroll-reveal">
+            <div class="block-container">
+                <div class="split-header">
+                    <div>
+                        <span class="section-label">01. PRODUCT OVERVIEW</span>
+                        <h2 class="serif-heading">Getting started with Neutrix</h2>
+                    </div>
+                    <p class="lead-text">After hospital discharge, families face complex medical documents, confusing drug schedules, and uncertainty about symptoms. Neutrix bridges the gap between hospital release and safe home recovery.</p>
+                </div>
+
+                <div class="grid-3-cards margin-top-lg">
+                    <div class="feature-tile scroll-reveal">
+                        <div class="tile-image-box">
+                            <svg class="tile-svg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="400" height="200" fill="#141414"/>
+                                <path d="M40 50 L360 50 M40 90 L280 90 M40 130 L320 130 M40 170 L200 170" stroke="#333" stroke-width="6" stroke-linecap="round"/>
+                                <path d="M300 120 L340 160 L380 100" stroke="#ef4444" stroke-width="8" stroke-linecap="round" fill="none"/>
+                            </svg>
+                            <span class="img-caption">RAW DISCHARGE RECORD</span>
+                        </div>
+                        <span class="tile-badge">PROBLEM</span>
+                        <h4>Medical Confusion</h4>
+                        <p>Patients often miss medicines, misunderstand diet/activity restrictions, or miss critical follow-up visits due to complex discharge paperwork.</p>
+                    </div>
+                    <div class="feature-tile scroll-reveal">
+                        <div class="tile-image-box">
+                            <svg class="tile-svg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="400" height="200" fill="#141414"/>
+                                <rect x="30" y="30" width="160" height="140" rx="10" fill="#222"/>
+                                <rect x="210" y="30" width="160" height="140" rx="10" fill="#222"/>
+                                <circle cx="110" cy="80" r="25" fill="#ffffff"/>
+                                <path d="M240 70 H340 M240 100 H320 M240 130 H290" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+                            </svg>
+                            <span class="img-caption">AI RECOVERY DASHBOARD</span>
+                        </div>
+                        <span class="tile-badge">SOLUTION</span>
+                        <h4>AI Recovery Plan</h4>
+                        <p>Converts raw discharge text into a structured step-by-step recovery dashboard with clear daily tasks and automated reminders.</p>
+                    </div>
+                    <div class="feature-tile scroll-reveal">
+                        <div class="tile-image-box">
+                            <svg class="tile-svg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="400" height="200" fill="#141414"/>
+                                <path d="M50 150 Q 120 50, 200 120 T 350 40" stroke="#ffffff" stroke-width="6" fill="none"/>
+                                <circle cx="200" cy="120" r="12" fill="#ffffff"/>
+                                <circle cx="350" cy="40" r="12" fill="#ffffff"/>
+                            </svg>
+                            <span class="img-caption">CLINICAL BRIEF GENERATOR</span>
+                        </div>
+                        <span class="tile-badge">OUTCOME</span>
+                        <h4>Safe Home Care</h4>
+                        <p>Reduces readmission risks by alerting caregivers to dangerous symptoms and preparing clean briefs for doctor visits.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Animated Counter for Key Metrics -->
+        <section id="metrics" class="doc-block scroll-reveal">
+            <div class="block-container">
+                <div class="center-header">
+                    <span class="section-label">02. KEY PERFORMANCE METRICS</span>
+                    <h2 class="serif-heading">Built for trust, safety & speed</h2>
+                </div>
+
+                <div class="metrics-grid margin-top-lg">
+                    <div class="metric-card scroll-reveal">
+                        <div class="metric-number"><span class="counter" data-target="100">0</span>%</div>
+                        <h4>Non-Diagnostic Safety</h4>
+                        <p>Strictly grounded in uploaded clinical summaries without generating speculative medical advice.</p>
+                    </div>
+
+                    <div class="metric-card scroll-reveal">
+                        <div class="metric-number"><span class="counter" data-target="2">0</span></div>
+                        <h4>Languages Supported</h4>
+                        <p>Full support for plain English and Malayalam (മലയാളം) recovery instructions.</p>
+                    </div>
+
+                    <div class="metric-card scroll-reveal">
+                        <div class="metric-number">&lt;<span class="counter" data-target="2">0</span>s</div>
+                        <h4>Processing Time</h4>
+                        <p>Lightning-fast document parsing and clinical entity extraction powered by Gemini AI.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Core Features -->
+        <section id="features" class="doc-block dark-bg scroll-reveal">
+            <div class="block-container">
+                <div class="center-header">
+                    <span class="section-label">03. CORE CAPABILITIES</span>
+                    <h2 class="serif-heading">Get more done with Neutrix AI</h2>
+                </div>
+
+                <div class="grid-3-cards margin-top-lg">
+                    <div class="px-feature-card scroll-reveal">
+                        <div class="card-media-box">
+                            <span class="time-badge">2 MIN READ</span>
+                            <svg class="feature-illustration" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="30" y="20" width="140" height="80" rx="6" fill="#f0f0f0" stroke="#ccc" stroke-width="2"/>
+                                <line x1="50" y1="40" x2="150" y2="40" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+                                <line x1="50" y1="60" x2="120" y2="60" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="50" y1="75" x2="140" y2="75" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h4>AI Discharge Explainer</h4>
+                        <p>Summarizes diagnoses, procedures, and home instructions with source document citations.</p>
+                        
+                        <button type="button" class="drawer-toggle-btn" id="drawerToggleBtn">⚡ View Sample Output</button>
+                        <a href="#workflow" class="card-link margin-top-sm">Learn workflow →</a>
+                    </div>
+
+                    <div class="px-feature-card scroll-reveal">
+                        <div class="card-media-box">
+                            <span class="time-badge">3 MIN READ</span>
+                            <svg class="feature-illustration" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="40" y="25" width="120" height="70" rx="6" fill="#f0f0f0" stroke="#ccc" stroke-width="2"/>
+                                <circle cx="70" cy="60" r="16" fill="#111"/>
+                                <circle cx="130" cy="60" r="16" fill="#111"/>
+                                <path d="M62 60 H78 M130 52 V68 M122 60 H138" stroke="#fff" stroke-width="3"/>
+                            </svg>
+                        </div>
+                        <h4>DoseGuard Schedule</h4>
+                        <p>Converts prescriptions into a daily dose matrix with food rules and refill alerts.</p>
+                    </div>
+
+                    <div class="px-feature-card scroll-reveal">
+                        <div class="card-media-box">
+                            <span class="time-badge">1 MIN READ</span>
+                            <svg class="feature-illustration" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M100 20 L160 100 H40 Z" fill="#111"/>
+                                <text x="100" y="82" font-size="32" font-weight="bold" fill="#fff" text-anchor="middle">!</text>
+                            </svg>
+                        </div>
+                        <h4>Red-Flag Safety Engine</h4>
+                        <p>Screens daily entered symptoms against clinical warning thresholds to guide urgent care.</p>
+                    </div>
+                </div>
+
+                <!-- Sample Comparison Drawer with Skeleton Loader -->
+                <div class="sample-drawer-wrapper" id="sampleDrawer">
+                    <div class="skeleton-loader-box" id="skeletonLoader">
+                        <div class="skeleton-header shimmer"></div>
+                        <div class="skeleton-line shimmer"></div>
+                        <div class="skeleton-line short shimmer"></div>
+                    </div>
+
+                    <div class="drawer-comparison-grid hidden-content" id="drawerRealContent">
+                        <div class="drawer-box raw">
+                            <span class="box-tag">RAW DISCHARGE PAPERWORK</span>
+                            <p class="code-font">Patient presenting with mild acute coronary syndrome. Advised tab clopidogrel 75mg 1-0-0 x 30 days pc, tab atorvastatin 40mg 0-0-1 hs. Avoid strenuous exertional activity. Return immediately if angina recurs.</p>
+                        </div>
+                        <div class="drawer-arrow">➔</div>
+                        <div class="drawer-box summary">
+                            <span class="box-tag">NEUTRIX AI SUMMARY</span>
+                            <ul>
+                                <li><strong>Morning Medicine:</strong> Clopidogrel 75mg (1 Tablet after breakfast)</li>
+                                <li><strong>Night Medicine:</strong> Atorvastatin 40mg (1 Tablet at bedtime)</li>
+                                <li><strong>Restriction:</strong> No heavy lifting or intense exercise.</li>
+                                <li><strong>Red Flag Alert:</strong> Seek emergency care immediately if chest pain returns.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Expandable Accordion -->
+        <section id="safety" class="doc-block scroll-reveal">
+            <div class="block-container split-accordion-layout">
+                <div class="accordion-left">
+                    <h2 class="serif-heading large">Six ways Neutrix keeps recovery safe</h2>
+                    <p class="muted-body">Our responsible AI framework ensures patients and family caregivers receive safe, non-diagnostic guidance at all times.</p>
+                    
+                    <div class="accordion-image-card">
+                        <svg class="shield-svg" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M100 20 L160 50 V90 C160 130 100 150 100 150 C100 150 40 130 40 90 V50 Z" fill="#1a1a1a" stroke="#ffffff" stroke-width="4"/>
+                            <path d="M100 50 V110 M70 80 H130" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+                        </svg>
+                        <p class="shield-caption">Grounded in User Data & Verified Guidelines</p>
+                    </div>
+                </div>
+
+                <div class="accordion-right">
+                    <div class="accordion-item active">
+                        <div class="accordion-header">
+                            <span>01. Strict Non-Diagnostic Policy</span>
+                            <span class="acc-icon">−</span>
+                        </div>
+                        <div class="accordion-wrapper">
+                            <div class="accordion-content">
+                                <p>Neutrix will never diagnose medical conditions, prescribe new drugs, or suggest altering doctor-prescribed treatment plans.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <span>02. Grounded AI Explanations</span>
+                            <span class="acc-icon">+</span>
+                        </div>
+                        <div class="accordion-wrapper">
+                            <div class="accordion-content">
+                                <p>Every generated summary displays exact source citations from the uploaded hospital discharge summary or prescription.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <span>03. Immediate Emergency Escalation</span>
+                            <span class="acc-icon">+</span>
+                        </div>
+                        <div class="accordion-wrapper">
+                            <div class="accordion-content">
+                                <p>High-risk symptoms like chest pain or difficulty breathing immediately trigger recommendations to seek emergency medical help.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <span>04. Malayalam & English Support</span>
+                            <span class="acc-icon">+</span>
+                        </div>
+                        <div class="accordion-wrapper">
+                            <div class="accordion-content">
+                                <p>Bilingual translation allows family members to view instructions in their preferred local language.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <span>05. Doctor Consultation Brief Generator</span>
+                            <span class="acc-icon">+</span>
+                        </div>
+                        <div class="accordion-wrapper">
+                            <div class="accordion-content">
+                                <p>Summarizes recent recovery vitals, symptoms, and missed doses into a single concise note for your next doctor visit.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <span>06. Complete Data Privacy</span>
+                            <span class="acc-icon">+</span>
+                        </div>
+                        <div class="accordion-wrapper">
+                            <div class="accordion-content">
+                                <p>Uploaded clinical records are kept private, local, and never shared or sold to third parties.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Architecture & Tech Stack Showcase -->
+        <section id="workflow" class="doc-block dark-bg scroll-reveal">
+            <div class="block-container">
+                <div class="split-header">
+                    <div>
+                        <span class="section-label">04. ARCHITECTURE & TECH</span>
+                        <h2 class="serif-heading">System Design & Stack</h2>
+                    </div>
+                </div>
+
+                <div class="workflow-pipeline-box margin-top-lg">
+                    <div class="pipeline-node">
+                        <div class="node-icon">📄</div>
+                        <span>1. PDF Discharge</span>
+                    </div>
+                    <div class="pipeline-connector"><div class="pulse-dot"></div></div>
+                    <div class="pipeline-node">
+                        <div class="node-icon">⚙️</div>
+                        <span>2. PyMuPDF Extraction</span>
+                    </div>
+                    <div class="pipeline-connector"><div class="pulse-dot"></div></div>
+                    <div class="pipeline-node">
+                        <div class="node-icon">🧠</div>
+                        <span>3. Gemini AI Parsing</span>
+                    </div>
+                    <div class="pipeline-connector"><div class="pulse-dot"></div></div>
+                    <div class="pipeline-node">
+                        <div class="node-icon">📱</div>
+                        <span>4. Patient Plan</span>
+                    </div>
+                </div>
+
+                <div class="tech-grid margin-top-lg">
+                    <div class="tech-card scroll-reveal">
+                        <small>FRONTEND & UI</small>
+                        <h4>Web Canvas</h4>
+                        <p>Interactive dashboard interface built for accessibility and clear patient profile views.</p>
+                    </div>
+                    <div class="tech-card scroll-reveal">
+                        <small>BACKEND & OCR</small>
+                        <h4>Python 3.11 & PyMuPDF</h4>
+                        <p>Fast text extraction from multi-page PDF discharge summaries and scanned lab reports.</p>
+                    </div>
+                    <div class="tech-card scroll-reveal">
+                        <small>AI ENGINE</small>
+                        <h4>Gemini / LLM API</h4>
+                        <p>Medical entity recognition and simplified summary generation grounded in user data.</p>
+                    </div>
+                    <div class="tech-card scroll-reveal">
+                        <small>DATABASE & CONTROL</small>
+                        <h4>SQLite & Git/GitHub</h4>
+                        <p>Lightweight local storage for patient recovery parameters and repository management.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Team Neutrinos -->
+        <section id="team" class="doc-block scroll-reveal">
+            <div class="block-container">
+                <div class="center-header">
+                    <span class="section-label">05. PROJECT CONTRIBUTORS</span>
+                    <h2 class="serif-heading">Built by Team Neutrinos</h2>
+                </div>
+
+                <div class="team-cards-row margin-top-lg">
+                    <div class="px-team-card spotlight-card scroll-reveal">
+                        <div class="spotlight-glow"></div>
+                        <div class="member-avatar">L</div>
+                        <h4>Lingesh</h4>
+                    </div>
+                    <div class="px-team-card spotlight-card scroll-reveal">
+                        <div class="spotlight-glow"></div>
+                        <div class="member-avatar">A</div>
+                        <h4>Ajay</h4>
+                    </div>
+                    <div class="px-team-card spotlight-card scroll-reveal">
+                        <div class="spotlight-glow"></div>
+                        <div class="member-avatar">B</div>
+                        <h4>Bobby</h4>
+                    </div>
+                    <div class="px-team-card spotlight-card scroll-reveal">
+                        <div class="spotlight-glow"></div>
+                        <div class="member-avatar">A</div>
+                        <h4>Adam</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Multi-Column Footer -->
+    <footer class="px-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-col brand-col">
+                    <div class="footer-logo">
+                        <img class="footer-logo-svg" src="assets/neutrix-logo.png" alt="Neutrix Health">
+                    </div>
+                    <p class="copyright">Neutrix Health © 2026</p>
+                </div>
+
+                <div class="footer-col">
+                    <span class="col-title">PRODUCTS</span>
+                    <a href="issues.html" target="_blank" rel="noopener">Patient Dashboard</a>
+                    <a href="#features">Discharge Explainer</a>
+                    <a href="#features">DoseGuard Schedule</a>
+                    <a href="#features">Recovery Tracker</a>
+                    <a href="#features">Red-Flag Engine</a>
+                </div>
+
+                <div class="footer-col">
+                    <span class="col-title">SOLUTIONS</span>
+                    <span class="sub-col-title">BY USER</span>
+                    <a href="#">Patients</a>
+                    <a href="#">Family Caregivers</a>
+                    <a href="#">Elderly Care</a>
+                    <span class="sub-col-title margin-top-sm">BY LANGUAGE</span>
+                    <a href="#">English</a>
+                    <a href="#">Malayalam (മലയാളം)</a>
+                </div>
+
+                <div class="footer-col">
+                    <span class="col-title">RESOURCES</span>
+                    <a href="#overview">Documentation</a>
+                    <a href="#safety">Responsible AI</a>
+                    <a href="#safety">Safety Disclaimer</a>
+                    <a href="#workflow">Architecture</a>
+                    <a href="#team">Team Neutrinos</a>
+                </div>
+
+                <div class="footer-col">
+                    <span class="col-title">COMPANY</span>
+                    <a href="#">About Neutrix</a>
+                    <a href="#">Brand Guidelines</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms & Conditions</a>
+                </div>
+            </div>
+
+            <div class="footer-watermark">NEUTRIX HEALTH</div>
+        </div>
+    </footer>
+
+    <script src="home.js"></script>
+</body>
+</html>

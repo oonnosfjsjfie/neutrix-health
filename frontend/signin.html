@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Sign In</title>
+    <script>
+        // Use the same light/dark setting as the website and dashboard
+        try {
+            if (localStorage.getItem('neutrixTheme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="skin.css">
+    <style>
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        .signin-top { padding: 16px 32px; border-bottom: 1px solid var(--border-color); }
+        .signin-top a { color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 600; }
+        .signin-top a:hover { color: var(--text-primary); }
+        .signin-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+        .signin-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px 36px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+            animation: nxReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes nxReveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+        .signin-logo { display: flex; justify-content: center; margin-bottom: 24px; }
+        .signin-logo img { height: 56px; width: auto; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); }
+        .eyebrow { display: block; text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--text-muted); }
+        .signin-card h1 {
+            font-family: "Georgia", "Times New Roman", serif;
+            font-weight: 400;
+            font-size: 34px;
+            letter-spacing: -0.5px;
+            text-align: center;
+            margin: 6px 0 4px;
+        }
+        .signin-card .sub { text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 28px; }
+        .field { margin-bottom: 18px; }
+        .field label { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px; }
+        .field input {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .field input:focus { outline: none; border-color: var(--text-primary); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06); }
+        .signin-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 6px;
+            border: none;
+            border-radius: 30px;
+            background: var(--text-primary);
+            color: var(--on-primary);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            animation: ctaPulse 2.8s infinite ease-in-out;
+        }
+        .signin-btn:hover { transform: translateY(-2px); }
+        .alert-success, .alert-danger { padding: 12px; margin-top: 16px; text-align: center; border-radius: 12px; font-size: 14px; font-weight: 600; }
+        .alert-danger { background: rgba(220, 38, 38, 0.08); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.3); }
+        .signin-foot { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 22px; }
+    </style>
+</head>
+<body>
+    <div class="signin-top"><a href="home.html">← Back to Neutrix Health</a></div>
+
+    <main class="signin-wrap">
+        <div class="signin-card">
+            <div class="signin-logo">
+                <img src="assets/neutrix-logo.png" alt="Neutrix Health">
+            </div>
+
+            <span class="eyebrow">PATIENT PORTAL</span>
+            <h1>Welcome back</h1>
+            <p class="sub">Sign in to see your recovery dashboard.</p>
+
+            <form id="loginForm">
+                <div class="field">
+                    <label for="userEmail">EMAIL ADDRESS</label>
+                    <input type="email" id="userEmail" placeholder="team@neutrinos.com" required>
+                </div>
+                <div class="field">
+                    <label for="userPassword">PASSWORD</label>
+                    <input type="password" id="userPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="signin-btn">Sign In →</button>
+            </form>
+
+            <div id="loginFeedback"></div>
+            <p class="signin-foot">Neutrix organizes and explains medical information. It does not replace your doctor.</p>
+        </div>
+    </main>
+
+    <script src="signin.js"></script>
+</body>
+</html>
