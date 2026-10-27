@@ -15,6 +15,6 @@ a doctor brief that can be emailed, and a chat assistant — in English and Mala
 ## Deploy on Render
 - Build command: `pip install -r backend/requirements.txt`
 - Start command: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Environment variables: `GEMINI_API_KEY`, `NEUTRIX_EMAIL`, `NEUTRIX_EMAIL_PASSWORD`
+- Environment variables: `GEMINI_API_KEY`, `NEUTRIX_MAIL_WEBHOOK`, `NEUTRIX_MAIL_TOKEN` (Doctor Brief email via Google Apps Script, see `email-script/Code.gs`)
 
 Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace a doctor.
