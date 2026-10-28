@@ -409,37 +409,42 @@ body {
 /* The heading now lives in the hero, so the card's own header is hidden */
 .nx-has-hero .ehr-card:not(.chart-card) .card-header { display: none; }
 
-/* Content area under the hero */
+/* Content area under the hero: one full-width column */
 .nx-site .ehr-workspace {
     max-width: 1200px;
     margin: 0 auto 90px;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr;
     align-items: start;
 }
 
-/* Side column = a dark card, like the website's dark sections */
+/* The side details now sit UNDER the main content, as a full-width card
+   laid out in columns (issue info, tips, history, safety notes...) */
 .nx-site .chart-card {
-    --card-bg: #181818;
-    --bg-workspace: #141414;
-    --input-bg: #141414;
-    --text-primary: #ffffff;
-    --text-secondary: #a8a8a8;
-    --text-muted: #777777;
-    --border-color: #282828;
-    --border-light: #222222;
-    --pill-bg: #232323;
-    --pill-hover: #2c2c2c;
-    --on-primary: #0c0c0c;
-    background: #0c0c0c;
-    color: #ffffff;
-    border: 1px solid #1f1f1f;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-    position: sticky;
-    top: 90px;
+    position: static;
+    border-top: 1px solid var(--border-color);
+    columns: 2 320px;
+    column-gap: 48px;
+    column-rule: 1px solid var(--border-color);
+    padding: 32px 36px;
 }
-.nx-site .chart-card .alert-warning { color: #fcd34d; }
-.nx-site .chart-card .alert-success { color: #6ee7b7; }
-.nx-site .chart-card .history-list { max-height: 560px; }
+.nx-site .chart-card > * { break-inside: avoid; }
+.nx-site .chart-card > .chart-header { column-span: all; margin-bottom: 18px; }
+.nx-site .chart-card > .chart-divider { display: none; }
+.nx-site .chart-card > .ehr-disclaimer {
+    column-span: all;
+    border-top: 1px solid var(--border-color);
+    margin-top: 20px;
+    padding-top: 16px;
+}
+.nx-site .chart-card > * + * { margin-top: 14px; }
+.nx-site .chart-card .history-list { max-height: 420px; }
+.nx-site .chart-card .caregiver-alert-box {
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-left: 4px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+    border-radius: 14px;
+}
+.nx-site .chart-card .back-btn { width: 100%; }
 
 /* Footer */
 .nx-footer {
@@ -469,7 +474,6 @@ body {
 
 @media (max-width: 1024px) {
     .nx-site .ehr-workspace { grid-template-columns: 1fr; margin: 0 16px 60px; }
-    .nx-site .chart-card { position: static; }
     .nx-footer .footer-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 900px) {
