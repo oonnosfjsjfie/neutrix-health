@@ -197,8 +197,19 @@
                         </div>
 
 
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="patientPhone"><span data-pf="lblPhone">Phone Number</span> <span class="req">*</span></label>
+                                <input type="tel" id="patientPhone" class="modern-input" placeholder="+91 98765 43210" autocomplete="tel" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="patientEmail"><span data-pf="lblEmail">Email ID</span> <span class="req">*</span></label>
+                                <input type="email" id="patientEmail" class="modern-input" placeholder="you@example.com" autocomplete="email" required>
+                            </div>
+                        </div>
+
                         <div class="tab-actions end">
-                            <button type="button" class="btn-primary" id="btn-next-1">Proceed →</button>
+                            <button type="button" class="btn-primary" id="btn-next-1">Next →</button>
                         </div>
                     </div>
 
@@ -292,7 +303,7 @@
 
                         <div class="tab-actions space-between">
                             <button type="button" class="btn-secondary prev-tab" data-prev="tab-demographics" id="btn-back-1">← Back to Demographics</button>
-                            <button type="button" class="btn-primary next-tab" data-next="tab-caregiver" id="btn-next-2">Proceed to Caregiver Setup →</button>
+                            <button type="button" class="btn-primary next-tab" data-next="tab-caregiver" id="btn-next-2">Next →</button>
                         </div>
                     </div>
 
@@ -300,11 +311,12 @@
                     <!-- TAB 3: Caregiver & Support -->
                     <div class="tab-pane" id="tab-caregiver">
                         <div class="section-title" id="txt-sec-3">3. Designated Caregiver & Communication</div>
+                        <p class="hint pf-optional" data-pf="caregiverOptional">Optional: add someone who helps with your care. You can leave this empty and save.</p>
 
 
                         <div class="form-group">
-                            <label for="caregiverName"><span id="lbl-caregiver-name">Primary Caregiver Name</span> <span class="req">*</span></label>
-                            <input type="text" id="caregiverName" class="modern-input" placeholder="e.g. Rahul Nair" required>
+                            <label for="caregiverName"><span id="lbl-caregiver-name">Primary Caregiver Name</span></label>
+                            <input type="text" id="caregiverName" class="modern-input" placeholder="e.g. Rahul Nair">
                         </div>
 
 
@@ -315,6 +327,10 @@
                             </div>
 
 
+                            <div class="form-group">
+                                <label for="caregiverEmail" data-pf="lblCaregiverEmail">Caregiver Email ID</label>
+                                <input type="email" id="caregiverEmail" class="modern-input" placeholder="caregiver@example.com">
+                            </div>
                             <div class="form-group">
                                 <label for="language" id="lbl-language">Care Summary Output Language</label>
                                 <select id="language" class="modern-select">
@@ -327,7 +343,7 @@
 
                         <div class="tab-actions space-between">
                             <button type="button" class="btn-secondary prev-tab" data-prev="tab-clinical" id="btn-back-2">← Back to Medical Baseline</button>
-                            <button type="submit" class="btn-success" id="btn-save-final">💾 Save & Sync Hospital Record</button>
+                            <button type="submit" class="btn-success" id="btn-save-final">✓ Save Profile</button>
                         </div>
                     </div>
                 </div>
@@ -476,10 +492,14 @@
         document.addEventListener('DOMContentLoaded', () => setTimeout(function () {   // after profile.js has set up its buttons
             const PF = {
                 English: { navIssues: 'My Issues', navProfile: 'Patient Profile', navWebsite: 'Website', eyebrow: 'MY PATIENT PROFILE',
+                    lblPhone: 'Phone Number', lblEmail: 'Email ID', lblCaregiverEmail: 'Caregiver Email ID',
+                    caregiverOptional: 'Optional: add someone who helps with your care. You can leave this empty and save.',
                     heroTitle: 'Your health, in one place.', heroSub: 'Your details, medical baseline and caregiver contact. Saved to your account and used across Neutrix.',
                     fApp: 'PATIENT PORTAL', fHelp: 'HELP', fWebsite: 'Neutrix website', fSafety: 'Responsible AI',
                     fNote: 'Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace advice from a qualified doctor.' },
                 Malayalam: { navIssues: 'എന്റെ പ്രശ്നങ്ങൾ', navProfile: 'രോഗി പ്രൊഫൈൽ', navWebsite: 'വെബ്സൈറ്റ്', eyebrow: 'എന്റെ രോഗി പ്രൊഫൈൽ',
+                    lblPhone: 'ഫോൺ നമ്പർ', lblEmail: 'ഇമെയിൽ ഐഡി', lblCaregiverEmail: 'പരിചാരകന്റെ ഇമെയിൽ ഐഡി',
+                    caregiverOptional: 'ഓപ്ഷണൽ: നിങ്ങളുടെ പരിചരണത്തിൽ സഹായിക്കുന്ന ഒരാളെ ചേർക്കുക. ഇത് ഒഴിവാക്കിയും സേവ് ചെയ്യാം.',
                     heroTitle: 'നിങ്ങളുടെ ആരോഗ്യം, ഒരിടത്ത്.', heroSub: 'നിങ്ങളുടെ വിവരങ്ങൾ, ആരോഗ്യ അടിസ്ഥാന വിവരങ്ങൾ, പരിചാരകന്റെ ബന്ധപ്പെടൽ. നിങ്ങളുടെ അക്കൗണ്ടിൽ സേവ് ചെയ്യുന്നു.',
                     fApp: 'രോഗി പോർട്ടൽ', fHelp: 'സഹായം', fWebsite: 'ന്യൂട്രിക്സ് വെബ്സൈറ്റ്', fSafety: 'ഉത്തരവാദിത്തമുള്ള AI',
                     fNote: 'ന്യൂട്രിക്സ് മെഡിക്കൽ വിവരങ്ങൾ ക്രമീകരിക്കുകയും വിശദീകരിക്കുകയും മാത്രം ചെയ്യുന്നു. ഇത് ഡോക്ടറുടെ ഉപദേശത്തിന് പകരമല്ല.' }

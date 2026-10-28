@@ -48,11 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
             lblCaregiverName: "Primary Caregiver Name",
             lblCaregiverPhone: "Primary Contact Phone",
             lblLang: "Care Summary Output Language",
-            btnNext1: "Proceed →",
-            btnNext2: "Proceed to Caregiver Setup →",
+            btnNext1: "Next →",
+            btnNext2: "Next →",
             btnBack1: "← Back to Demographics",
             btnBack2: "← Back to Medical Baseline",
-            btnSave: "💾 Save & Sync Hospital Record",
+            btnSave: "✓ Save Profile",
             chartTitle: "CLINICAL CHART PREVIEW",
             chartCond: "Pre-Existing Condition",
             chartAllergies: "Adverse Drug Reactions / Allergies",
@@ -91,11 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
             lblCaregiverName: "പരിചാരകന്റെ പേര്",
             lblCaregiverPhone: "ഫോൺ നമ്പർ",
             lblLang: "റിപ്പോർട്ട് ഭാഷ",
-            btnNext1: "തുടരുക →",
-            btnNext2: "പരിചാരകന്റെ വിവരങ്ങളിലേക്ക് →",
+            btnNext1: "അടുത്തത് →",
+            btnNext2: "അടുത്തത് →",
             btnBack1: "← തിരികെ പോകുക",
             btnBack2: "← തിരികെ പോകുക",
-            btnSave: "💾 സേവ് ചെയ്യുക",
+            btnSave: "✓ പ്രൊഫൈൽ സേവ് ചെയ്യുക",
             chartTitle: "പേഷ്യന്റ് ചാർട്ട് പ്രിവ്യൂ",
             chartCond: "ആരോഗ്യ പ്രശ്നങ്ങൾ",
             chartAllergies: "അലർജികൾ",
@@ -138,23 +138,25 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => switchTab(btn.dataset.prev));
         });
 
-        // "Proceed": save what is filled in so far and go back to the website.
-        // Only the patient's name is needed here; the other tabs can be filled in later
-        // from the profile picture menu → My Patient Profile.
+        // Step 1 "Next": name, phone and email are needed, then go to the Medical Baseline step.
+        // What is filled in so far is kept on this device as a draft.
         document.getElementById('btn-next-1').addEventListener('click', () => {
-            const nameField = document.getElementById('patientName');
-            const ageField = document.getElementById('age');
-            const nameOk = validateInput(nameField);
-            const ageOk = !ageField || !ageField.value.trim() || validateInput(ageField);
-            if (!nameOk || !ageOk) {
-                messageArea.innerHTML = `<div class="alert-warning">⚠️ Please enter the patient's full name${ageOk ? '' : ' and a valid age'} first.</div>`;
-                (nameOk ? ageField : nameField).focus();
+            const fields = ['patientName', 'age', 'patientPhone', 'patientEmail'].map(id => document.getElementById(id));
+            const bad = fields.filter(f => !validateInput(f));
+            if (bad.length) {
+                const names = { patientName: 'full name', age: 'a valid age', patientPhone: 'a valid phone number', patientEmail: 'a valid email ID' };
+                messageArea.innerHTML = `<div class="alert-warning">⚠️ Please enter ${bad.map(f => names[f.id]).join(', ')}.</div>`;
+                bad[0].focus();
                 return;
             }
-            localStorage.setItem('neutrix_hospital_profile', JSON.stringify(collectFormData()));
-            localStorage.setItem('neutrix_patient_name', nameField.value.trim());
-            messageArea.innerHTML = `<div class="alert-success">✓ Profile saved. Taking you back to the website…</div>`;
-            setTimeout(() => { window.location.href = 'home.html'; }, 900);
+            messageArea.innerHTML = '';
+            saveDraft();
+            switchTab('tab-clinical');
+            document.querySelector('.timeline-stepper').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        document.getElementById('btn-next-2').addEventListener('click', () => {
+            saveDraft();
+            document.querySelector('.timeline-stepper').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
 
 
@@ -233,7 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
             isValid = false;
         } else if (field.id === 'age' && (isNaN(val) || val < 1 || val > 120)) {
             isValid = false;
-        } else if (field.id === 'caregiverPhone' && val && val !== 'Not provided' && !/^[+0-9\s-]{7,15}$/.test(val)) {
+        } else if ((field.id === 'caregiverPhone' || field.id === 'patientPhone') && val && val !== 'Not provided' && !/^[+0-9\s()-]{7,18}$/.test(val)) {
+            isValid = false;
+        } else if (field.type === 'email' && val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
             isValid = false;
         }
 
@@ -343,16 +347,16 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
 
-        const patientName = document.getElementById('patientName');
-        const caregiverName = document.getElementById('caregiverName');
-
-
-        const isNameValid = validateInput(patientName);
-        const isCaregiverValid = validateInput(caregiverName);
-
-
-        if (!isNameValid || !isCaregiverValid) {
-            messageArea.innerHTML = `<div class="alert-warning">⚠️ Validation Error: Please fill in mandatory patient and caregiver details correctly.</div>`;
+        // Step 1 details are needed; the caregiver step is optional (checked only if filled in)
+        const step1 = ['patientName', 'age', 'patientPhone', 'patientEmail'].map(id => document.getElementById(id));
+        const step3 = ['caregiverPhone', 'caregiverEmail'].map(id => document.getElementById(id));
+        if (step1.some(f => !validateInput(f))) {
+            switchTab('tab-demographics');
+            messageArea.innerHTML = `<div class="alert-warning">⚠️ Please complete your name, phone number and email ID in Patient Information.</div>`;
+            return;
+        }
+        if (step3.some(f => !validateInput(f))) {
+            messageArea.innerHTML = `<div class="alert-warning">⚠️ The caregiver phone or email doesn't look right. Fix it or leave it empty.</div>`;
             return;
         }
 
@@ -360,7 +364,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = collectFormData();
         localStorage.setItem('neutrix_hospital_profile', JSON.stringify(data));
         window.neutrixProfileSaved = true;
-        messageArea.innerHTML = `<div class="alert-success">✓ Profile saved & synchronized successfully!</div>`;
+        localStorage.setItem('neutrix_patient_name', data.patientName);
+        messageArea.innerHTML = `<div class="alert-success">✓ Profile saved!</div>`;
         updateChartPreview(data);
     }
 
@@ -415,6 +420,9 @@ document.addEventListener('DOMContentLoaded', () => {
             age: document.getElementById('age').value,
             gender: document.getElementById('gender').value,
             bloodGroup: document.getElementById('bloodGroup').value,
+            patientPhone: document.getElementById('patientPhone').value.trim(),
+            patientEmail: document.getElementById('patientEmail').value.trim(),
+            caregiverEmail: document.getElementById('caregiverEmail').value.trim(),
             condition: document.getElementById('conditions').value,
             allergies: document.getElementById('allergies').value.trim() || 'None reported',
             medications,
@@ -588,6 +596,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('conditions').value = data.condition || 'None';
                 document.getElementById('allergies').value = data.allergies === 'None reported' ? '' : data.allergies;
                 document.getElementById('caregiverName').value = data.caregiverName || '';
+                document.getElementById('patientPhone').value = data.patientPhone || '';
+                document.getElementById('patientEmail').value = data.patientEmail || '';
+                document.getElementById('caregiverEmail').value = data.caregiverEmail || '';
                 document.getElementById('caregiverPhone').value = data.caregiverPhone === 'Not provided' ? '' : data.caregiverPhone;
                 document.getElementById('language').value = data.language || 'English';
 
@@ -622,6 +633,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+
+    // Keep what is filled in so far (so the steps can be finished later)
+    function saveDraft() {
+        const data = collectFormData();
+        localStorage.setItem('neutrix_hospital_profile', JSON.stringify(data));
+        if (data.patientName) localStorage.setItem('neutrix_patient_name', data.patientName);
+        updateChartPreview(data);
+    }
+
+    // Email: start with the account's email if nothing is saved yet
+    (function prefillEmail() {
+        const box = document.getElementById('patientEmail');
+        if (box.value) return;
+        try {
+            const acct = JSON.parse(localStorage.getItem('neutrixCloudProfile') || 'null');
+            if (acct && acct.email) box.value = acct.email;
+        } catch (e) {}
+    })();
 
     function initMRN() {
         const randomCode = Math.floor(10000 + Math.random() * 90000);
@@ -673,8 +702,6 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     // Highlight all nodes as completed green matching Adam's theme parameters
     stepNodes.forEach(node => {
         node.classList.add('completed');
-        node.style.background = '#198754';
-        node.style.color = '#ffffff';
     });
 
     // 2. EXTRACT LOGGED PASSWORDS AND STRINGS FOR VISUAL GREETINGS LATER
