@@ -355,9 +355,14 @@ document.addEventListener('keydown', (e) => {
 });
 document.getElementById('addIssueBtn').addEventListener('click', () => openModal());
 
-document.getElementById('signOutBtn').addEventListener('click', () => {
-    localStorage.removeItem('neutrix_authenticated');
-    localStorage.removeItem(ACTIVE_KEY);
+document.getElementById('signOutBtn').addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true;
+    if (window.NeutrixCloud && NeutrixCloud.configured) {
+        await NeutrixCloud.signOut();       // uploads last changes, then clears this device
+    } else {
+        localStorage.removeItem('neutrix_authenticated');
+        localStorage.removeItem(ACTIVE_KEY);
+    }
     window.location.href = 'signin.html';
 });
 
