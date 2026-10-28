@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Dashboard</title>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js"></script>
+    <script src="issue-scope.js?v=20261028e"></script>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
     <link rel="stylesheet" href="skin.css">
@@ -172,7 +172,7 @@
 
     </main>
 
-    <script src="common.js"></script>
+    <script src="common.js?v=20261028e"></script>
     <script src="account-menu.js"></script>
     <script>
         const DASH_TEXT = {
@@ -230,6 +230,9 @@
             { href: 'improvements.html', icon: '🌱', who: 'Ajay', ai: true, needs: 'progress',
               en: ['My Improvements', 'See how your new reports compare with the earlier ones'],
               ml: ['എന്റെ പുരോഗതി', 'പുതിയ റിപ്പോർട്ടുകൾ മുൻ റിപ്പോർട്ടുകളുമായി താരതമ്യം ചെയ്ത് കാണുക'] },
+            { href: 'exercise.html', icon: '🏃', who: 'Ajay', ai: true, needs: 'exercise',
+              en: ['Exercise', 'The exercises from your reports, with your camera checking each movement'],
+              ml: ['വ്യായാമം', 'റിപ്പോർട്ടുകളിലെ വ്യായാമങ്ങൾ, ഓരോ ചലനവും ക്യാമറ പരിശോധിക്കുന്നു'] },
             { href: 'tracking.html', icon: '📈', who: 'Bobby',
               en: ['Recovery Tracker', 'Log temperature, BP, sugar and symptoms'],
               ml: ['സുഖപ്രാപ്തി ട്രാക്കർ', 'താപനില, BP, ഷുഗർ, ലക്ഷണങ്ങൾ രേഖപ്പെടുത്തുക'] },
@@ -252,7 +255,8 @@
             box.innerHTML = '';
             const unlocked = {
                 report: !!storeGet('neutrixReport'),
-                progress: (storeGet('neutrixFollowups') || []).some(f => f.comparison)
+                progress: (storeGet('neutrixFollowups') || []).some(f => f.comparison),
+                exercise: !!((exerciseInfo() || {}).exercises || []).length
             };
             const lockedHint = document.getElementById('lockedHint');
             lockedHint.textContent = dt('lockedHint');
@@ -307,6 +311,17 @@
 
         document.addEventListener('neutrix:langchange', renderDashboard);
         renderDashboard();
+
+        // Do the reports mention exercises? Ask the AI once per set of reports,
+        // then show the Exercise tile if any were found.
+        if (loadReport() && !exerciseInfo()) {
+            fetchExercises().then(info => {
+                if (info && info.exercises.length) {
+                    renderDashboard();
+                    document.dispatchEvent(new CustomEvent('neutrix:exercises'));
+                }
+            }).catch(err => console.warn('[exercise] check failed', err));
+        }
     </script>
     <script src="chat.js"></script>
 </body>

@@ -530,6 +530,42 @@ window.reportVersion = function (r, legacy) {
     return `${r.updatedAt || r.createdAt}|${followups}`;
 };
 
+// ---------- Exercises written in the reports (camera exercise coach) ----------
+// Saved as { version, exercises, restrictions_en, restrictions_ml, checkedAt }.
+// Only valid while the reports have not changed (same reportVersion).
+window.exerciseInfo = function () {
+    const r = loadReport();
+    const saved = storeGet('neutrixExercises');
+    return r && saved && saved.version === reportVersion(r) ? saved : null;
+};
+let exerciseRequest = null;
+window.fetchExercises = function () {
+    const r = loadReport();
+    if (!r) return Promise.resolve(null);
+    if (exerciseRequest) return exerciseRequest;
+    const version = reportVersion(r);
+    exerciseRequest = fetch(`${API_BASE}/api/exercises`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report_text: fullReportText(r) })
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'No answer from the AI');
+            const info = {
+                version,
+                exercises: data.exercises || [],
+                restrictions_en: data.restrictions_en || [],
+                restrictions_ml: data.restrictions_ml || [],
+                checkedAt: new Date().toISOString()
+            };
+            storeSet('neutrixExercises', info);
+            return info;
+        })
+        .finally(() => { exerciseRequest = null; });
+    return exerciseRequest;
+};
+
 // ---------- Summary versions (history on the Reports Portal) ----------
 // Each entry: { kind: 'first' | 'update' | 'refresh', createdAt, files, summary: { English, Malayalam } }
 window.summaryHistory = function (r) {
@@ -774,7 +810,7 @@ langBtn.addEventListener('click', () => {
 const NX_LAYOUT = {
     English: {
         nav: { dashboard: 'Dashboard', upload: 'AI Summary', report: 'Reports', medplan: 'Medicines', schedule: 'Schedule',
-               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Doctor Brief', issues: 'My Issues', website: 'Website' },
+               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Doctor Brief', exercise: 'Exercise', issues: 'My Issues', website: 'Website' },
         hero: {
             issues:       ['MY MEDICAL ISSUES', 'Your recovery, one issue at a time.', 'Pick an issue to continue, or add a new one. Each issue keeps its own reports, plans and history.'],
             upload:       ['AI DISCHARGE SUMMARY', 'Upload. Understand. Recover.', 'Add your discharge summary, lab reports and pharmacy bills. Neutrix turns them into a simple summary.'],
@@ -784,14 +820,15 @@ const NX_LAYOUT = {
             checkups:     ['UPCOMING CHECK-UPS', 'Never miss a follow-up.', 'Visits and tests found in your reports, with dates.'],
             improvements: ['MY IMPROVEMENTS', 'See how far you have come.', 'How your newer reports compare with the earlier ones.'],
             tracking:     ['RECOVERY TRACKER', 'Small readings. Clear signals.', 'Record the patient’s health readings daily to assist your medical care team.'],
-            briefing:     ['DOCTOR BRIEF', 'Tell your doctor, clearly.', 'Prepare a clear, structured message and send it straight to your doctor.']
+            briefing:     ['DOCTOR BRIEF', 'Tell your doctor, clearly.', 'Prepare a clear, structured message and send it straight to your doctor.'],
+            exercise:     ['AI EXERCISE COACH', 'Move right. Recover stronger.', 'The exercises from your reports, with your camera checking each movement as you go.']
         },
         footer: { app: 'PATIENT PORTAL', tools: 'RECOVERY TOOLS', help: 'HELP', note: 'Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace advice from a qualified doctor.',
                   website: 'Neutrix website', safety: 'Responsible AI', top: '↑ Top' }
     },
     Malayalam: {
         nav: { dashboard: 'ഡാഷ്ബോർഡ്', upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്നുകൾ', schedule: 'ഷെഡ്യൂൾ',
-               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടർ ബ്രീഫ്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്' },
+               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടർ ബ്രീഫ്', exercise: 'വ്യായാമം', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്' },
         hero: {
             issues:       ['എന്റെ ആരോഗ്യ പ്രശ്നങ്ങൾ', 'ഓരോ പ്രശ്നവും, ഓരോ ചുവടും.', 'തുടരാൻ ഒരു പ്രശ്നം തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ പുതിയത് ചേർക്കുക.'],
             upload:       ['AI ഡിസ്ചാർജ് സംഗ്രഹം', 'അപ്‌ലോഡ് ചെയ്യൂ. മനസ്സിലാക്കൂ.', 'ഡിസ്ചാർജ് സമ്മറി, ലാബ് റിപ്പോർട്ടുകൾ, ഫാർമസി ബില്ലുകൾ എന്നിവ ചേർക്കുക.'],
@@ -801,7 +838,8 @@ const NX_LAYOUT = {
             checkups:     ['വരാനിരിക്കുന്ന പരിശോധനകൾ', 'ഒരു പരിശോധനയും മുടങ്ങരുത്.', 'നിങ്ങളുടെ റിപ്പോർട്ടുകളിൽ കണ്ടെത്തിയ സന്ദർശനങ്ങളും പരിശോധനകളും.'],
             improvements: ['എന്റെ പുരോഗതി', 'നിങ്ങൾ എത്ര മുന്നോട്ട് പോയി.', 'പുതിയ റിപ്പോർട്ടുകൾ മുൻ റിപ്പോർട്ടുകളുമായി താരതമ്യം ചെയ്യുമ്പോൾ.'],
             tracking:     ['റിക്കവറി ട്രാക്കർ', 'ചെറിയ അളവുകൾ. വ്യക്തമായ സൂചനകൾ.', 'നിങ്ങളുടെ മെഡിക്കൽ കെയർ ടീമിനെ സഹായിക്കുന്നതിന് രോഗിയുടെ ആരോഗ്യ വിവരങ്ങൾ ദിവസവും രേഖപ്പെടുത്തുക.'],
-            briefing:     ['ഡോക്ടർ ബ്രീഫ്', 'ഡോക്ടറോട് വ്യക്തമായി പറയൂ.', 'വ്യക്തമായ ഒരു സന്ദേശം തയ്യാറാക്കി ഡോക്ടർക്ക് നേരിട്ട് അയക്കുക.']
+            briefing:     ['ഡോക്ടർ ബ്രീഫ്', 'ഡോക്ടറോട് വ്യക്തമായി പറയൂ.', 'വ്യക്തമായ ഒരു സന്ദേശം തയ്യാറാക്കി ഡോക്ടർക്ക് നേരിട്ട് അയക്കുക.'],
+            exercise:     ['AI വ്യായാമ സഹായി', 'ശരിയായി ചെയ്യൂ. വേഗം സുഖപ്പെടൂ.', 'നിങ്ങളുടെ റിപ്പോർട്ടുകളിലെ വ്യായാമങ്ങൾ, ഓരോ ചലനവും ക്യാമറ പരിശോധിക്കുന്നു.']
         },
         footer: { app: 'രോഗി പോർട്ടൽ', tools: 'ടൂളുകൾ', help: 'സഹായം', note: 'ന്യൂട്രിക്സ് മെഡിക്കൽ വിവരങ്ങൾ ക്രമീകരിക്കുകയും വിശദീകരിക്കുകയും മാത്രം ചെയ്യുന്നു. ഇത് ഡോക്ടറുടെ ഉപദേശത്തിന് പകരമല്ല.',
                   website: 'ന്യൂട്രിക്സ് വെബ്സൈറ്റ്', safety: 'ഉത്തരവാദിത്തമുള്ള AI', top: '↑ മുകളിലേക്ക്' }
@@ -845,6 +883,8 @@ const NX_LAYOUT = {
         const items = [['dashboard', 'index.html'], ['upload', 'summary.html']];
         if (hasReport) items.push(['report', 'report.html'], ['medplan', 'medplan.html'], ['checkups', 'checkups.html']);
         if (hasProgress) items.push(['improvements', 'improvements.html']);
+        const ex = window.exerciseInfo && exerciseInfo();
+        if (ex && ex.exercises.length) items.push(['exercise', 'exercise.html']);
         items.push(['tracking', 'tracking.html'], ['briefing', 'briefing.html']);
         return items;
     }
@@ -894,7 +934,7 @@ const NX_LAYOUT = {
         const link = (href, text) => `<a href="${href}">${text}</a>`;
         const toolLinks = inIssue
             ? [link('index.html', n.dashboard), link('summary.html', n.upload), link('report.html', n.report),
-               link('medplan.html', n.medplan), link('checkups.html', n.checkups), link('tracking.html', n.tracking), link('briefing.html', n.briefing)].join('')
+               link('medplan.html', n.medplan), link('checkups.html', n.checkups)].concat(((window.exerciseInfo && exerciseInfo()) || { exercises: [] }).exercises.length ? [link('exercise.html', n.exercise)] : [], [link('tracking.html', n.tracking), link('briefing.html', n.briefing)]).join('')
             : link('issues.html', n.issues);
         footer.innerHTML = `
             <div class="footer-container">
@@ -920,6 +960,7 @@ const NX_LAYOUT = {
     }
     renderLayout();
     document.addEventListener('neutrix:langchange', renderLayout);
+    document.addEventListener('neutrix:exercises', () => { renderNav(); renderFooter(); });   // Exercise link appears once found
 })();
 
 (function init() {

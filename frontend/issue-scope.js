@@ -22,7 +22,9 @@
         'neutrixSchedule',
         'neutrixChat',
         'neutrixFollowups',
-        'neutrix_meds'
+        'neutrix_meds',
+        'neutrixExercises',
+        'neutrixExerciseLog'
     ];
     const ACTIVE_KEY = 'neutrixActiveIssue';
 

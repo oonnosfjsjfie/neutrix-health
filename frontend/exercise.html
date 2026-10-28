@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Accounts + online saving (must load before issue-scope.js) -->
+    <script src="firebase-config.js"></script>
+    <script src="neutrix-cloud.js"></script>
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js?v=20261028e"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Exercise</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <style>
+        .rainbow { background: linear-gradient(90deg, #ff007a, #a855f7, #3b82f6, #00f2fe); }
+
+        /* ---------- Exercise list ---------- */
+        .ex-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+        .ex-head h2 { margin: 0 0 4px; }
+        .ex-head .subtitle { margin: 0; }
+        .ex-loading { display: flex; align-items: center; gap: 12px; padding: 22px; border: 1px dashed var(--border-color); border-radius: 16px; color: var(--text-secondary); font-size: 14px; }
+        .ex-spin { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--border-color); border-top-color: #a855f7; animation: exSpin 0.8s linear infinite; flex-shrink: 0; }
+        @keyframes exSpin { to { transform: rotate(360deg); } }
+        .ex-restrict {
+            margin-bottom: 18px; padding: 14px 16px; border-radius: 14px;
+            border: 1px solid rgba(245, 158, 11, 0.45); background: rgba(245, 158, 11, 0.08); font-size: 13.5px;
+        }
+        .ex-restrict strong { display: block; margin-bottom: 6px; color: #b45309; }
+        [data-theme="dark"] .ex-restrict strong { color: #fbbf24; }
+        .ex-restrict ul { margin: 0; padding-left: 18px; }
+
+        .ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .ex-card {
+            position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px;
+            padding: 20px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--card-bg);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            animation: nxReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .ex-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; opacity: 0; transition: opacity 0.25s ease;
+                           background: linear-gradient(90deg, #ff007a, #a855f7, #3b82f6, #00f2fe); }
+        .ex-card:hover { transform: translateY(-3px); border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 18px 40px rgba(168, 85, 247, 0.12); }
+        .ex-card:hover::before { opacity: 1; }
+        .ex-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .ex-icon {
+            width: 52px; height: 52px; border-radius: 16px; font-size: 26px; display: flex; align-items: center; justify-content: center;
+            border: 2px solid transparent;
+            background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box, linear-gradient(135deg, #ff007a, #a855f7, #3b82f6, #00f2fe) border-box;
+        }
+        .ex-tag { font-size: 11px; font-weight: 800; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+        .ex-tag.cam { color: #fff; background: linear-gradient(90deg, #a855f7, #3b82f6); }
+        .ex-tag.guide { color: var(--text-secondary); background: var(--pill-bg, rgba(0,0,0,0.05)); }
+        .ex-name { font-weight: 700; font-size: 17.5px; line-height: 1.3; }
+        .ex-dose { font-size: 13.5px; color: var(--text-primary); font-weight: 600; }
+        .ex-freq { font-size: 13px; color: var(--text-secondary); }
+        .ex-quote { font-size: 12.5px; color: var(--text-muted); font-style: italic; border-left: 3px solid var(--border-color); padding-left: 10px; }
+        .ex-today { font-size: 12px; font-weight: 700; color: #16a34a; }
+        [data-theme="dark"] .ex-today { color: #4ade80; }
+        .ex-card .btn-primary { margin-top: auto; width: 100%; }
+        .ex-none { text-align: center; padding: 30px 16px; border: 1px dashed var(--border-color); border-radius: 16px; }
+        .ex-none .empty-icon { font-size: 40px; }
+        .ex-foot { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 18px; }
+        .ex-foot .hint { margin: 0; }
+
+        /* ---------- Coach ---------- */
+        .coach-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .coach-title { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 30px; margin: 4px 0 2px; letter-spacing: -0.5px; }
+        .coach-target { color: var(--text-secondary); font-size: 14px; }
+        .coach-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
+        @media (max-width: 900px) { .coach-grid { grid-template-columns: 1fr; } }
+
+        .stage {
+            position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 20px; overflow: hidden;
+            background: radial-gradient(circle at 50% 40%, #1f2937, #0b0f17);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+        }
+        .stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+        .stage video.mirror { transform: scaleX(-1); }
+        .stage-msg {
+            position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 14px; padding: 24px; text-align: center; color: #e5e7eb; font-size: 15px; z-index: 3;
+            background: rgba(11, 15, 23, 0.72);
+        }
+        .stage-msg[hidden] { display: none; }
+        .stage-msg .big { font-size: 46px; }
+        .stage-msg .btn-primary { background: #fff; color: #111; }
+        .stage-badge {
+            position: absolute; top: 12px; left: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #fff; background: rgba(0, 0, 0, 0.55);
+        }
+        .stage-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: exPulse 1.4s ease infinite; }
+        @keyframes exPulse { 50% { opacity: 0.3; } }
+        .stage-feedback {
+            position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 2; max-width: calc(100% - 32px);
+            padding: 10px 18px; border-radius: 30px; font-weight: 700; font-size: 16px; color: #fff; text-align: center;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(6px); transition: background 0.2s ease;
+        }
+        .stage-feedback.good { background: rgba(22, 163, 74, 0.88); }
+        .stage-feedback.warn { background: rgba(217, 119, 6, 0.92); }
+        .stage-tools { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; gap: 8px; }
+        .stage-tools button {
+            border: none; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+            color: #fff; background: rgba(0, 0, 0, 0.55);
+        }
+        .stage-tools button:hover { background: rgba(0, 0, 0, 0.75); }
+
+        .coach-panel { display: flex; flex-direction: column; gap: 14px; }
+        .panel-box { border: 1px solid var(--border-color); border-radius: 18px; padding: 18px; background: var(--card-bg); }
+        .rep-wrap { display: flex; align-items: center; gap: 18px; }
+        .rep-ring { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+        .rep-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .rep-ring .track { stroke: var(--border-color); }
+        .rep-ring .fill { stroke: url(#exGrad); transition: stroke-dashoffset 0.35s ease; }
+        .rep-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .rep-num b { font-size: 36px; line-height: 1; }
+        .rep-num span { font-size: 12px; color: var(--text-muted); font-weight: 700; }
+        .rep-num.pop b { animation: exPop 0.4s ease; }
+        @keyframes exPop { 40% { transform: scale(1.35); color: #16a34a; } }
+        .rep-meta { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; color: var(--text-secondary); }
+        .rep-meta strong { color: var(--text-primary); font-size: 15px; }
+        .meter-label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+        .meter { position: relative; height: 14px; border-radius: 10px; background: var(--pill-bg, rgba(0,0,0,0.06)); overflow: hidden; }
+        .meter .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; border-radius: 10px; transition: width 0.12s linear;
+                      background: linear-gradient(90deg, #a855f7, #3b82f6, #22c55e); }
+        .meter .goal { position: absolute; top: -3px; bottom: -3px; right: 0; width: 3px; background: #16a34a; }
+        .coach-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .coach-btns button { width: 100%; }
+        .steps-list { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6; }
+        .caution { font-size: 13px; color: #b91c1c; font-weight: 600; margin-top: 10px; }
+        [data-theme="dark"] .caution { color: #fca5a5; }
+        .privacy-note { font-size: 12px; color: var(--text-muted); display: flex; gap: 8px; align-items: flex-start; }
+
+        /* Guided (no camera) */
+        .guided-timer { font-size: 54px; font-weight: 800; letter-spacing: -1px; text-align: center; font-variant-numeric: tabular-nums; margin: 6px 0 12px; }
+        .done-banner { text-align: center; padding: 26px 16px; }
+        .done-banner .big { font-size: 52px; }
+        .done-banner h3 { font-family: Georgia, serif; font-weight: 400; font-size: 28px; margin: 6px 0; }
+        #exError { margin-bottom: 16px; padding: 12px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 600;
+                   background: rgba(220, 38, 38, 0.08); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.3); }
+        [data-theme="dark"] #exError { color: #fca5a5; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body data-page="exercise" data-title-key="pageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+
+        <section class="ehr-card">
+
+            <!-- No reports yet -->
+            <div id="emptyView" class="empty-state hidden">
+                <div class="empty-icon">🏃</div>
+                <h2 data-x="emptyTitle"></h2>
+                <p data-x="emptyText"></p>
+                <a href="summary.html"><button class="btn-primary" type="button" data-x="emptyBtn"></button></a>
+            </div>
+
+            <!-- List of exercises from the reports -->
+            <div id="listView" class="hidden">
+                <div class="ex-head">
+                    <div>
+                        <h2 data-x="listTitle"></h2>
+                        <p class="subtitle" data-x="listSub"></p>
+                    </div>
+                    <span class="form-status" data-x="aiBadge"></span>
+                </div>
+
+                <div id="exLoading" class="ex-loading hidden"><span class="ex-spin"></span><span data-x="loading"></span></div>
+                <div id="exError" class="hidden"></div>
+                <div id="exRestrict" class="ex-restrict hidden"></div>
+                <div id="exGrid" class="ex-grid"></div>
+                <div id="exNone" class="ex-none hidden">
+                    <div class="empty-icon">📄</div>
+                    <h3 data-x="noneTitle"></h3>
+                    <p class="hint" data-x="noneText"></p>
+                </div>
+
+                <div class="ex-foot">
+                    <p class="hint" data-x="listHint"></p>
+                    <button id="recheckBtn" class="btn-secondary" type="button" data-x="recheck"></button>
+                </div>
+            </div>
+
+            <!-- Camera coach -->
+            <div id="coachView" class="hidden">
+                <div class="coach-top">
+                    <div>
+                        <button class="btn-secondary" type="button" id="coachBack" data-x="back"></button>
+                        <h2 class="coach-title" id="coachName"></h2>
+                        <div class="coach-target" id="coachTarget"></div>
+                    </div>
+                </div>
+
+                <div class="coach-grid">
+                    <div>
+                        <div class="stage" id="stage">
+                            <video id="video" playsinline muted></video>
+                            <canvas id="overlay"></canvas>
+                            <span class="stage-badge hidden" id="liveBadge"><span class="dot"></span><span data-x="live"></span></span>
+                            <div class="stage-tools hidden" id="stageTools">
+                                <button type="button" id="voiceBtn"></button>
+                                <button type="button" id="flipBtn" data-x="flip"></button>
+                            </div>
+                            <div class="stage-feedback hidden" id="feedback"></div>
+                            <div class="stage-msg" id="stageMsg">
+                                <div class="big">📷</div>
+                                <div id="stageMsgText" data-x="camIntro"></div>
+                                <button class="btn-primary" type="button" id="startBtn" data-x="startCam"></button>
+                            </div>
+                        </div>
+                        <p class="privacy-note" style="margin-top: 12px;"><span>🔒</span><span data-x="privacy"></span></p>
+                    </div>
+
+                    <div class="coach-panel">
+                        <div class="panel-box">
+                            <div class="rep-wrap">
+                                <div class="rep-ring">
+                                    <svg viewBox="0 0 120 120" aria-hidden="true">
+                                        <defs><linearGradient id="exGrad" x1="0" y1="0" x2="1" y2="1">
+                                            <stop offset="0" stop-color="#ff007a"/><stop offset="0.5" stop-color="#a855f7"/><stop offset="1" stop-color="#3b82f6"/>
+                                        </linearGradient></defs>
+                                        <circle class="track" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
+                                        <circle class="fill" id="ringFill" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round"
+                                                stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+                                    </svg>
+                                    <div class="rep-num" id="repNum"><b id="repCount">0</b><span id="repGoal"></span></div>
+                                </div>
+                                <div class="rep-meta">
+                                    <strong id="setLabel"></strong>
+                                    <span id="sideLabel"></span>
+                                    <span id="angleLabel"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-box">
+                            <div class="meter-label"><span data-x="movement"></span><span data-x="goal"></span></div>
+                            <div class="meter"><div class="bar" id="meterBar"></div><div class="goal"></div></div>
+                        </div>
+
+                        <div class="coach-btns">
+                            <button class="btn-secondary" type="button" id="pauseBtn" data-x="pause" disabled></button>
+                            <button class="btn-primary" type="button" id="finishBtn" data-x="finish"></button>
+                        </div>
+
+                        <div class="panel-box">
+                            <div class="section-title" style="margin-top: 0;" data-x="howTo"></div>
+                            <ol class="steps-list" id="coachSteps"></ol>
+                            <div class="caution" id="coachCaution"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guided exercise (no camera) -->
+            <div id="guidedView" class="hidden">
+                <div class="coach-top">
+                    <div>
+                        <button class="btn-secondary" type="button" id="guidedBack" data-x="back"></button>
+                        <h2 class="coach-title" id="guidedName"></h2>
+                        <div class="coach-target" id="guidedTarget"></div>
+                    </div>
+                </div>
+                <div class="coach-grid">
+                    <div class="panel-box">
+                        <div class="section-title" style="margin-top: 0;" data-x="howTo"></div>
+                        <ol class="steps-list" id="guidedSteps"></ol>
+                        <div class="caution" id="guidedCaution"></div>
+                        <p class="hint" style="margin-top: 14px;" data-x="guidedNote"></p>
+                    </div>
+                    <div class="panel-box">
+                        <div class="meter-label"><span data-x="timer"></span><span id="guidedGoal"></span></div>
+                        <div class="guided-timer" id="guidedTimer">00:00</div>
+                        <div class="coach-btns">
+                            <button class="btn-secondary" type="button" id="timerBtn" data-x="timerStart"></button>
+                            <button class="btn-primary" type="button" id="guidedDone" data-x="markDone"></button>
+                        </div>
+                        <div id="guidedSaved" class="alert-success hidden" style="margin-top: 14px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finished -->
+            <div id="doneView" class="hidden">
+                <div class="done-banner">
+                    <div class="big">🎉</div>
+                    <h3 data-x="doneTitle"></h3>
+                    <p class="hint" id="doneText"></p>
+                    <button class="btn-primary" type="button" id="doneBack" data-x="doneBack"></button>
+                </div>
+            </div>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-x="safeTitle"></h3>
+                <span class="mrn-badge">🏃</span>
+            </div>
+            <ol class="info-list">
+                <li data-x="safe1"></li>
+                <li data-x="safe2"></li>
+                <li data-x="safe3"></li>
+                <li data-x="safe4"></li>
+            </ol>
+            <div class="chart-divider"></div>
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+
+    </main>
+
+    <script src="common.js?v=20261028e"></script>
+    <script src="account-menu.js"></script>
+    <script src="exercise-pose.js"></script>
+    <script src="exercise.js"></script>
+    <script src="chat.js"></script>
+</body>
+</html>

@@ -383,6 +383,117 @@ def generate_schedule(report_text: str, bill_text: str):
 
 
 # ======================================================
+# 4a. Exercises written in the reports (for the camera exercise coach)
+# ======================================================
+# Movements the camera coach can check. Anything else is "guided" (steps + timer only).
+EXERCISE_MOVES = {"arm_raise", "elbow_bend", "sit_to_stand", "knee_extension", "marching", "guided"}
+EXERCISE_SIDES = {"left", "right", "both"}
+
+
+def _int_or_none(value, low, high):
+    try:
+        n = int(float(str(value).strip()))
+    except (TypeError, ValueError):
+        return None
+    return n if low <= n <= high else None
+
+
+def generate_exercises(report_text: str):
+    """Returns (exercises, restrictions, message, ok). Only exercises written in the reports."""
+    prompt = f"""
+    You read a patient's own medical documents and list ONLY the exercises, physiotherapy
+    or physical activity that the documents tell the patient to do at home.
+    Return ONLY JSON in exactly this shape:
+    {{"exercises": [
+      {{"name_en": "Shoulder raise", "name_ml": "തോൾ ഉയർത്തൽ",
+        "move": "arm_raise", "side": "both",
+        "reps": 10, "sets": 2, "hold_seconds": null, "minutes": null,
+        "frequency_en": "Twice a day", "frequency_ml": "ദിവസം രണ്ടു തവണ",
+        "steps_en": ["Stand straight", "Slowly lift both arms forward up to shoulder height", "Lower slowly"],
+        "steps_ml": ["നേരെ നിൽക്കുക", "രണ്ട് കൈകളും സാവധാനം തോളിന്റെ ഉയരം വരെ ഉയർത്തുക", "സാവധാനം താഴ്ത്തുക"],
+        "caution_en": "Stop if you feel chest pain or dizziness", "caution_ml": "നെഞ്ചുവേദനയോ തലകറക്കമോ തോന്നിയാൽ നിർത്തുക",
+        "source": "exact short quote from the report"}}
+    ],
+    "restrictions_en": ["No heavy lifting for 1 week"],
+    "restrictions_ml": ["ഒരാഴ്ചത്തേക്ക് ഭാരം ഉയർത്തരുത്"]}}
+
+    RULES:
+    1. Include ONLY activities the documents actually advise (physiotherapy exercises, home exercises,
+       walking advice, breathing exercises, etc.). Never invent or suggest new exercises.
+       "source" must be a short exact quote from the documents.
+    2. "move" tells the app's camera coach which movement to check. Use exactly one of:
+       - "arm_raise": lifting the arm(s) forward or sideways above shoulder level (shoulder flexion/abduction)
+       - "elbow_bend": bending and straightening the elbow (biceps curl, elbow flexion)
+       - "sit_to_stand": standing up from a chair and sitting down, squats, mini squats
+       - "knee_extension": sitting and straightening the knee (quadriceps / knee extension)
+       - "marching": lifting the knees one at a time while standing or sitting (marching on the spot, hip flexion)
+       - "guided": anything else (walking, breathing exercises, ankle pumps, neck exercises, cycling...)
+    3. "side": "left", "right" or "both" (use "both" if not written).
+    4. reps, sets, hold_seconds and minutes: numbers ONLY if written in the documents, otherwise null.
+       Never invent amounts.
+    5. steps: 2 to 5 short, simple, safe steps that describe the movement as written. Malayalam versions in "_ml".
+    6. restrictions: activity limits written in the documents (no lifting, no driving, avoid strenuous
+       exercise...). Copy them in simple words. Empty list if none.
+    7. If the documents say to avoid all exercise, return no exercises and put that in restrictions.
+    8. If nothing is advised, return {{"exercises": [], "restrictions_en": [], "restrictions_ml": []}}.
+
+    MEDICAL REPORTS:
+    {report_text[:REPORT_LIMIT]}
+    """
+    try:
+        raw = generate(prompt, json_mode=True)
+    except Exception as e:
+        print(f"[exercises] Gemini error: {e}")
+        return [], [], [], friendly_error(e), False
+
+    try:
+        data = parse_json(raw)
+        if not isinstance(data, dict):
+            data = {"exercises": data}
+    except Exception as e:
+        print(f"[exercises] Bad JSON: {e}")
+        return [], [], [], "Couldn't read the exercises from the AI. Please try again.", False
+
+    def text_list(value):
+        if not isinstance(value, list):
+            return []
+        return [str(v).strip() for v in value if str(v or "").strip()][:6]
+
+    exercises = []
+    for item in data.get("exercises", []) or []:
+        if not isinstance(item, dict) or not (item.get("name_en") or item.get("name_ml")):
+            continue
+        move = str(item.get("move", "guided")).lower().strip()
+        if move not in EXERCISE_MOVES:
+            move = "guided"
+        side = str(item.get("side", "both")).lower().strip()
+        if side not in EXERCISE_SIDES:
+            side = "both"
+        exercises.append({
+            "name_en": str(item.get("name_en") or item.get("name_ml") or ""),
+            "name_ml": str(item.get("name_ml") or item.get("name_en") or ""),
+            "move": move,
+            "side": side,
+            "reps": _int_or_none(item.get("reps"), 1, 100),
+            "sets": _int_or_none(item.get("sets"), 1, 10),
+            "hold_seconds": _int_or_none(item.get("hold_seconds"), 1, 120),
+            "minutes": _int_or_none(item.get("minutes"), 1, 180),
+            "frequency_en": str(item.get("frequency_en") or ""),
+            "frequency_ml": str(item.get("frequency_ml") or ""),
+            "steps_en": text_list(item.get("steps_en")),
+            "steps_ml": text_list(item.get("steps_ml")),
+            "caution_en": str(item.get("caution_en") or ""),
+            "caution_ml": str(item.get("caution_ml") or ""),
+            "source": str(item.get("source") or ""),
+        })
+
+    restrictions_en = text_list(data.get("restrictions_en"))
+    restrictions_ml = text_list(data.get("restrictions_ml"))
+    print(f"[exercises] {len(exercises)} exercises, {len(restrictions_en)} restrictions")
+    return exercises[:8], restrictions_en, restrictions_ml, "", True
+
+
+# ======================================================
 # 4b. Compare a new report with earlier ones ("My Improvements")
 # ======================================================
 def compare_reports(previous_text: str, new_docs: list, language: str):

@@ -16,6 +16,7 @@ from services.ai_engine import (
     generate_medicine_plan,
     generate_checkups,
     generate_schedule,
+    generate_exercises,
     translate_markdown,
     compare_reports,
 )
@@ -105,6 +106,18 @@ def schedule(req: PlanRequest):
     print("[schedule] Building daily schedule...")
     doses, message, ok = generate_schedule(req.report_text, req.bill_text)
     return {"doses": doses, "message": message, "ok": ok}
+
+
+class ExerciseRequest(BaseModel):
+    report_text: str
+
+
+@app.post("/api/exercises")
+def exercises(req: ExerciseRequest):
+    print("[exercises] Looking for exercises in the reports...")
+    items, restrictions_en, restrictions_ml, message, ok = generate_exercises(req.report_text)
+    return {"exercises": items, "restrictions_en": restrictions_en,
+            "restrictions_ml": restrictions_ml, "message": message, "ok": ok}
 
 
 # ---------- Compare a new report with earlier ones ----------
