@@ -15,6 +15,13 @@ a doctor brief that can be emailed, and a chat assistant — in English and Mala
 ## Deploy on Render
 - Build command: `pip install -r backend/requirements.txt`
 - Start command: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Environment variables: `GEMINI_API_KEY`, `NEUTRIX_MAIL_WEBHOOK`, `NEUTRIX_MAIL_TOKEN` (Doctor Brief email via Google Apps Script, see `email-script/Code.gs`)
+- Environment variables: `GEMINI_API_KEY`, `FIREBASE_CONFIG` (accounts, see below), `NEUTRIX_MAIL_WEBHOOK`, `NEUTRIX_MAIL_TOKEN` (Doctor Brief email via Google Apps Script, see `email-script/Code.gs`)
 
 Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace a doctor.
+
+## Accounts (Firebase)
+Sign In / Sign Up (email or Google) and saving each user's data online use Firebase (free Spark plan).
+- Firebase project: `neutrix-health` — Authentication (Email/Password + Google) and Firestore (Mumbai).
+- Firestore security rules: `firestore.rules` (each user can only read/write `users/{their uid}`).
+- The web config is served by the backend from the `FIREBASE_CONFIG` environment variable.
+- Add every website address you use to Firebase → Authentication → Settings → Authorized domains.

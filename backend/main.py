@@ -1,7 +1,9 @@
 import os
+import re
+import json
 import uvicorn
 from pathlib import Path
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
 from pydantic import BaseModel
@@ -159,6 +161,22 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 @app.get("/", include_in_schema=False)
 def open_website():
     return RedirectResponse(url="/home.html")
+
+
+# Firebase web settings (accounts + online saving) come from the FIREBASE_CONFIG
+# environment variable, so the key is not stored in GitHub.
+# Paste Firebase's whole "const firebaseConfig = {...}" snippet (or JSON) into it.
+@app.get("/firebase-config.js", include_in_schema=False)
+def firebase_config():
+    raw = os.getenv("FIREBASE_CONFIG", "")
+    pairs = dict(re.findall(r'["\']?(\w+)["\']?\s*:\s*["\']([^"\']*)["\']', raw))
+    if not pairs.get("apiKey"):
+        static = FRONTEND_DIR / "firebase-config.js"
+        if static.is_file():
+            return FileResponse(static, media_type="application/javascript")
+        return Response("window.NEUTRIX_FIREBASE_CONFIG = {};", media_type="application/javascript")
+    body = "window.NEUTRIX_FIREBASE_CONFIG = " + json.dumps(pairs) + ";"
+    return Response(body, media_type="application/javascript", headers={"Cache-Control": "no-cache"})
 
 
 if FRONTEND_DIR.is_dir():
