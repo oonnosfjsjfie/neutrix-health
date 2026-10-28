@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lblCaregiverName: "Primary Caregiver Name",
             lblCaregiverPhone: "Primary Contact Phone",
             lblLang: "Care Summary Output Language",
-            btnNext1: "Proceed to Medical Baseline →",
+            btnNext1: "Proceed →",
             btnNext2: "Proceed to Caregiver Setup →",
             btnBack1: "← Back to Demographics",
             btnBack2: "← Back to Medical Baseline",
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lblCaregiverName: "പരിചാരകന്റെ പേര്",
             lblCaregiverPhone: "ഫോൺ നമ്പർ",
             lblLang: "റിപ്പോർട്ട് ഭാഷ",
-            btnNext1: "മെഡിക്കൽ വിവരങ്ങളിലേക്ക് →",
+            btnNext1: "തുടരുക →",
             btnNext2: "പരിചാരകന്റെ വിവരങ്ങളിലേക്ക് →",
             btnBack1: "← തിരികെ പോകുക",
             btnBack2: "← തിരികെ പോകുക",
@@ -136,6 +136,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.querySelectorAll('.prev-tab').forEach(btn => {
             btn.addEventListener('click', () => switchTab(btn.dataset.prev));
+        });
+
+        // "Proceed": save what is filled in so far and go back to the website.
+        // Only the patient's name is needed here; the other tabs can be filled in later
+        // from the profile picture menu → My Patient Profile.
+        document.getElementById('btn-next-1').addEventListener('click', () => {
+            const nameField = document.getElementById('patientName');
+            const ageField = document.getElementById('age');
+            const nameOk = validateInput(nameField);
+            const ageOk = !ageField || !ageField.value.trim() || validateInput(ageField);
+            if (!nameOk || !ageOk) {
+                messageArea.innerHTML = `<div class="alert-warning">⚠️ Please enter the patient's full name${ageOk ? '' : ' and a valid age'} first.</div>`;
+                (nameOk ? ageField : nameField).focus();
+                return;
+            }
+            localStorage.setItem('neutrix_hospital_profile', JSON.stringify(collectFormData()));
+            localStorage.setItem('neutrix_patient_name', nameField.value.trim());
+            messageArea.innerHTML = `<div class="alert-success">✓ Profile saved. Taking you back to the website…</div>`;
+            setTimeout(() => { window.location.href = 'home.html'; }, 900);
         });
 
 
