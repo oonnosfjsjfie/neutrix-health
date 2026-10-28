@@ -33,7 +33,7 @@
 
     // ---------- 1. Login + issue checks ----------
     if (rawGet.call(localStorage, 'neutrix_authenticated') !== 'true') {
-        location.replace('signin.html');
+        location.replace('signin.html?next=' + encodeURIComponent((location.pathname.split('/').pop() || 'index.html') + location.search));
         return;
     }
 

@@ -59,9 +59,12 @@ function friendly(err) {
     return map[code] || (err && err.message) || 'Something went wrong. Please try again.';
 }
 
+// After signing in, go back to the page that sent them here (default: the website)
 function goNext() {
-    const hasProfile = !!(localStorage.getItem('neutrix_hospital_profile') || localStorage.getItem('neutrix_patient_name'));
-    window.location.replace(hasProfile ? 'issues.html' : 'profile.html');
+    const next = new URLSearchParams(location.search).get('next') || '';
+    // Only pages of this site, e.g. "issues.html" or "index.html?issue=..."
+    const safe = /^[a-z0-9_-]+\.html(\?[^#]*)?$/i.test(next) && !/^signin\.html/i.test(next);
+    window.location.replace(safe ? next : 'home.html');
 }
 
 async function finish(user, name) {

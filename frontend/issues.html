@@ -12,7 +12,10 @@
     <script>
         // Only logged-in users can see this page
         if (localStorage.getItem('neutrix_authenticated') !== 'true') {
-            window.location.replace('signin.html');
+            window.location.replace('signin.html?next=issues.html');
+        } else if (!(localStorage.getItem('neutrix_hospital_profile') || localStorage.getItem('neutrix_patient_name'))) {
+            // First visit after signing up: fill in the profile once
+            window.location.replace('profile.html');
         }
     </script>
     <link rel="stylesheet" href="theme.css">

@@ -7,6 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix Health | Getting Started & Product Hub</title>
     <link rel="stylesheet" href="home.css">
+    <!-- Accounts: shows Sign In or the profile picture in the top right -->
+    <script src="firebase-config.js"></script>
+    <script src="neutrix-cloud.js"></script>
 </head>
 <body>
 
@@ -43,6 +46,25 @@
                 <button type="button" id="themeToggleBtn" class="btn-text-nav">☀️ Theme</button>
                 <!-- Opens the patient dashboard in a new tab -->
                 <a href="issues.html" target="_blank" rel="noopener" class="btn-pill dark">Dashboard ↗</a>
+
+                <!-- Signed out: Sign In button -->
+                <a href="signin.html?next=home.html" id="navSignIn" class="btn-pill outline nav-signin">Sign In</a>
+
+                <!-- Signed in: small oval profile picture with a menu -->
+                <div class="nav-profile" id="navProfile" hidden>
+                    <button type="button" class="nav-avatar" id="navAvatar" aria-haspopup="true" aria-expanded="false" title="Your account">
+                        <img id="navAvatarImg" alt="" referrerpolicy="no-referrer" hidden>
+                        <span id="navAvatarInitial"></span>
+                    </button>
+                    <div class="nav-menu" id="navMenu" hidden>
+                        <div class="nav-menu-head">
+                            <div class="nav-menu-name" id="navMenuName"></div>
+                            <div class="nav-menu-email" id="navMenuEmail"></div>
+                        </div>
+                        <a href="issues.html" target="_blank" rel="noopener" class="nav-menu-item">🗂 My Dashboard</a>
+                        <button type="button" class="nav-menu-item danger" id="navSignOut">🚪 Sign Out</button>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -530,5 +552,6 @@
     </footer>
 
     <script src="home.js"></script>
+    <script src="home-auth.js"></script>
 </body>
 </html>

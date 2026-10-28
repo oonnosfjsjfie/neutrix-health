@@ -18,7 +18,7 @@
 
     const DEVICE_ONLY = new Set([
         'neutrix_authenticated', 'neutrixTheme', 'neutrixLang', 'neutrixChatOpen', 'neutrixActiveIssue',
-        'neutrixCloudDirty', 'neutrixCloudPull', 'neutrixCloudUid'
+        'neutrixCloudDirty', 'neutrixCloudPull', 'neutrixCloudUid', 'neutrixCloudProfile'
     ]);
     const isSynced = key => typeof key === 'string' && /^neutrix/i.test(key) && !DEVICE_ONLY.has(key);
 
@@ -70,7 +70,7 @@
         applying = true;
         try {
             localSyncedKeys().forEach(k => rawRemove.call(localStorage, k));
-            ['neutrixCloudDirty', 'neutrixCloudPull', 'neutrixCloudUid', 'neutrix_authenticated', 'neutrixActiveIssue']
+            ['neutrixCloudDirty', 'neutrixCloudPull', 'neutrixCloudUid', 'neutrixCloudProfile', 'neutrix_authenticated', 'neutrixActiveIssue']
                 .forEach(k => rawRemove.call(localStorage, k));
         } finally {
             applying = false;
@@ -215,6 +215,25 @@
         return changed;
     }
 
+    // Name + Google photo, kept on this device for the website's profile button
+    function saveProfile(user, displayName) {
+        if (!user) return;
+        try {
+            rawSet.call(localStorage, 'neutrixCloudProfile', JSON.stringify({
+                name: displayName || user.displayName || '',
+                email: user.email || '',
+                photo: user.photoURL || ''
+            }));
+        } catch (e) {}
+    }
+    function cachedProfile() { return readJson('neutrixCloudProfile', null); }
+
+    // Sign-in page address that comes back to this page afterwards
+    function signInUrl(next) {
+        const here = next || ((location.pathname.split('/').pop() || 'home.html') + location.search);
+        return 'signin.html?next=' + encodeURIComponent(here);
+    }
+
     // ---------- After signing in (used by signin.js) ----------
     async function afterSignIn(user, displayName) {
         const previousUid = rawGet.call(localStorage, 'neutrixCloudUid');
@@ -238,6 +257,7 @@
         }
         rawSet.call(localStorage, 'neutrixCloudUid', user.uid);
         rawSet.call(localStorage, 'neutrix_authenticated', 'true');
+        saveProfile(user, displayName);
 
         const name = displayName || user.displayName;
         if (name && !rawGet.call(localStorage, 'neutrix_patient_name')) {
@@ -260,15 +280,17 @@
     // ---------- On every app page ----------
     function startPageSync() {
         if (!configured) return;
-        const onSignIn = /signin\.html$/.test(location.pathname);
-        if (onSignIn) return;
+        // The website and the sign-in page are public: never force a sign-in there
+        const isPublic = /(^\/$|home\.html$|signin\.html$)/.test(location.pathname);
+        if (isPublic) return;
         currentUser().then(async user => {
             if (!user) {
                 // Signed out (or signed in on another device only): back to sign in
                 rawRemove.call(localStorage, 'neutrix_authenticated');
-                location.replace('signin.html');
+                location.replace(signInUrl());
                 return;
             }
+            saveProfile(user);
             await flush();
             const changed = await pull();
             // Data arrived from another device: reload once so the page shows it
@@ -293,7 +315,10 @@
         flush,
         pull,
         afterSignIn,
-        signOut
+        signOut,
+        saveProfile,
+        cachedProfile,
+        signInUrl
     };
 
     startPageSync();
