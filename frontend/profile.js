@@ -491,8 +491,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Image Upload Handlers
-    function handleImageUpload(e) {
-        const file = e.target.files[0];
+    async function handleImageUpload(e) {
+        let file = e.target.files[0];
+        // Make the picture small (a profile photo does not need to be big; it is also saved to the account)
+        if (file && window.NxCamera) file = await NxCamera.shrink(file, 600);
         if (file) {
             if (file.size > 2 * 1024 * 1024) {
                 alert('Image size exceeds 2MB limit.');

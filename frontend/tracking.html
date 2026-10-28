@@ -8,7 +8,7 @@
     <script src="firebase-config.js"></script>
     <script src="neutrix-cloud.js"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261028e"></script>
+    <script src="issue-scope.js?v=20261029a"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Recovery Tracker</title>
     <link rel="stylesheet" href="theme.css">
@@ -80,6 +80,15 @@
 
                 <button onclick="topFunction()" id="checkWarningBtn" type="submit" class="btn-primary action-btn" data-bt="btn">Save Recovery Details</button>
             </form>
+
+            <!-- Saved readings (kept per issue, used in the doctor progress report) -->
+            <div class="tr-history hidden" id="trHistory">
+                <div class="section-title" data-tr="histTitle">Recent readings</div>
+                <div class="tr-table-wrap"><table class="tr-table">
+                    <thead><tr><th data-tr="when">When</th><th data-tr="temp">Temp °F</th><th>BP</th><th data-tr="sugar">Sugar</th><th data-tr="weight">Weight</th><th data-tr="symptoms">Symptoms</th><th data-tr="meds">Medicines</th></tr></thead>
+                    <tbody id="trRows"></tbody>
+                </table></div>
+            </div>
         </section>
 
         <aside class="ehr-card chart-card">
@@ -110,7 +119,7 @@
 
     </main>
 
-    <script src="common.js?v=20261028e"></script>
+    <script src="common.js?v=20261029a"></script>
     <script src="account-menu.js"></script>
     <script src="tracker&briefing.js"></script>
     <script>
@@ -166,6 +175,46 @@
         document.addEventListener('neutrix:langchange', applyBobbyText);
         applyBobbyText();
     </script>
+    <script>
+        // ---------- Save each reading so there is a history (and the doctor report can use it) ----------
+        (function () {
+            const TR = {
+                English: { histTitle: 'Recent readings', when: 'When', temp: 'Temp °F', sugar: 'Sugar', weight: 'Weight', symptoms: 'Symptoms', meds: 'Medicines' },
+                Malayalam: { histTitle: 'അടുത്തിടെയുള്ള റീഡിംഗുകൾ', when: 'എപ്പോൾ', temp: 'താപനില °F', sugar: 'ഷുഗർ', weight: 'ഭാരം', symptoms: 'ലക്ഷണങ്ങൾ', meds: 'മരുന്നുകൾ' }
+            };
+            const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            function render() {
+                const d = TR[neutrixLang] || TR.English;
+                document.querySelectorAll('[data-tr]').forEach(el => { el.textContent = d[el.dataset.tr]; });
+                const list = storeGet('neutrixTracker') || [];
+                document.getElementById('trHistory').classList.toggle('hidden', !list.length);
+                document.getElementById('trRows').innerHTML = list.slice(-10).reverse().map(r => `<tr>
+                    <td>${esc(new Date(r.at).toLocaleString(localeFor(), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))}</td>
+                    <td>${esc(r.temp || '–')}</td><td>${esc(r.bp || '–')}</td><td>${esc(r.sugar || '–')}</td><td>${esc(r.weight || '–')}</td>
+                    <td>${esc(r.symptoms || '–')}</td><td>${esc(r.meds || '–')}</td></tr>`).join('');
+            }
+            document.getElementById('recoveryForm').addEventListener('submit', () => {
+                const v = id => (document.getElementById(id).value || '').trim();
+                const list = storeGet('neutrixTracker') || [];
+                list.push({
+                    at: new Date().toISOString(), temp: v('temp'), bp: v('bp'), sugar: v('sugar'), weight: v('weight'),
+                    symptoms: v('trackerSymptoms') || 'None',
+                    meds: (document.querySelector('input[name="medsRadio"]:checked') || {}).value || ''
+                });
+                storeSet('neutrixTracker', list.slice(-200));
+                render();
+            });
+            document.addEventListener('neutrix:langchange', render);
+            render();
+        })();
+    </script>
+    <style>
+        .tr-history { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+        .tr-table-wrap { overflow-x: auto; }
+        .tr-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .tr-table th { text-align: left; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); padding: 8px 10px; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+        .tr-table td { padding: 9px 10px; border-bottom: 1px dashed var(--border-color); vertical-align: top; }
+    </style>
     <script src="chat.js"></script>
 </body>
 </html>

@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Dashboard</title>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261028e"></script>
+    <script src="issue-scope.js?v=20261029a"></script>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
     <link rel="stylesheet" href="skin.css">
@@ -172,7 +172,7 @@
 
     </main>
 
-    <script src="common.js?v=20261028e"></script>
+    <script src="common.js?v=20261029a"></script>
     <script src="account-menu.js"></script>
     <script>
         const DASH_TEXT = {
@@ -238,7 +238,10 @@
               ml: ['സുഖപ്രാപ്തി ട്രാക്കർ', 'താപനില, BP, ഷുഗർ, ലക്ഷണങ്ങൾ രേഖപ്പെടുത്തുക'] },
             { href: 'briefing.html', icon: '🧑‍⚕️', who: 'Bobby',
               en: ['Doctor Brief', 'Write a clear update and email it to your doctor'],
-              ml: ['ഡോക്ടർ ബ്രീഫ്', 'വ്യക്തമായ ഒരു സന്ദേശം തയ്യാറാക്കി ഡോക്ടർക്ക് ഇമെയിൽ ചെയ്യുക'] }
+              ml: ['ഡോക്ടർ ബ്രീഫ്', 'വ്യക്തമായ ഒരു സന്ദേശം തയ്യാറാക്കി ഡോക്ടർക്ക് ഇമെയിൽ ചെയ്യുക'] },
+            { href: 'progress.html', icon: '📊', who: 'Ajay', ai: true, needs: 'report',
+              en: ['Download Overall Progress', 'One AI report for your doctor from everything you recorded'],
+              ml: ['മൊത്തം പുരോഗതി ഡൗൺലോഡ്', 'നിങ്ങൾ രേഖപ്പെടുത്തിയ എല്ലാത്തിൽ നിന്നും ഡോക്ടർക്കായി ഒരു AI റിപ്പോർട്ട്'] }
         ];
 
         function dt(key, vars = {}) {

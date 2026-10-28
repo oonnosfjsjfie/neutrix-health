@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Accounts + online saving (must load before issue-scope.js) -->
+    <script src="firebase-config.js"></script>
+    <script src="neutrix-cloud.js"></script>
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js?v=20261029a"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Overall Progress Report</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .pr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+        .pr-head h2 { margin: 0 0 4px; }
+        .pr-head .subtitle { margin: 0; }
+        .pr-sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin: 6px 0 20px; }
+        .pr-src { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border-color); background: var(--card-bg); }
+        .pr-src .ic { font-size: 22px; }
+        .pr-src b { display: block; font-size: 13.5px; }
+        .pr-src span { font-size: 12px; color: var(--text-muted); }
+        .pr-src.empty { opacity: 0.5; }
+        .pr-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+        .pr-state { font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 20px; background: var(--pill-bg); color: var(--text-secondary); }
+        .pr-state.fresh { color: #16a34a; } [data-theme="dark"] .pr-state.fresh { color: #4ade80; }
+        .pr-state.stale { color: #b45309; } [data-theme="dark"] .pr-state.stale { color: #fbbf24; }
+        .pr-loading { display: flex; align-items: center; gap: 12px; padding: 22px; border: 1px dashed var(--border-color); border-radius: 16px; color: var(--text-secondary); font-size: 14px; }
+        .pr-spin { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--border-color); border-top-color: #a855f7; animation: prSpin 0.8s linear infinite; flex-shrink: 0; }
+        @keyframes prSpin { to { transform: rotate(360deg); } }
+        .pr-error { padding: 12px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 600; background: rgba(220, 38, 38, 0.08); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.3); margin-bottom: 14px; }
+        [data-theme="dark"] .pr-error { color: #fca5a5; }
+        .pr-paper { border: 1px solid var(--border-color); border-radius: 18px; padding: 28px 30px; background: var(--card-bg); }
+        .pr-paper table { width: 100%; border-collapse: collapse; margin: 10px 0 14px; font-size: 13.5px; display: block; overflow-x: auto; }
+        .pr-paper th, .pr-paper td { border: 1px solid var(--border-color); padding: 7px 10px; text-align: left; }
+        .pr-paper th { background: var(--pill-bg); font-size: 12px; }
+        .pr-paper h2 { font-size: 17px; margin: 22px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); }
+        .pr-paper h2:first-child { margin-top: 0; }
+        .pr-meta { font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px; }
+        .hidden { display: none !important; }
+        @media (max-width: 640px) { .pr-paper { padding: 18px 16px; } }
+    </style>
+</head>
+<body data-page="progress" data-title-key="pageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+        <section class="ehr-card">
+            <div class="pr-head">
+                <div>
+                    <h2 data-p="title"></h2>
+                    <p class="subtitle" data-p="sub"></p>
+                </div>
+                <span class="form-status" data-p="badge"></span>
+            </div>
+
+            <div class="section-title" data-p="usesTitle"></div>
+            <div class="pr-sources" id="prSources"></div>
+
+            <div class="pr-actions">
+                <button class="btn-primary" type="button" id="prMakeBtn"></button>
+                <button class="btn-success hidden" type="button" id="prDlBtn" data-p="download"></button>
+                <span class="pr-state hidden" id="prState"></span>
+            </div>
+            <div id="prError" class="pr-error hidden"></div>
+            <div id="prLoading" class="pr-loading hidden"><span class="pr-spin"></span><span data-p="loading"></span></div>
+            <div id="prPaper" class="pr-paper hidden">
+                <div class="pr-meta" id="prMeta"></div>
+                <div id="prBody" class="md-content"></div>
+            </div>
+            <p class="hint" style="margin-top: 14px;" data-p="englishNote"></p>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header">
+                <h3 data-p="howTitle"></h3>
+                <span class="mrn-badge">🩺</span>
+            </div>
+            <ol class="info-list">
+                <li data-p="how1"></li>
+                <li data-p="how2"></li>
+                <li data-p="how3"></li>
+            </ol>
+            <div class="chart-divider"></div>
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+            <footer class="ehr-disclaimer">
+                <p data-i18n-html="notice"></p>
+            </footer>
+        </aside>
+    </main>
+
+    <script src="common.js?v=20261029a"></script>
+    <script src="account-menu.js"></script>
+    <script>
+    (function () {
+        const P = {
+            English: {
+                pageTitle: 'Neutrix | Overall Progress Report',
+                title: 'Overall progress report', sub: 'One report for your doctor, written by AI from everything you recorded in Neutrix for this issue.',
+                badge: 'AI • FOR YOUR DOCTOR', usesTitle: 'What goes into the report',
+                make: '✨ Create report', remake: '🔄 Update report', download: '⬇ Download PDF',
+                loading: 'Reading all your records and writing the report… (about 20 seconds)',
+                fresh: '✓ Up to date', stale: '⚠ New records since this report. Update it before sending.',
+                made: 'Created {when}', nothing: 'Nothing has been recorded for this issue yet. Upload your reports first.',
+                englishNote: 'The report is written in English so any doctor can read it.',
+                failed: 'The report could not be created: {msg}', serverDown: 'Could not reach the Neutrix server. Check your internet and try again.',
+                howTitle: 'HOW TO USE IT',
+                how1: 'Create the report before a follow-up visit, or when you want to update your doctor.',
+                how2: 'Download the PDF and show it, print it, or attach it in the Doctor Brief email.',
+                how3: 'The AI only uses what you recorded. It does not diagnose or change treatment.',
+                src: { report: 'Discharge summary', meds: 'Medicine ticks', readings: 'Home readings', exercise: 'Exercise sessions',
+                       improve: 'Report changes', checkups: 'Check-ups', briefs: 'Doctor messages' },
+                n: { report: '{n} report(s)', meds: '{n} doses ticked', readings: '{n} readings', exercise: '{n} sessions',
+                     improve: '{n} comparison(s)', checkups: 'Found', briefs: '{n} sent', none: 'None yet' }
+            },
+            Malayalam: {
+                pageTitle: 'ന്യൂട്രിക്സ് | മൊത്തം പുരോഗതി റിപ്പോർട്ട്',
+                title: 'മൊത്തം പുരോഗതി റിപ്പോർട്ട്', sub: 'ഈ പ്രശ്നത്തിനായി ന്യൂട്രിക്സിൽ നിങ്ങൾ രേഖപ്പെടുത്തിയ എല്ലാത്തിൽ നിന്നും AI തയ്യാറാക്കുന്ന, ഡോക്ടർക്കുള്ള ഒരു റിപ്പോർട്ട്.',
+                badge: 'AI • ഡോക്ടർക്ക്', usesTitle: 'റിപ്പോർട്ടിൽ ഉൾപ്പെടുന്നത്',
+                make: '✨ റിപ്പോർട്ട് തയ്യാറാക്കുക', remake: '🔄 റിപ്പോർട്ട് പുതുക്കുക', download: '⬇ PDF ഡൗൺലോഡ് ചെയ്യുക',
+                loading: 'എല്ലാ രേഖകളും വായിച്ച് റിപ്പോർട്ട് എഴുതുന്നു… (ഏകദേശം 20 സെക്കൻഡ്)',
+                fresh: '✓ പുതിയത്', stale: '⚠ ഈ റിപ്പോർട്ടിന് ശേഷം പുതിയ രേഖകളുണ്ട്. അയക്കുന്നതിന് മുമ്പ് പുതുക്കുക.',
+                made: 'തയ്യാറാക്കിയത് {when}', nothing: 'ഈ പ്രശ്നത്തിന് ഇതുവരെ ഒന്നും രേഖപ്പെടുത്തിയിട്ടില്ല. ആദ്യം റിപ്പോർട്ടുകൾ അപ്‌ലോഡ് ചെയ്യുക.',
+                englishNote: 'ഏത് ഡോക്ടർക്കും വായിക്കാൻ കഴിയുന്ന രീതിയിൽ റിപ്പോർട്ട് ഇംഗ്ലീഷിലാണ് എഴുതുന്നത്.',
+                failed: 'റിപ്പോർട്ട് തയ്യാറാക്കാൻ കഴിഞ്ഞില്ല: {msg}', serverDown: 'ന്യൂട്രിക്സ് സെർവറിൽ എത്താൻ കഴിഞ്ഞില്ല. ഇന്റർനെറ്റ് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.',
+                howTitle: 'എങ്ങനെ ഉപയോഗിക്കാം',
+                how1: 'തുടർ സന്ദർശനത്തിന് മുമ്പോ ഡോക്ടറെ അറിയിക്കേണ്ടപ്പോഴോ റിപ്പോർട്ട് തയ്യാറാക്കുക.',
+                how2: 'PDF ഡൗൺലോഡ് ചെയ്ത് കാണിക്കുക, പ്രിന്റ് ചെയ്യുക, അല്ലെങ്കിൽ ഡോക്ടർ ബ്രീഫ് ഇമെയിലിൽ ചേർക്കുക.',
+                how3: 'നിങ്ങൾ രേഖപ്പെടുത്തിയത് മാത്രമേ AI ഉപയോഗിക്കൂ. ഇത് രോഗനിർണയം നടത്തുകയോ ചികിത്സ മാറ്റുകയോ ചെയ്യുന്നില്ല.',
+                src: { report: 'ഡിസ്ചാർജ് സംഗ്രഹം', meds: 'മരുന്ന് ടിക്കുകൾ', readings: 'വീട്ടിലെ റീഡിംഗുകൾ', exercise: 'വ്യായാമ സെഷനുകൾ',
+                       improve: 'റിപ്പോർട്ട് മാറ്റങ്ങൾ', checkups: 'പരിശോധനകൾ', briefs: 'ഡോക്ടർക്കുള്ള സന്ദേശങ്ങൾ' },
+                n: { report: '{n} റിപ്പോർട്ട്', meds: '{n} ഡോസ് ടിക്ക് ചെയ്തു', readings: '{n} റീഡിംഗ്', exercise: '{n} സെഷൻ',
+                     improve: '{n} താരതമ്യം', checkups: 'ഉണ്ട്', briefs: '{n} അയച്ചു', none: 'ഇതുവരെ ഇല്ല' }
+            }
+        };
+        const L = () => P[window.neutrixLang] || P.English;
+        const fill = (s, v = {}) => Object.keys(v).reduce((a, k) => a.replaceAll(`{${k}}`, v[k]), s);
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const cut = (s, n) => (s && s.length > n ? s.slice(0, n) + ' …[shortened]' : s || '');
+
+        // ---------- Gather everything recorded for this issue ----------
+        function gather() {
+            const issue = window.neutrixActiveIssue || {};
+            const profile = storeGet('neutrix_hospital_profile') || {};
+            const report = loadReport();
+            const today = dayKey(new Date());
+            const facts = {
+                today,
+                patient: {
+                    name: profile.patientName || localStorage.getItem('neutrix_patient_name') || '',
+                    age: profile.age || '', gender: profile.gender || '', blood_group: profile.bloodGroup || '',
+                    known_condition: profile.condition || '', allergies: profile.allergies || '',
+                    regular_medicines: (profile.medications || []).map(m => `${m.name} ${m.dose || ''} (${m.time || ''})`.trim())
+                },
+                issue: { title: issue.title || '', since: issue.startDate || '', hospital_or_doctor: issue.hospital || '', notes: issue.notes || '' }
+            };
+            const counts = {};
+
+            // Discharge summary (AI summary of the uploaded reports)
+            if (report) {
+                const sums = report.summaries || {};
+                facts.discharge_summary = cut(sums.English || Object.values(sums)[0] || report.summary || '', 7000);
+                facts.reports_uploaded = (report.files || []).map(f => f.name).concat(loadFollowups().flatMap(f => (f.files || []).map(x => x.name)));
+                counts.report = 1 + loadFollowups().length;
+            }
+
+            // Medicines: doses scheduled vs ticked, per medicine and per time of day
+            const schedule = storeGet('neutrixSchedule');
+            if (schedule && schedule.startDate && typeof dosesForDay === 'function') {
+                const per = {}, bySlot = {}, recent = [];
+                let k = schedule.startDate, guard = 0, ticked = 0;
+                while (k <= today && guard++ < 400) {
+                    const ticks = (schedule.ticks || {})[k] || {};
+                    const doses = dosesForDay(schedule, k) || [];
+                    let dayTaken = 0;
+                    doses.forEach(d => {
+                        const name = `${d.medicine} ${d.strength || ''}`.trim();
+                        per[name] = per[name] || { scheduled: 0, taken: 0 };
+                        per[name].scheduled++;
+                        bySlot[d.slot] = bySlot[d.slot] || { scheduled: 0, taken: 0 };
+                        bySlot[d.slot].scheduled++;
+                        if (ticks[d.id]) { per[name].taken++; bySlot[d.slot].taken++; dayTaken++; ticked++; }
+                    });
+                    if (doses.length) recent.push(`${k}: ${dayTaken}/${doses.length}`);
+                    k = dayKeyShift(k, 1);
+                }
+                facts.medicine_adherence = { from: schedule.startDate, to: today, note: 'Today is still in progress.', per_medicine: per, by_time_of_day: bySlot, per_day: recent.slice(-30) };
+                counts.meds = ticked;
+            }
+
+            // Home readings (Recovery Tracker)
+            const readings = storeGet('neutrixTracker') || [];
+            if (readings.length) {
+                facts.home_readings = readings.slice(-60).map(r => ({ at: r.at, temp_F: r.temp, bp: r.bp, sugar_mg_dl: r.sugar, weight: r.weight, symptoms: r.symptoms, took_medicines: r.meds }));
+                counts.readings = readings.length;
+            }
+
+            // Exercise: prescribed vs done
+            const ex = storeGet('neutrixExercises');
+            const exLog = storeGet('neutrixExerciseLog') || {};
+            if ((ex && ex.exercises && ex.exercises.length) || Object.keys(exLog).length) {
+                let sessions = 0;
+                const done = Object.keys(exLog).sort().map(day => ({
+                    day,
+                    exercises: Object.entries(exLog[day]).map(([id, e]) => { sessions += e.sessions || 0; return { name: e.name_en || id, sessions: e.sessions, reps: e.reps }; })
+                }));
+                facts.exercise = {
+                    prescribed: ((ex && ex.exercises) || []).map(e => ({ name: e.name_en, reps: e.reps, sets: e.sets, hold_seconds: e.hold_seconds, minutes: e.minutes, how_often: e.frequency_en })),
+                    activity_limits: (ex && ex.restrictions_en) || [],
+                    sessions_done: done.slice(-30)
+                };
+                counts.exercise = sessions;
+            }
+
+            // Changes found in newer reports (My Improvements)
+            const comps = loadFollowups().filter(f => f.comparison);
+            if (comps.length) {
+                facts.report_changes = comps.map(f => {
+                    const c = f.comparison;
+                    const text = typeof c === 'string' ? c : (c.English || Object.values(c)[0] || '');
+                    return { added: (f.createdAt || '').slice(0, 10), comparison: cut(text, 3000) };
+                });
+                counts.improve = comps.length;
+            }
+
+            // Check-ups
+            const ck = storeGet('neutrixCheckups');
+            const ckText = ck && ck.content ? (ck.content.English || Object.values(ck.content)[0]) : (typeof ck === 'string' ? ck : '');
+            if (ckText) { facts.checkups = cut(ckText, 3500); counts.checkups = 1; }
+
+            // Messages already emailed to the doctor (Doctor Brief)
+            const briefs = storeGet('neutrixBriefLog') || [];
+            if (briefs.length) { facts.messages_to_doctor = briefs.slice(-10).map(b => ({ at: b.at, text: cut(b.text, 600) })); counts.briefs = briefs.length; }
+
+            return { facts, counts };
+        }
+
+        function signature(facts) {
+            const s = JSON.stringify({ ...facts, today: undefined });
+            let h = 0;
+            for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+            return String(h);
+        }
+
+        // ---------- Page ----------
+        let gathered = gather();
+        let saved = storeGet('neutrixProgressReport');
+
+        function renderSources() {
+            const l = L();
+            const items = [['report', '📋'], ['meds', '💊'], ['readings', '📈'], ['exercise', '🏃'], ['improve', '🌱'], ['checkups', '📅'], ['briefs', '🧑‍⚕️']];
+            $('prSources').innerHTML = items.map(([key, icon]) => {
+                const n = gathered.counts[key];
+                const label = n ? fill(l.n[key], { n }) : l.n.none;
+                return `<div class="pr-src ${n ? '' : 'empty'}"><span class="ic">${icon}</span><div><b>${esc(l.src[key])}</b><span>${esc(label)}</span></div></div>`;
+            }).join('');
+        }
+
+        function renderReport() {
+            const l = L();
+            const has = !!(saved && saved.markdown);
+            $('prPaper').classList.toggle('hidden', !has);
+            $('prDlBtn').classList.toggle('hidden', !has);
+            $('prMakeBtn').textContent = has ? l.remake : l.make;
+            const state = $('prState');
+            state.classList.toggle('hidden', !has);
+            if (!has) return;
+            const fresh = saved.signature === signature(gathered.facts);
+            state.className = 'pr-state ' + (fresh ? 'fresh' : 'stale');
+            state.textContent = fresh ? l.fresh : l.stale;
+            $('prMeta').textContent = fill(l.made, { when: new Date(saved.createdAt).toLocaleString(localeFor(), { dateStyle: 'medium', timeStyle: 'short' }) });
+            $('prBody').innerHTML = renderMarkdown(saved.markdown);
+        }
+
+        function texts() {
+            const l = L();
+            document.querySelectorAll('[data-p]').forEach(el => { if (typeof l[el.dataset.p] === 'string') el.textContent = l[el.dataset.p]; });
+            document.title = l.pageTitle;
+            renderSources();
+            renderReport();
+        }
+
+        async function make() {
+            const l = L();
+            gathered = gather();
+            renderSources();
+            $('prError').classList.add('hidden');
+            if (!gathered.counts.report) {
+                $('prError').textContent = l.nothing;
+                $('prError').classList.remove('hidden');
+                return;
+            }
+            $('prMakeBtn').disabled = true;
+            $('prLoading').classList.remove('hidden');
+            try {
+                const res = await fetch(`${API_BASE}/api/progress-report`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ facts: gathered.facts })
+                });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.report || 'No answer from the AI');
+                saved = { markdown: data.report, createdAt: new Date().toISOString(), signature: signature(gathered.facts) };
+                storeSet('neutrixProgressReport', saved);
+                renderReport();
+            } catch (e) {
+                $('prError').textContent = e instanceof TypeError ? l.serverDown : fill(l.failed, { msg: e.message });
+                $('prError').classList.remove('hidden');
+            } finally {
+                $('prMakeBtn').disabled = false;
+                $('prLoading').classList.add('hidden');
+            }
+        }
+
+        // ---------- PDF ----------
+        async function download() {
+            if (!saved || !window.html2pdf) return;
+            const btn = $('prDlBtn');
+            btn.disabled = true;
+            const f = gathered.facts;
+            const p = f.patient;
+            const made = new Date(saved.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+            <style>
+                .nx-pr { font-family: "Segoe UI", Roboto, "Noto Sans Malayalam", sans-serif; color: #0f172a; background: #fff; font-size: 11.5px; line-height: 1.5; padding: 4px; }
+                .nx-pr .head { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #191919; padding-bottom: 10px; margin-bottom: 12px; }
+                .nx-pr .brand { font-weight: 800; font-size: 16px; letter-spacing: 1px; }
+                .nx-pr .brand small { display: block; font-weight: 500; font-size: 10.5px; color: #64748b; letter-spacing: 0; }
+                .nx-pr h1 { font-size: 18px; margin: 0; text-align: right; }
+                .nx-pr .sub { text-align: right; color: #64748b; font-size: 10.5px; }
+                .nx-pr .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; background: #f1f5f9; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+                .nx-pr .meta b { color: #475569; }
+                .nx-pr h2 { font-size: 13.5px; margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 1px solid #e2e8f0; page-break-after: avoid; }
+                .nx-pr table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; }
+                .nx-pr th { background: #191919; color: #fff; text-align: left; padding: 5px 7px; font-size: 10.5px; }
+                .nx-pr td { border-bottom: 1px solid #e2e8f0; padding: 4px 7px; vertical-align: top; }
+                .nx-pr tr, .nx-pr li { page-break-inside: avoid; }
+                .nx-pr ul { margin: 4px 0 8px; padding-left: 18px; }
+                .nx-pr .foot { margin-top: 14px; font-size: 9.5px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 6px; }
+            </style>
+            <div class="nx-pr">
+                <div class="head">
+                    <div class="brand">NEUTRIX HEALTH<small>Post-discharge home-care record</small></div>
+                    <div><h1>Patient Progress Report</h1><div class="sub">Prepared for the treating doctor</div></div>
+                </div>
+                <div class="meta">
+                    <div><b>Patient:</b> ${esc(p.name || '-')}</div>
+                    <div><b>Age / Gender:</b> ${esc([p.age, p.gender].filter(Boolean).join(' / ') || '-')}</div>
+                    <div><b>Issue:</b> ${esc(f.issue.title || '-')}</div>
+                    <div><b>Hospital / doctor:</b> ${esc(f.issue.hospital_or_doctor || '-')}</div>
+                    <div><b>Allergies:</b> ${esc(p.allergies || '-')}</div>
+                    <div><b>Report created:</b> ${esc(made)}</div>
+                </div>
+                ${renderMarkdown(saved.markdown)}
+                <div class="foot">Written by AI (Neutrix) only from what the patient recorded at home and the reports they uploaded. It is not a diagnosis. Please confirm details with the patient.</div>
+            </div>`;
+            const savedScroll = window.scrollY;
+            window.scrollTo(0, 0);
+            try {
+                const name = (p.name || 'Patient').replace(/[^A-Za-z0-9]+/g, '_');
+                await html2pdf().set({
+                    margin: [10, 10, 12, 10],
+                    filename: `Neutrix_Progress_Report_${name}_${dayKey(new Date())}.pdf`,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { scale: 2, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'li', 'h2'] }
+                }).from(wrap).save();
+            } catch (e) {
+                console.error(e);
+            } finally {
+                window.scrollTo(0, savedScroll);
+                btn.disabled = false;
+            }
+        }
+
+        $('prMakeBtn').addEventListener('click', make);
+        $('prDlBtn').addEventListener('click', download);
+        document.addEventListener('neutrix:langchange', texts);
+        texts();
+        window.NxProgress = { gather };
+    })();
+    </script>
+    <script src="chat.js"></script>
+</body>
+</html>

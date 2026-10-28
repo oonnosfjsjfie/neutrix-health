@@ -8,12 +8,13 @@
     <script src="firebase-config.js"></script>
     <script src="neutrix-cloud.js"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261028e"></script>
+    <script src="issue-scope.js?v=20261029a"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Exercise</title>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
     <link rel="stylesheet" href="skin.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .rainbow { background: linear-gradient(90deg, #ff007a, #a855f7, #3b82f6, #00f2fe); }
 
@@ -142,6 +143,18 @@
         #exError { margin-bottom: 16px; padding: 12px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 600;
                    background: rgba(220, 38, 38, 0.08); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.3); }
         [data-theme="dark"] #exError { color: #fca5a5; }
+        /* History */
+        .ex-history { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border-color); }
+        .ex-history .week-strip { max-width: 560px; }
+        .ex-day-log { margin-top: 14px; border: 1px solid var(--border-color); border-radius: 16px; padding: 14px 16px; }
+        .ex-log-title { font-weight: 700; margin-bottom: 8px; }
+        .ex-log-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0; border-top: 1px dashed var(--border-color); }
+        .ex-log-row:first-of-type { border-top: none; }
+        .ex-log-times { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+        .ex-log-total { font-size: 13px; font-weight: 700; color: #16a34a; white-space: nowrap; }
+        [data-theme="dark"] .ex-log-total { color: #4ade80; }
+        .ex-download { margin-top: 18px; padding: 16px; border-radius: 16px; background: var(--pill-bg, rgba(0,0,0,0.04)); }
+        .ex-download .hint { margin: 0 0 10px; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -198,6 +211,19 @@
                 <div class="ex-foot">
                     <p class="hint" data-x="listHint"></p>
                     <button id="recheckBtn" class="btn-secondary" type="button" data-x="recheck"></button>
+                </div>
+
+                <!-- History of earlier days + report -->
+                <div class="ex-history">
+                    <div class="section-title" data-x="histTitle"></div>
+                    <p class="hint" data-x="histHint"></p>
+                    <div id="exWeek" class="week-strip"></div>
+                    <div id="exDayLog" class="ex-day-log"></div>
+                    <div class="ex-download">
+                        <p class="hint" data-x="dlHint"></p>
+                        <button id="exDlBtn" class="btn-primary" type="button" data-x="dlBtn"></button>
+                        <p id="exDlStatus" class="hint" style="margin-top: 8px;"></p>
+                    </div>
                 </div>
             </div>
 
@@ -334,7 +360,7 @@
 
     </main>
 
-    <script src="common.js?v=20261028e"></script>
+    <script src="common.js?v=20261029a"></script>
     <script src="account-menu.js"></script>
     <script src="exercise-pose.js"></script>
     <script src="exercise.js"></script>

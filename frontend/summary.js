@@ -55,7 +55,7 @@ function renderSaved() {
 
         const icon = document.createElement('div');
         icon.className = 'file-chip-icon';
-        icon.textContent = 'PDF';
+        icon.textContent = /\.(jpe?g|png|webp|heic|heif)$/i.test(item.name || '') ? 'IMG' : 'PDF';
 
         const info = document.createElement('div');
         info.className = 'file-chip-info';

@@ -79,6 +79,28 @@
             safe3: 'Keep a chair or wall nearby for support, and have someone with you if you feel weak.',
             safe4: 'The camera coach only checks your movement. It is not a doctor or physiotherapist.',
             // live feedback
+            histTitle: 'Your exercise history',
+            histHint: 'Tap a day to see what you did.',
+            histEmptyDay: 'No exercise recorded on this day.',
+            histToday: 'Today',
+            histReps: '{r} reps',
+            histDone: 'Done',
+            histSessions: '{n} session(s)',
+            dlHint: 'Download a report of your exercise history to show your doctor or physiotherapist.',
+            dlBtn: '📥 Download Exercise Report (PDF)',
+            dlPreparing: 'Preparing your report…',
+            dlReady: '✓ Report downloaded.',
+            dlFailed: 'Could not create the report. Please try again.',
+            dlNothing: 'Nothing recorded yet. Do an exercise first.',
+            pdfTitle: 'Exercise Report',
+            pdfSub: 'Home exercise record from the Neutrix exercise coach',
+            pdfPatient: 'Patient', pdfIssue: 'Medical issue', pdfPeriod: 'Period', pdfGenerated: 'Generated',
+            pdfOverview: 'Overview', pdfActiveDays: 'Active days', pdfSessions: 'Sessions', pdfTotalReps: 'Total reps', pdfExercises: 'Exercises',
+            pdfByExercise: 'By exercise', pdfExercise: 'Exercise', pdfTarget: 'Target (from report)', pdfType: 'Checked by', pdfLast: 'Last done',
+            pdfCamera: 'Camera', pdfSelf: 'Self-reported',
+            pdfDailyLog: 'Daily log', pdfDate: 'Date', pdfTime: 'Time', pdfResult: 'Result',
+            pdfRestrictions: 'Limits written in the reports',
+            pdfNote: 'Reps were counted by the camera coach in the patient’s browser (no video is recorded). Self-reported items were marked done by the patient. This record supports, and does not replace, clinical assessment.',
             fbGetReady: 'Get ready…',
             fbNobody: 'Step into the picture',
             fbShowArm: 'Move so your whole arm is in the picture',
@@ -172,6 +194,28 @@
             safe2: 'സാവധാനം ചെയ്യുക. വേഗതയേക്കാൾ പ്രധാനം നിയന്ത്രിതമായ ചലനങ്ങളാണ്.',
             safe3: 'പിന്തുണയ്ക്കായി ഒരു കസേരയോ ചുമരോ അടുത്ത് വയ്ക്കുക, ക്ഷീണം തോന്നിയാൽ ആരെങ്കിലും കൂടെ ഉണ്ടാകണം.',
             safe4: 'ക്യാമറ സഹായി നിങ്ങളുടെ ചലനം മാത്രമേ പരിശോധിക്കൂ. ഇത് ഡോക്ടറോ ഫിസിയോതെറാപ്പിസ്റ്റോ അല്ല.',
+            histTitle: 'നിങ്ങളുടെ വ്യായാമ ചരിത്രം',
+            histHint: 'ആ ദിവസം എന്ത് ചെയ്തുവെന്ന് കാണാൻ ഒരു ദിവസം ടാപ്പ് ചെയ്യുക.',
+            histEmptyDay: 'ഈ ദിവസം വ്യായാമമൊന്നും രേഖപ്പെടുത്തിയിട്ടില്ല.',
+            histToday: 'ഇന്ന്',
+            histReps: '{r} ആവർത്തനം',
+            histDone: 'ചെയ്തു',
+            histSessions: '{n} തവണ',
+            dlHint: 'ഡോക്ടറെയോ ഫിസിയോതെറാപ്പിസ്റ്റിനെയോ കാണിക്കാൻ നിങ്ങളുടെ വ്യായാമ ചരിത്രത്തിന്റെ റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക.',
+            dlBtn: '📥 വ്യായാമ റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക (PDF)',
+            dlPreparing: 'റിപ്പോർട്ട് തയ്യാറാക്കുന്നു…',
+            dlReady: '✓ റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്തു.',
+            dlFailed: 'റിപ്പോർട്ട് ഉണ്ടാക്കാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.',
+            dlNothing: 'ഇതുവരെ ഒന്നും രേഖപ്പെടുത്തിയിട്ടില്ല. ആദ്യം ഒരു വ്യായാമം ചെയ്യുക.',
+            pdfTitle: 'വ്യായാമ റിപ്പോർട്ട്',
+            pdfSub: 'ന്യൂട്രിക്സ് വ്യായാമ സഹായിയിൽ നിന്നുള്ള വീട്ടിലെ വ്യായാമ രേഖ',
+            pdfPatient: 'രോഗി', pdfIssue: 'ആരോഗ്യ പ്രശ്നം', pdfPeriod: 'കാലയളവ്', pdfGenerated: 'തയ്യാറാക്കിയത്',
+            pdfOverview: 'ചുരുക്കം', pdfActiveDays: 'വ്യായാമം ചെയ്ത ദിവസങ്ങൾ', pdfSessions: 'തവണകൾ', pdfTotalReps: 'ആകെ ആവർത്തനങ്ങൾ', pdfExercises: 'വ്യായാമങ്ങൾ',
+            pdfByExercise: 'ഓരോ വ്യായാമവും', pdfExercise: 'വ്യായാമം', pdfTarget: 'ലക്ഷ്യം (റിപ്പോർട്ടിൽ നിന്ന്)', pdfType: 'പരിശോധിച്ചത്', pdfLast: 'അവസാനം ചെയ്തത്',
+            pdfCamera: 'ക്യാമറ', pdfSelf: 'സ്വയം രേഖപ്പെടുത്തിയത്',
+            pdfDailyLog: 'ദൈനംദിന രേഖ', pdfDate: 'തീയതി', pdfTime: 'സമയം', pdfResult: 'ഫലം',
+            pdfRestrictions: 'റിപ്പോർട്ടുകളിൽ എഴുതിയ നിയന്ത്രണങ്ങൾ',
+            pdfNote: 'ആവർത്തനങ്ങൾ രോഗിയുടെ ബ്രൗസറിലെ ക്യാമറ സഹായി എണ്ണിയതാണ് (വീഡിയോ റെക്കോർഡ് ചെയ്യുന്നില്ല). സ്വയം രേഖപ്പെടുത്തിയവ രോഗി ചെയ്തതായി അടയാളപ്പെടുത്തിയതാണ്. ഇത് ക്ലിനിക്കൽ പരിശോധനയ്ക്ക് പകരമല്ല.',
             fbGetReady: 'തയ്യാറാകൂ…',
             fbNobody: 'ചിത്രത്തിനുള്ളിലേക്ക് വരൂ',
             fbShowArm: 'കൈ മുഴുവൻ ചിത്രത്തിൽ വരുന്ന രീതിയിൽ നീങ്ങുക',
@@ -234,6 +278,13 @@
         const entry = day[exId(ex)] = day[exId(ex)] || { sessions: 0, reps: 0 };
         entry.sessions += 1;
         entry.reps += reps || 0;
+        // Details for the history and the report
+        entry.name_en = ex.name_en || '';
+        entry.name_ml = ex.name_ml || '';
+        entry.camera = NxPose.trackable(ex.move);
+        entry.target = doseText(ex);
+        entry.items = entry.items || [];
+        entry.items.push({ at: new Date().toISOString(), reps: reps || 0 });
         // keep about two months
         Object.keys(log).sort().slice(0, -60).forEach(k => delete log[k]);
         storeSet('neutrixExerciseLog', log);
@@ -277,6 +328,7 @@
             ? `<strong>${esc(x('restrictTitle'))}</strong><ul>${restrictions.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : '';
 
         show('exNone', !!info && !exercises.length);
+        renderHistory();
 
         exercises.forEach((ex, i) => {
             const camera = NxPose.trackable(ex.move);
@@ -338,6 +390,190 @@
         renderList();
     }
     ['coachBack', 'guidedBack', 'doneBack'].forEach(id => $(id).addEventListener('click', backToList));
+
+    // =====================================================
+    // History of earlier days + download report
+    // =====================================================
+    let histDay = today();
+    function dayKeyOf(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+    function shift(k, n) { const [y, m, d] = k.split('-').map(Number); const x = new Date(y, m - 1, d + n); return dayKeyOf(x); }
+    function keyDate(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
+    function nameOf(entry, id) {
+        const ex = ((info && info.exercises) || []).find(e => exId(e) === id);
+        if (ex) return pick(ex, 'name');
+        return (ml() ? entry.name_ml || entry.name_en : entry.name_en || entry.name_ml) || id.replace(/-/g, ' ');
+    }
+    function isCameraEntry(entry, id) {
+        if (entry.camera !== undefined) return entry.camera;
+        const ex = ((info && info.exercises) || []).find(e => exId(e) === id);
+        return ex ? NxPose.trackable(ex.move) : entry.reps > 0;
+    }
+    const fmtTime = iso => new Date(iso).toLocaleTimeString(localeFor(), { hour: 'numeric', minute: '2-digit' });
+
+    function renderHistory() {
+        const log = storeGet('neutrixExerciseLog') || {};
+        const strip = $('exWeek');
+        strip.innerHTML = '';
+        for (let i = 6; i >= 0; i--) {
+            const k = shift(today(), -i);
+            const day = log[k] || {};
+            const sessions = Object.values(day).reduce((a, e) => a + (e.sessions || 0), 0);
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'week-day' + (k === histDay ? ' selected' : '');
+            const label = document.createElement('span');
+            label.textContent = keyDate(k).toLocaleDateString(localeFor(), { weekday: 'short' });
+            const dot = document.createElement('span');
+            dot.className = 'week-dot' + (sessions ? ' full' : '');
+            dot.textContent = sessions ? String(sessions) : '–';
+            b.append(label, dot);
+            b.addEventListener('click', () => { histDay = k; renderHistory(); });
+            strip.appendChild(b);
+        }
+        const box = $('exDayLog');
+        const day = log[histDay] || {};
+        const ids = Object.keys(day);
+        const title = histDay === today() ? x('histToday') : keyDate(histDay).toLocaleDateString(localeFor(), { weekday: 'long', day: 'numeric', month: 'long' });
+        if (!ids.length) {
+            box.innerHTML = `<div class="ex-log-title">${esc(title)}</div><p class="hint">${esc(x('histEmptyDay'))}</p>`;
+            return;
+        }
+        box.innerHTML = `<div class="ex-log-title">${esc(title)}</div>` + ids.map(id => {
+            const e = day[id];
+            const cam = isCameraEntry(e, id);
+            const times = (e.items || []).map(it => `${fmtTime(it.at)}${cam ? ` · ${x('histReps', { r: it.reps })}` : ''}`);
+            const total = cam ? x('histReps', { r: e.reps }) : x('histDone');
+            return `<div class="ex-log-row">
+                <div><strong>${esc(nameOf(e, id))}</strong>
+                ${times.length ? `<div class="ex-log-times">${times.map(esc).join(' &nbsp;|&nbsp; ')}</div>` : ''}</div>
+                <span class="ex-log-total">${esc(x('histSessions', { n: e.sessions }))} · ${esc(total)}</span>
+            </div>`;
+        }).join('');
+    }
+
+    function buildPdfHtml() {
+        const log = storeGet('neutrixExerciseLog') || {};
+        const days = Object.keys(log).filter(k => Object.keys(log[k] || {}).length).sort();
+        const start = days[0];
+        const fmtD = k => keyDate(k).toLocaleDateString(localeFor(), { day: 'numeric', month: 'short', year: 'numeric' });
+        const per = new Map();
+        let sessions = 0, reps = 0, rows = '';
+        days.forEach(k => {
+            let first = true;
+            Object.entries(log[k]).forEach(([id, e]) => {
+                const cam = isCameraEntry(e, id);
+                sessions += e.sessions || 0;
+                reps += e.reps || 0;
+                const m = per.get(id) || { name: nameOf(e, id), cam, target: e.target || '', sessions: 0, reps: 0, last: k };
+                m.sessions += e.sessions || 0; m.reps += e.reps || 0; m.last = k;
+                const ex = ((info && info.exercises) || []).find(z => exId(z) === id);
+                if (ex && !m.target) m.target = doseText(ex) || '';
+                per.set(id, m);
+                const items = e.items && e.items.length ? e.items : [{ at: null, reps: e.reps }];
+                items.forEach(it => {
+                    rows += `<tr class="${first ? 'day-start' : ''}"><td>${first ? esc(fmtD(k)) : ''}</td>
+                        <td>${it.at ? esc(fmtTime(it.at)) : '–'}</td><td>${esc(nameOf(e, id))}</td>
+                        <td class="ok">${esc(cam ? x('histReps', { r: it.reps }) : x('histDone'))}</td></tr>`;
+                    first = false;
+                });
+            });
+        });
+        let exRows = '';
+        per.forEach(m => {
+            exRows += `<tr><td>${esc(m.name)}</td><td>${esc(m.target || '–')}</td><td>${esc(m.cam ? x('pdfCamera') : x('pdfSelf'))}</td>
+                <td>${m.sessions}</td><td>${m.cam ? m.reps : '–'}</td><td>${esc(fmtD(m.last))}</td></tr>`;
+        });
+        const restrictions = info ? (ml() && info.restrictions_ml.length ? info.restrictions_ml : info.restrictions_en) : [];
+        const issue = window.neutrixActiveIssue ? window.neutrixActiveIssue.title : '';
+        const patient = localStorage.getItem('neutrix_patient_name') || '';
+        const generated = new Date().toLocaleString(localeFor(), { dateStyle: 'medium', timeStyle: 'short' });
+        return `
+        <style>
+            .nx-pdf { width: 100%; box-sizing: border-box; padding: 4px; font-family: "Segoe UI", Roboto, "Noto Sans Malayalam", sans-serif; color: #111; background: #fff; font-size: 12px; line-height: 1.5; }
+            .nx-pdf * { box-sizing: border-box; }
+            .nx-pdf .head { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #a855f7; padding-bottom: 10px; margin-bottom: 14px; }
+            .nx-pdf .brand-name { font-weight: 800; font-size: 16px; letter-spacing: 1px; }
+            .nx-pdf .brand-sub { font-size: 11px; color: #666; }
+            .nx-pdf h1 { font-size: 20px; margin: 0; text-align: right; font-family: Georgia, serif; font-weight: 400; }
+            .nx-pdf .sub { font-size: 11px; color: #666; text-align: right; }
+            .nx-pdf .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; background: #f4f2ee; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+            .nx-pdf .meta b { color: #555; }
+            .nx-pdf h2 { font-size: 14px; margin: 18px 0 8px; border-bottom: 1px solid #e5e3df; padding-bottom: 4px; }
+            .nx-pdf .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+            .nx-pdf .stat { border: 1px solid #e5e3df; border-radius: 8px; padding: 10px; text-align: center; }
+            .nx-pdf .stat .num { font-size: 22px; font-weight: 800; color: #7c3aed; }
+            .nx-pdf .stat .lbl { font-size: 11px; color: #666; }
+            .nx-pdf table { width: 100%; border-collapse: collapse; }
+            .nx-pdf th { background: #111; color: #fff; text-align: left; padding: 6px 8px; font-size: 11px; }
+            .nx-pdf td { border-bottom: 1px solid #e5e3df; padding: 5px 8px; vertical-align: top; }
+            .nx-pdf tr { page-break-inside: avoid; }
+            .nx-pdf tr.day-start td { border-top: 2px solid #d4d0c8; }
+            .nx-pdf td.ok { color: #15803d; font-weight: 700; }
+            .nx-pdf ul { margin: 0; padding-left: 18px; }
+            .nx-pdf .foot { margin-top: 16px; font-size: 10.5px; color: #666; border-top: 1px dashed #d4d0c8; padding-top: 8px; }
+        </style>
+        <div class="nx-pdf">
+            <div class="head">
+                <div><div class="brand-name">NEUTRIX HEALTH</div><div class="brand-sub">Post-Discharge Patient Portal</div></div>
+                <div><h1>${esc(x('pdfTitle'))}</h1><div class="sub">${esc(x('pdfSub'))}</div></div>
+            </div>
+            <div class="meta">
+                <div><b>${esc(x('pdfPatient'))}:</b> ${esc(patient || '–')}</div>
+                <div><b>${esc(x('pdfIssue'))}:</b> ${esc(issue || '–')}</div>
+                <div><b>${esc(x('pdfPeriod'))}:</b> ${esc(fmtD(start))} – ${esc(fmtD(today()))}</div>
+                <div><b>${esc(x('pdfGenerated'))}:</b> ${esc(generated)}</div>
+            </div>
+            <h2>${esc(x('pdfOverview'))}</h2>
+            <div class="stats">
+                <div class="stat"><div class="num">${days.length}</div><div class="lbl">${esc(x('pdfActiveDays'))}</div></div>
+                <div class="stat"><div class="num">${sessions}</div><div class="lbl">${esc(x('pdfSessions'))}</div></div>
+                <div class="stat"><div class="num">${reps}</div><div class="lbl">${esc(x('pdfTotalReps'))}</div></div>
+                <div class="stat"><div class="num">${per.size}</div><div class="lbl">${esc(x('pdfExercises'))}</div></div>
+            </div>
+            <h2>${esc(x('pdfByExercise'))}</h2>
+            <table><thead><tr><th>${esc(x('pdfExercise'))}</th><th>${esc(x('pdfTarget'))}</th><th>${esc(x('pdfType'))}</th>
+                <th>${esc(x('pdfSessions'))}</th><th>${esc(x('pdfTotalReps'))}</th><th>${esc(x('pdfLast'))}</th></tr></thead>
+                <tbody>${exRows}</tbody></table>
+            ${restrictions.length ? `<h2>${esc(x('pdfRestrictions'))}</h2><ul>${restrictions.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
+            <h2>${esc(x('pdfDailyLog'))}</h2>
+            <table><thead><tr><th>${esc(x('pdfDate'))}</th><th>${esc(x('pdfTime'))}</th><th>${esc(x('pdfExercise'))}</th><th>${esc(x('pdfResult'))}</th></tr></thead>
+                <tbody>${rows}</tbody></table>
+            <div class="foot">${esc(x('pdfNote'))}</div>
+        </div>`;
+    }
+
+    async function downloadExerciseReport() {
+        const status = $('exDlStatus');
+        const log = storeGet('neutrixExerciseLog') || {};
+        if (!Object.values(log).some(d => Object.keys(d || {}).length)) { status.textContent = x('dlNothing'); return; }
+        if (!window.html2pdf) { status.textContent = x('dlFailed'); return; }
+        const btn = $('exDlBtn');
+        btn.disabled = true;
+        status.textContent = x('dlPreparing');
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = buildPdfHtml();
+        const saved = window.scrollY;
+        window.scrollTo(0, 0);
+        try {
+            await html2pdf().set({
+                margin: [10, 10, 12, 10],
+                filename: `Neutrix_Exercise_Report_${today()}.pdf`,
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
+            }).from(wrapper).save();
+            status.textContent = x('dlReady');
+        } catch (e) {
+            console.error(e);
+            status.textContent = x('dlFailed');
+        } finally {
+            window.scrollTo(0, saved);
+            btn.disabled = false;
+        }
+    }
+    $('exDlBtn').addEventListener('click', downloadExerciseReport);
+    window.NxExerciseReport = { buildPdfHtml };
 
     // =====================================================
     // 2. Camera coach

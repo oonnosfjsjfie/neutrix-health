@@ -24,7 +24,10 @@
         'neutrixFollowups',
         'neutrix_meds',
         'neutrixExercises',
-        'neutrixExerciseLog'
+        'neutrixExerciseLog',
+        'neutrixTracker',
+        'neutrixBriefLog',
+        'neutrixProgressReport'
     ];
     const ACTIVE_KEY = 'neutrixActiveIssue';
 

@@ -21,10 +21,10 @@ const I18N = {
         cardSubtitle: "Upload one or more medical reports and pharmacy bills (PDF) to get a simple AI summary.",
         beta: "Beta",
         uploadSection: "Upload Reports",
-        fileLabel: "Medical Reports (PDF)",
-        dropTitle: "Drag & drop your PDFs here, or <span>browse</span>",
-        dropSub: "Add one or more PDFs (discharge summary, lab reports, prescriptions). Digital PDFs work best.",
-        billLabel: "Pharmacy Bills (PDF, optional)",
+        fileLabel: "Medical Reports (PDF or photos)",
+        dropTitle: "Drag & drop your PDFs or photos here, or <span>browse</span>",
+        dropSub: "Add PDFs or photos of each page (discharge summary, lab reports, prescriptions). No PDF? Use “Take photo”.",
+        billLabel: "Pharmacy Bills (PDF or photos, optional)",
         billDropTitle: "Drag & drop your pharmacy bills here, or <span>browse</span>",
         billDropSub: "Add one or more bills. Neutrix will cross-check your medicines and costs.",
         removeBtn: "✕ Remove",
@@ -134,8 +134,8 @@ const I18N = {
         viewSummaryBtn: "📋 Open AI Patient Reports Portal",
         addMoreBtn: "＋ Add Reports or Bills",
         addMoreHint: "Add new or missing files. Neutrix will update your AI summary using all of your reports.",
-        moreReportsLabel: "Medical Reports (PDF)",
-        moreBillsLabel: "Pharmacy Bills (PDF)",
+        moreReportsLabel: "Medical Reports (PDF or photos)",
+        moreBillsLabel: "Pharmacy Bills (PDF or photos)",
         updateBtn: "🔄 Update My AI Summary",
         updateLoading: "🔄 Updating your AI summary with the new files...",
         cancelBtn: "Cancel",
@@ -143,7 +143,7 @@ const I18N = {
         addNewTitle: "➕ Add New Report",
         addNewHint: "Optional: got a newer lab test or check-up report? Neutrix can compare it with your earlier reports and show your improvements.",
         addNewDropTitle: "Drag & drop your new report here, or <span>browse</span>",
-        addNewDropSub: "PDF only. You can add more than one.",
+        addNewDropSub: "PDFs or photos. You can add more than one.",
         compareBtn: "🔍 Compare With My Previous Reports",
         compareLoading: "🔄 Reading your new report and comparing it with the earlier ones...",
         noNewFile: "Please add at least one new report PDF.",
@@ -220,7 +220,7 @@ const I18N = {
 
         // Messages
         noFile: "Please add at least one medical report PDF before processing.",
-        onlyPdf: "Only PDF files are supported. Please choose .pdf files.",
+        onlyPdf: "Only PDF files or photos (JPG, PNG, WEBP, HEIC) are supported.",
         loading: "🔄 Reading your documents and writing the AI summary...",
         success: "Analysis Completed Successfully!",
         redirecting: "✅ Done! Opening your summary...",
@@ -253,10 +253,10 @@ const I18N = {
         cardSubtitle: "ലളിതമായ AI സംഗ്രഹം ലഭിക്കാൻ ഒന്നോ അതിലധികമോ മെഡിക്കൽ റിപ്പോർട്ടുകളും ഫാർമസി ബില്ലുകളും (PDF) അപ്‌ലോഡ് ചെയ്യുക.",
         beta: "ബീറ്റ",
         uploadSection: "റിപ്പോർട്ടുകൾ അപ്‌ലോഡ് ചെയ്യുക",
-        fileLabel: "മെഡിക്കൽ റിപ്പോർട്ടുകൾ (PDF)",
-        dropTitle: "നിങ്ങളുടെ PDF-കൾ ഇവിടെ വലിച്ചിടുക, അല്ലെങ്കിൽ <span>തിരഞ്ഞെടുക്കുക</span>",
-        dropSub: "ഒന്നോ അതിലധികമോ PDF-കൾ ചേർക്കാം (ഡിസ്ചാർജ് സമ്മറി, ലാബ് റിപ്പോർട്ടുകൾ, കുറിപ്പടികൾ). ഡിജിറ്റൽ PDF-കളാണ് ഏറ്റവും നല്ലത്.",
-        billLabel: "ഫാർമസി ബില്ലുകൾ (PDF, ഓപ്ഷണൽ)",
+        fileLabel: "മെഡിക്കൽ റിപ്പോർട്ടുകൾ (PDF അല്ലെങ്കിൽ ഫോട്ടോ)",
+        dropTitle: "PDF-കളോ ഫോട്ടോകളോ ഇവിടെ വലിച്ചിടുക, അല്ലെങ്കിൽ <span>തിരഞ്ഞെടുക്കുക</span>",
+        dropSub: "PDF-കളോ ഓരോ പേജിന്റെയും ഫോട്ടോകളോ ചേർക്കാം. PDF ഇല്ലേ? “ഫോട്ടോ എടുക്കുക” ഉപയോഗിക്കുക.",
+        billLabel: "ഫാർമസി ബില്ലുകൾ (PDF അല്ലെങ്കിൽ ഫോട്ടോ, ഓപ്ഷണൽ)",
         billDropTitle: "ഫാർമസി ബില്ലുകൾ ഇവിടെ വലിച്ചിടുക, അല്ലെങ്കിൽ <span>തിരഞ്ഞെടുക്കുക</span>",
         billDropSub: "ഒന്നോ അതിലധികമോ ബില്ലുകൾ ചേർക്കാം. നിങ്ങളുടെ മരുന്നുകളും ചെലവും ന്യൂട്രിക്സ് ഒത്തുനോക്കും.",
         removeBtn: "✕ നീക്കം ചെയ്യുക",
@@ -366,8 +366,8 @@ const I18N = {
         viewSummaryBtn: "📋 AI രോഗി റിപ്പോർട്ട് പോർട്ടൽ തുറക്കുക",
         addMoreBtn: "＋ റിപ്പോർട്ടുകളോ ബില്ലുകളോ ചേർക്കുക",
         addMoreHint: "പുതിയതോ വിട്ടുപോയതോ ആയ ഫയലുകൾ ചേർക്കുക. എല്ലാ റിപ്പോർട്ടുകളും ഉപയോഗിച്ച് ന്യൂട്രിക്സ് നിങ്ങളുടെ AI സംഗ്രഹം പുതുക്കും.",
-        moreReportsLabel: "മെഡിക്കൽ റിപ്പോർട്ടുകൾ (PDF)",
-        moreBillsLabel: "ഫാർമസി ബില്ലുകൾ (PDF)",
+        moreReportsLabel: "മെഡിക്കൽ റിപ്പോർട്ടുകൾ (PDF അല്ലെങ്കിൽ ഫോട്ടോ)",
+        moreBillsLabel: "ഫാർമസി ബില്ലുകൾ (PDF അല്ലെങ്കിൽ ഫോട്ടോ)",
         updateBtn: "🔄 എന്റെ AI സംഗ്രഹം പുതുക്കുക",
         updateLoading: "🔄 പുതിയ ഫയലുകൾ ഉപയോഗിച്ച് AI സംഗ്രഹം പുതുക്കുന്നു...",
         cancelBtn: "റദ്ദാക്കുക",
@@ -375,7 +375,7 @@ const I18N = {
         addNewTitle: "➕ പുതിയ റിപ്പോർട്ട് ചേർക്കുക",
         addNewHint: "ഓപ്ഷണൽ: പുതിയ ലാബ് ടെസ്റ്റോ പരിശോധനാ റിപ്പോർട്ടോ ലഭിച്ചോ? ന്യൂട്രിക്സ് അതിനെ മുൻ റിപ്പോർട്ടുകളുമായി താരതമ്യം ചെയ്ത് നിങ്ങളുടെ പുരോഗതി കാണിക്കും.",
         addNewDropTitle: "പുതിയ റിപ്പോർട്ട് ഇവിടെ വലിച്ചിടുക, അല്ലെങ്കിൽ <span>തിരഞ്ഞെടുക്കുക</span>",
-        addNewDropSub: "PDF മാത്രം. ഒന്നിലധികം ചേർക്കാം.",
+        addNewDropSub: "PDF-കളോ ഫോട്ടോകളോ. ഒന്നിലധികം ചേർക്കാം.",
         compareBtn: "🔍 മുൻ റിപ്പോർട്ടുകളുമായി താരതമ്യം ചെയ്യുക",
         compareLoading: "🔄 പുതിയ റിപ്പോർട്ട് വായിച്ച് മുൻ റിപ്പോർട്ടുകളുമായി താരതമ്യം ചെയ്യുന്നു...",
         noNewFile: "കുറഞ്ഞത് ഒരു പുതിയ റിപ്പോർട്ട് PDF ചേർക്കുക.",
@@ -452,7 +452,7 @@ const I18N = {
 
         // Messages
         noFile: "തുടരുന്നതിന് മുമ്പ് കുറഞ്ഞത് ഒരു മെഡിക്കൽ റിപ്പോർട്ട് PDF ചേർക്കുക.",
-        onlyPdf: "PDF ഫയലുകൾ മാത്രമേ സ്വീകരിക്കൂ. ദയവായി .pdf ഫയലുകൾ തിരഞ്ഞെടുക്കുക.",
+        onlyPdf: "PDF ഫയലുകളും ഫോട്ടോകളും (JPG, PNG, WEBP, HEIC) മാത്രമേ സ്വീകരിക്കൂ.",
         loading: "🔄 നിങ്ങളുടെ രേഖകൾ വായിച്ച് AI സംഗ്രഹം തയ്യാറാക്കുന്നു...",
         success: "വിശകലനം വിജയകരമായി പൂർത്തിയായി!",
         redirecting: "✅ പൂർത്തിയായി! നിങ്ങളുടെ സംഗ്രഹം തുറക്കുന്നു...",
@@ -810,7 +810,7 @@ langBtn.addEventListener('click', () => {
 const NX_LAYOUT = {
     English: {
         nav: { dashboard: 'Dashboard', upload: 'AI Summary', report: 'Reports', medplan: 'Medicines', schedule: 'Schedule',
-               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Doctor Brief', exercise: 'Exercise', issues: 'My Issues', website: 'Website' },
+               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Doctor Brief', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website' },
         hero: {
             issues:       ['MY MEDICAL ISSUES', 'Your recovery, one issue at a time.', 'Pick an issue to continue, or add a new one. Each issue keeps its own reports, plans and history.'],
             upload:       ['AI DISCHARGE SUMMARY', 'Upload. Understand. Recover.', 'Add your discharge summary, lab reports and pharmacy bills. Neutrix turns them into a simple summary.'],
@@ -821,14 +821,15 @@ const NX_LAYOUT = {
             improvements: ['MY IMPROVEMENTS', 'See how far you have come.', 'How your newer reports compare with the earlier ones.'],
             tracking:     ['RECOVERY TRACKER', 'Small readings. Clear signals.', 'Record the patient’s health readings daily to assist your medical care team.'],
             briefing:     ['DOCTOR BRIEF', 'Tell your doctor, clearly.', 'Prepare a clear, structured message and send it straight to your doctor.'],
-            exercise:     ['AI EXERCISE COACH', 'Move right. Recover stronger.', 'The exercises from your reports, with your camera checking each movement as you go.']
+            exercise:     ['AI EXERCISE COACH', 'Move right. Recover stronger.', 'The exercises from your reports, with your camera checking each movement as you go.'],
+            progress:     ['OVERALL PROGRESS REPORT', 'Everything, in one report.', 'Your medicines, readings, exercise and reports, turned into one clear report for your doctor.']
         },
         footer: { app: 'PATIENT PORTAL', tools: 'RECOVERY TOOLS', help: 'HELP', note: 'Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace advice from a qualified doctor.',
                   website: 'Neutrix website', safety: 'Responsible AI', top: '↑ Top' }
     },
     Malayalam: {
         nav: { dashboard: 'ഡാഷ്ബോർഡ്', upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്നുകൾ', schedule: 'ഷെഡ്യൂൾ',
-               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടർ ബ്രീഫ്', exercise: 'വ്യായാമം', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്' },
+               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടർ ബ്രീഫ്', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്' },
         hero: {
             issues:       ['എന്റെ ആരോഗ്യ പ്രശ്നങ്ങൾ', 'ഓരോ പ്രശ്നവും, ഓരോ ചുവടും.', 'തുടരാൻ ഒരു പ്രശ്നം തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ പുതിയത് ചേർക്കുക.'],
             upload:       ['AI ഡിസ്ചാർജ് സംഗ്രഹം', 'അപ്‌ലോഡ് ചെയ്യൂ. മനസ്സിലാക്കൂ.', 'ഡിസ്ചാർജ് സമ്മറി, ലാബ് റിപ്പോർട്ടുകൾ, ഫാർമസി ബില്ലുകൾ എന്നിവ ചേർക്കുക.'],
@@ -839,7 +840,8 @@ const NX_LAYOUT = {
             improvements: ['എന്റെ പുരോഗതി', 'നിങ്ങൾ എത്ര മുന്നോട്ട് പോയി.', 'പുതിയ റിപ്പോർട്ടുകൾ മുൻ റിപ്പോർട്ടുകളുമായി താരതമ്യം ചെയ്യുമ്പോൾ.'],
             tracking:     ['റിക്കവറി ട്രാക്കർ', 'ചെറിയ അളവുകൾ. വ്യക്തമായ സൂചനകൾ.', 'നിങ്ങളുടെ മെഡിക്കൽ കെയർ ടീമിനെ സഹായിക്കുന്നതിന് രോഗിയുടെ ആരോഗ്യ വിവരങ്ങൾ ദിവസവും രേഖപ്പെടുത്തുക.'],
             briefing:     ['ഡോക്ടർ ബ്രീഫ്', 'ഡോക്ടറോട് വ്യക്തമായി പറയൂ.', 'വ്യക്തമായ ഒരു സന്ദേശം തയ്യാറാക്കി ഡോക്ടർക്ക് നേരിട്ട് അയക്കുക.'],
-            exercise:     ['AI വ്യായാമ സഹായി', 'ശരിയായി ചെയ്യൂ. വേഗം സുഖപ്പെടൂ.', 'നിങ്ങളുടെ റിപ്പോർട്ടുകളിലെ വ്യായാമങ്ങൾ, ഓരോ ചലനവും ക്യാമറ പരിശോധിക്കുന്നു.']
+            exercise:     ['AI വ്യായാമ സഹായി', 'ശരിയായി ചെയ്യൂ. വേഗം സുഖപ്പെടൂ.', 'നിങ്ങളുടെ റിപ്പോർട്ടുകളിലെ വ്യായാമങ്ങൾ, ഓരോ ചലനവും ക്യാമറ പരിശോധിക്കുന്നു.'],
+            progress:     ['മൊത്തം പുരോഗതി റിപ്പോർട്ട്', 'എല്ലാം, ഒരു റിപ്പോർട്ടിൽ.', 'മരുന്നുകൾ, റീഡിംഗുകൾ, വ്യായാമം, റിപ്പോർട്ടുകൾ — ഡോക്ടർക്കായി ഒരു വ്യക്തമായ റിപ്പോർട്ട്.']
         },
         footer: { app: 'രോഗി പോർട്ടൽ', tools: 'ടൂളുകൾ', help: 'സഹായം', note: 'ന്യൂട്രിക്സ് മെഡിക്കൽ വിവരങ്ങൾ ക്രമീകരിക്കുകയും വിശദീകരിക്കുകയും മാത്രം ചെയ്യുന്നു. ഇത് ഡോക്ടറുടെ ഉപദേശത്തിന് പകരമല്ല.',
                   website: 'ന്യൂട്രിക്സ് വെബ്സൈറ്റ്', safety: 'ഉത്തരവാദിത്തമുള്ള AI', top: '↑ മുകളിലേക്ക്' }

@@ -46,6 +46,7 @@
                         linear-gradient(135deg, #ff007a, #a855f7, #3b82f6, #00f2fe) border-box !important;
         }
         .nx-site .modern-input, .nx-site .modern-select, .nx-site .modern-textarea, .nx-site input, .nx-site select, .nx-site textarea { border-radius: 12px; }
+        .pf-cam-btn { margin: 0 0 0 8px !important; vertical-align: middle; }
         .nx-site .intake-card { animation: nxReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
         @keyframes nxReveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
         @media print { .nx-hero, .nx-footer, .nx-nav-links, .pf-toolbar { display: none !important; } }
@@ -485,10 +486,15 @@
         </div>
     </footer>
 
+    <script src="camera-capture.js"></script>
     <script src="profile.js"></script>
     <script src="account-menu.js"></script>
     <script>
         // Website layout texts + remember theme and language (same settings as the rest of Neutrix)
+        // "Take photo" for the profile picture (front camera)
+        NxCamera.attach(document.getElementById('profilePicInput'), {
+            after: document.getElementById('txt-upload-btn'), facing: 'user', tip: false, className: 'pf-cam-btn'
+        });
         document.addEventListener('DOMContentLoaded', () => setTimeout(function () {   // after profile.js has set up its buttons
             const PF = {
                 English: { navIssues: 'My Issues', navProfile: 'Patient Profile', navWebsite: 'Website', eyebrow: 'MY PATIENT PROFILE',

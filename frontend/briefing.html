@@ -8,7 +8,7 @@
     <script src="firebase-config.js"></script>
     <script src="neutrix-cloud.js"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261028e"></script>
+    <script src="issue-scope.js?v=20261029a"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Doctor Brief</title>
     <link rel="stylesheet" href="theme.css">
@@ -123,7 +123,7 @@
 
     </main>
 
-    <script src="common.js?v=20261028e"></script>
+    <script src="common.js?v=20261029a"></script>
     <script src="account-menu.js"></script>
     <script src="tracker&briefing.js"></script>
     <script>
@@ -283,6 +283,10 @@
                 showEmailStatus(data.ok ? 'ok' : 'error', (data.ok ? '✅ ' : '⚠️ ') + data.message);
                 if (data.ok) {
                     try { localStorage.setItem('neutrixDoctorEmail', to); } catch (e) {}
+                    // Keep a short record of what was sent (used in the doctor progress report)
+                    const sent = storeGet('neutrixBriefLog') || [];
+                    sent.push({ at: new Date().toISOString(), to, text: body.slice(0, 1500) });
+                    storeSet('neutrixBriefLog', sent.slice(-30));
                 }
             } catch (err) {
                 showEmailStatus('error', '⚠️ ' + bt('serverDown'));

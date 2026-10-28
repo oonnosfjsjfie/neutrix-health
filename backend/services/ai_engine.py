@@ -103,20 +103,82 @@ def extract_pdf_text(file_bytes: bytes) -> str:
     return text
 
 
+# ---------- Photos and scanned pages ----------
+MAX_SCANNED_PAGES = 8   # pages of a scanned PDF read with the AI
+
+def image_mime(name: str, data: bytes):
+    """Returns the image type if this file is a photo, else None."""
+    head = data[:16]
+    if head.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if head.startswith(b"\x89PNG"):
+        return "image/png"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "image/webp"
+    if head[4:12] in (b"ftypheic", b"ftypheix", b"ftyphevc", b"ftypmif1", b"ftypmsf1", b"ftypheif"):
+        return "image/heic"
+    ext = (name or "").lower().rsplit(".", 1)[-1]
+    return {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp",
+            "heic": "image/heic", "heif": "image/heif"}.get(ext)
+
+
+def read_image_text(data: bytes, mime: str) -> str:
+    """Copies the text from a photo of a medical document (AI reads the picture)."""
+    prompt = (
+        "This is a photo or scan of one page of a medical document (discharge summary, lab report, "
+        "prescription, physiotherapy advice or pharmacy bill). Copy ALL the text exactly as written, "
+        "top to bottom. Keep numbers, units, dates and medicine names exactly. Write tables as rows "
+        "with ' | ' between columns. Do not explain, summarise or add anything. If a word cannot be "
+        "read, write [unclear]. If the picture does not show a document with readable text, reply "
+        "with exactly: NO_TEXT"
+    )
+    text = generate([types.Part.from_bytes(data=data, mime_type=mime), prompt]).strip()
+    return "" if text.upper().startswith("NO_TEXT") else text
+
+
+def read_scanned_pdf(data: bytes) -> str:
+    """A PDF with no text layer (scanned pages): turn each page into a picture and read it."""
+    parts = []
+    with pymupdf.open(stream=data, filetype="pdf") as doc:
+        for i, page in enumerate(doc):
+            if i >= MAX_SCANNED_PAGES:
+                parts.append(f"[Only the first {MAX_SCANNED_PAGES} scanned pages were read]")
+                break
+            png = page.get_pixmap(dpi=150).tobytes("png")
+            text = read_image_text(png, "image/png")
+            if text:
+                parts.append(text)
+    return "\n\n".join(parts)
+
+
 def combine_documents(docs: list, label: str):
-    """Extract text from several PDFs and join them with clear headers."""
+    """Extract text from PDFs and photos and join them with clear headers."""
     parts = []
     problems = []
     for name, data in docs:
+        mime = image_mime(name, data)
         try:
-            text = extract_pdf_text(data)
+            if mime:
+                print(f"[photo] Reading '{name}' with the AI")
+                text = read_image_text(data, mime)
+                if not text.strip():
+                    problems.append(f"'{name}' has no readable document text (take the photo again, closer and in good light)")
+                    continue
+            else:
+                text = extract_pdf_text(data)
+                if not text.strip():
+                    print(f"[scan] '{name}' has no text layer, reading the pages with the AI")
+                    text = read_scanned_pdf(data)
         except Exception as e:
+            if is_busy_error(e):
+                raise
             problems.append(f"'{name}' could not be read ({e})")
             continue
         if not text.strip():
-            problems.append(f"'{name}' has no readable text (it may be a scanned image)")
+            problems.append(f"'{name}' has no readable text")
             continue
-        parts.append(f"===== {label}: {name} =====\n{text.strip()}")
+        kind = "PHOTO" if mime else "FILE"
+        parts.append(f"===== {label}: {name} ({kind}) =====\n{text.strip()}")
     return "\n\n".join(parts), problems
 
 
@@ -134,8 +196,12 @@ def process_documents_to_summary(documents: list, bills: list, language: str,
     print(f"[1] Received {len(documents)} report(s) and {len(bills)} bill(s)"
           + (" + earlier reports" if previous_text.strip() else ""))
 
-    new_report_text, report_problems = combine_documents(documents, "REPORT")
-    new_bill_text, bill_problems = combine_documents(bills, "PHARMACY BILL")
+    try:
+        new_report_text, report_problems = combine_documents(documents, "REPORT")
+        new_bill_text, bill_problems = combine_documents(bills, "PHARMACY BILL")
+    except Exception as e:   # the AI was busy / out of quota while reading photos
+        return {"transcription": previous_text, "bill_text": previous_bill_text,
+                "summary": friendly_error(e), "ok": False}
 
     # Files added to an existing set: keep the earlier text and add the new text after it
     report_text = "\n\n".join(t for t in [previous_text.strip(), new_report_text] if t)
@@ -144,12 +210,12 @@ def process_documents_to_summary(documents: list, bills: list, language: str,
     # No new files is fine when re-summarising reports that are already saved
     if not documents and not bills and not previous_text.strip():
         return {"transcription": previous_text, "bill_text": previous_bill_text,
-                "summary": "Please add at least one PDF.", "ok": False}
+                "summary": "Please add at least one PDF or photo.", "ok": False}
 
     if not report_text.strip():
         details = "; ".join(report_problems) or "No readable text was found."
         return {"transcription": "", "bill_text": "",
-                "summary": f"None of the medical reports could be read: {details}. Please upload digital PDFs (not scanned images).",
+                "summary": f"None of the medical reports could be read: {details}. Please upload clear PDFs, or photos of each page taken in good light.",
                 "ok": False}
 
     problems = report_problems + bill_problems
@@ -494,15 +560,72 @@ def generate_exercises(report_text: str):
 
 
 # ======================================================
+# 4c. Overall progress report for the doctor (all tools together)
+# ======================================================
+def generate_progress_report(facts: dict):
+    """facts: everything the patient recorded in Neutrix for one issue. Returns (markdown, ok)."""
+    data = json.dumps(facts, ensure_ascii=False, indent=1)[:60000]
+    prompt = f"""
+    You write a short, factual PATIENT PROGRESS REPORT for a doctor, from the home-care records a patient
+    kept in the Neutrix app after hospital discharge. Write in clear clinical English that a busy doctor
+    can read in two minutes.
+
+    STRICT RULES:
+    - Use ONLY the data below. Never invent readings, dates, medicines or events.
+    - Do NOT diagnose and do NOT recommend treatment changes. You may point out what may need the doctor's attention.
+    - If something was not recorded, say "Not recorded" in that section (one line). Do not pad.
+    - Quote numbers exactly. Give date ranges. Keep medicine names as written.
+    - Flag safety concerns clearly with "⚠️" (e.g. danger symptoms, very high/low readings, many missed doses,
+      missed follow-up dates). Normal adult reference points you may use for flagging only: temperature ≥ 100.4 °F,
+      BP ≥ 140/90 or < 90/60, fasting sugar ≥ 180 or < 70 mg/dL.
+
+    FORMAT (Markdown, exactly these sections, in this order):
+    ## 1. Snapshot
+    A 3–5 line overview: patient, issue, discharge/diagnosis in one line, period covered by the records.
+    ## 2. Key points for the doctor
+    3–7 bullets, most important first (⚠️ flags first).
+    ## 3. Medicine adherence
+    A table: Medicine | Doses scheduled | Taken | Missed | Adherence %. Then one line on the pattern (e.g. evening doses missed most).
+    ## 4. Home readings
+    A table of the readings (date, temp, BP, sugar, weight) — summarise ranges if there are many — then the trend in 1–3 bullets.
+    ## 5. Symptoms reported
+    Bullets with dates.
+    ## 6. Exercise and rehabilitation
+    What was prescribed vs what was done (sessions, reps, active days), and activity limits written in the reports.
+    ## 7. Changes in reports
+    What the newer reports showed compared with earlier ones (if any).
+    ## 8. Follow-up visits and tests
+    Upcoming and possibly missed check-ups with dates.
+    ## 9. Messages already sent to the doctor
+    Dates and a one-line gist of each.
+    ## 10. Data notes
+    One or two lines on what was not recorded or may be incomplete.
+
+    PATIENT RECORDS (JSON):
+    {data}
+    """
+    try:
+        text = generate(prompt)
+    except Exception as e:
+        print(f"[progress] Gemini error: {e}")
+        return friendly_error(e), False
+    text = re.sub(r"^```(?:markdown|md)?\s*|\s*```$", "", (text or "").strip())
+    return text, bool(text)
+
+
+# ======================================================
 # 4b. Compare a new report with earlier ones ("My Improvements")
 # ======================================================
 def compare_reports(previous_text: str, new_docs: list, language: str):
     """Returns (new_text, comparison_markdown, ok)."""
     print(f"[compare] {len(new_docs)} new report(s)")
-    new_text, problems = combine_documents(new_docs, "NEW REPORT")
+    try:
+        new_text, problems = combine_documents(new_docs, "NEW REPORT")
+    except Exception as e:
+        return "", friendly_error(e), False
     if not new_text.strip():
         details = "; ".join(problems) or "No readable text was found."
-        return "", f"The new report could not be read: {details}. Please upload a digital PDF (not a scanned image).", False
+        return "", f"The new report could not be read: {details}. Please upload a clear PDF, or photos of each page taken in good light.", False
 
     problem_note = ""
     if problems:

@@ -17,6 +17,7 @@ from services.ai_engine import (
     generate_checkups,
     generate_schedule,
     generate_exercises,
+    generate_progress_report,
     translate_markdown,
     compare_reports,
 )
@@ -118,6 +119,17 @@ def exercises(req: ExerciseRequest):
     items, restrictions_en, restrictions_ml, message, ok = generate_exercises(req.report_text)
     return {"exercises": items, "restrictions_en": restrictions_en,
             "restrictions_ml": restrictions_ml, "message": message, "ok": ok}
+
+
+class ProgressRequest(BaseModel):
+    facts: dict
+
+
+@app.post("/api/progress-report")
+def progress_report(req: ProgressRequest):
+    print("[progress] Writing the overall progress report...")
+    report, ok = generate_progress_report(req.facts)
+    return {"report": report, "ok": ok}
 
 
 # ---------- Compare a new report with earlier ones ----------
