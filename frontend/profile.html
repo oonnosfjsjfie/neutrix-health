@@ -9,6 +9,12 @@
     <script src="neutrix-cloud.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix Health | Patient Portal</title>
+    <script>
+        // Only signed-in users can open the patient profile
+        if (localStorage.getItem('neutrix_authenticated') !== 'true') {
+            window.location.replace('signin.html?next=' + encodeURIComponent('profile.html' + location.search));
+        }
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -400,5 +406,6 @@
 
 
     <script src="profile.js"></script>
+    <script src="account-menu.js"></script>
 </body>
 </html>

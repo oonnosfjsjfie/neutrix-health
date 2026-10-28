@@ -13,9 +13,9 @@
         // Only logged-in users can see this page
         if (localStorage.getItem('neutrix_authenticated') !== 'true') {
             window.location.replace('signin.html?next=issues.html');
-        } else if (!(localStorage.getItem('neutrix_hospital_profile') || localStorage.getItem('neutrix_patient_name'))) {
-            // First visit after signing up: fill in the profile once
-            window.location.replace('profile.html');
+        } else if (!localStorage.getItem('neutrix_hospital_profile')) {
+            // First visit after signing up: fill in the patient profile once
+            window.location.replace('profile.html?back=issues.html');
         }
     </script>
     <link rel="stylesheet" href="theme.css">
@@ -163,7 +163,6 @@
             <div class="system-controls">
                 <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
                 <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
-                <button class="ctrl-btn" id="signOutBtn" type="button" data-it="signOut">🚪 Sign Out</button>
             </div>
         </div>
     </nav>
@@ -259,6 +258,7 @@
     </div>
 
     <script src="common.js"></script>
+    <script src="account-menu.js"></script>
     <script src="issues.js"></script>
 </body>
 </html>

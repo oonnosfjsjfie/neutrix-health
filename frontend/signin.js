@@ -67,11 +67,16 @@ function goNext() {
     window.location.replace(safe ? next : 'home.html');
 }
 
-async function finish(user, name) {
+async function finish(user, name, isNew) {
     show('info', 'Signed in. Loading your saved data…');
     await NeutrixCloud.afterSignIn(user, name);
     show('ok', '✓ Welcome! Opening your workspace…');
-    setTimeout(goNext, 400);
+    // New account (or no patient profile yet): fill in the patient profile first, then the dashboard
+    const needsProfile = isNew || !localStorage.getItem('neutrix_hospital_profile');
+    setTimeout(() => {
+        if (needsProfile) window.location.replace('profile.html?back=issues.html');
+        else goNext();
+    }, 400);
 }
 
 // ---------- Not set up yet ----------
@@ -81,7 +86,10 @@ if (!NeutrixCloud.configured) {
 } else {
     // Already signed in on this device? Skip the form.
     NeutrixCloud.currentUser().then(user => {
-        if (user && localStorage.getItem('neutrix_authenticated') === 'true') goNext();
+        if (user && localStorage.getItem('neutrix_authenticated') === 'true') {
+            if (!localStorage.getItem('neutrix_hospital_profile')) window.location.replace('profile.html?back=issues.html');
+            else goNext();
+        }
     }).catch(err => show('error', 'Could not reach the sign-in service: ' + err.message));
 }
 
@@ -114,7 +122,7 @@ $('signUpForm').addEventListener('submit', async e => {
         const { auth } = await NeutrixCloud.init();
         const cred = await auth.createUserWithEmailAndPassword($('suEmail').value.trim(), password);
         if (name) await cred.user.updateProfile({ displayName: name });
-        await finish(cred.user, name);
+        await finish(cred.user, name, true);
     } catch (err) {
         show('error', friendly(err));
         busy(false);
@@ -146,7 +154,8 @@ $('googleBtn').addEventListener('click', async () => {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
         const cred = await auth.signInWithPopup(provider);
-        await finish(cred.user, cred.user.displayName);
+        const isNew = !!(cred.additionalUserInfo && cred.additionalUserInfo.isNewUser);
+        await finish(cred.user, cred.user.displayName, isNew);
     } catch (err) {
         show('error', friendly(err));
         busy(false);

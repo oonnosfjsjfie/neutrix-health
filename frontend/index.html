@@ -91,7 +91,6 @@
             <div class="system-controls">
                 <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
                 <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
-                <button class="ctrl-btn" id="signOutBtn" type="button" data-dt="signOut">🚪 Sign Out</button>
             </div>
         </div>
     </nav>
@@ -152,6 +151,7 @@
     </main>
 
     <script src="common.js"></script>
+    <script src="account-menu.js"></script>
     <script>
         const DASH_TEXT = {
             English: {
@@ -282,16 +282,6 @@
             setField('issueNotesField', 'issueNotesValue', issue.notes);
         }
 
-        document.getElementById('signOutBtn').addEventListener('click', async (e) => {
-            e.currentTarget.disabled = true;
-            if (window.NeutrixCloud && NeutrixCloud.configured) {
-                await NeutrixCloud.signOut();       // uploads last changes, then clears this device
-            } else {
-                localStorage.removeItem('neutrix_authenticated');
-                localStorage.removeItem('neutrixActiveIssue');
-            }
-            window.location.href = 'signin.html';
-        });
 
         document.addEventListener('neutrix:langchange', renderDashboard);
         renderDashboard();

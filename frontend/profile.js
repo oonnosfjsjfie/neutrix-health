@@ -340,6 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = collectFormData();
         localStorage.setItem('neutrix_hospital_profile', JSON.stringify(data));
+        window.neutrixProfileSaved = true;
         messageArea.innerHTML = `<div class="alert-success">✓ Profile saved & synchronized successfully!</div>`;
         updateChartPreview(data);
     }
@@ -665,8 +666,9 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     const feedbackArea = document.getElementById('messageArea') || document.querySelector('.alert-success') || e.target.parentElement;
     
     // 3. IMMEDIATE REDIRECTION LINK BRIDGE TO YOUR DASHBOARD HUB
+    // Go back where they came from (?back=...), only if the profile really saved
     setTimeout(() => {
-        window.location.href = 'issues.html'; // Pushes them straight to your main dashboard shell!
+        if (window.neutrixProfileSaved) window.location.href = profileBackPage();
     }, 1500);
 });
 
@@ -676,7 +678,13 @@ document.addEventListener('click', function(e) {
         e.preventDefault();
         const patientNameInput = document.getElementById('patientName')?.value || "User";
         localStorage.setItem('neutrix_patient_name', patientNameInput);
-        window.location.href = 'issues.html';
+        window.location.href = profileBackPage();
     }
 });
+
+// Page to return to after saving: ?back=issues.html / home.html / ... (default: the dashboard)
+function profileBackPage() {
+    const back = new URLSearchParams(location.search).get('back') || '';
+    return /^[a-z0-9_-]+\.html(\?[^#]*)?$/i.test(back) && !/^(signin|profile)\.html/i.test(back) ? back : 'issues.html';
+}
 
