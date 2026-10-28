@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -15,15 +15,54 @@
             window.location.replace('signin.html?next=' + encodeURIComponent('profile.html' + location.search));
         }
     </script>
+    <script>
+        // Same light/dark setting as the website and the dashboard
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('neutrixTheme') === 'dark' ? 'dark' : 'light'); } catch (e) {}
+    </script>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="skin.css?v=20261028e">
+    <style>
+        /* Website look for the patient profile */
+        .pf-toolbar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-bottom: 22px; }
+        .pf-toolbar .btn-meta {
+            border: 1px solid var(--border-color); border-radius: 30px; padding: 8px 16px; background: var(--card-bg);
+            color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+        }
+        .pf-toolbar .btn-meta:hover { border-color: var(--text-primary); transform: translateY(-1px); }
+        .pf-toolbar .btn-meta.highlight { background: var(--text-primary); color: var(--on-primary, #fff); border-color: var(--text-primary); }
+        .pf-toolbar .btn-meta.danger { color: #dc2626; }
+        [data-theme="dark"] .pf-toolbar .btn-meta.danger { color: #f87171; }
+        .nx-site .progress-bar-fill { background: linear-gradient(90deg, #ff007a, #a855f7, #3b82f6, #00f2fe) !important; }
+        .nx-site .timeline-line-fill { background: linear-gradient(90deg, #a855f7, #3b82f6) !important; }
+        .nx-site .step-node.active .node-icon, .nx-site .step-node.completed .node-icon {
+            border: 2px solid transparent !important;
+            background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+                        linear-gradient(135deg, #ff007a, #a855f7, #3b82f6, #00f2fe) border-box !important;
+            color: var(--text-primary) !important;
+        }
+        .nx-site .avatar-preview-box {
+            border: 3px solid transparent !important;
+            background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+                        linear-gradient(135deg, #ff007a, #a855f7, #3b82f6, #00f2fe) border-box !important;
+        }
+        .nx-site .modern-input, .nx-site .modern-select, .nx-site .modern-textarea, .nx-site input, .nx-site select, .nx-site textarea { border-radius: 12px; }
+        .nx-site .intake-card { animation: nxReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @keyframes nxReveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+        @media print { .nx-hero, .nx-footer, .nx-nav-links, .pf-toolbar { display: none !important; } }
+    </style>
 </head>
-<body>
+<body class="nx-site nx-has-hero">
     <!-- Top Navigation Bar -->
     <header class="ehr-navbar">
         <div class="nav-container">
             <div class="hospital-brand">
                 <a href="home.html" class="brand-logo-link"><img class="brand-logo-svg" src="assets/neutrix-logo.png" alt="Neutrix Health" style="height:44px;width:auto;display:block;border-radius:12px"></a>
             </div>
+            <nav class="nx-nav-links">
+                <a class="nx-nav-item" href="issues.html" data-pf="navIssues">My Issues</a>
+                <a class="nx-nav-item active" href="profile.html" data-pf="navProfile">Patient Profile</a>
+                <a class="nx-nav-item" href="home.html" data-pf="navWebsite">Website</a>
+            </nav>
            
             <div class="system-controls">
                 <!-- Theme & Language Utilities -->
@@ -36,18 +75,27 @@
                 </button>
 
 
-                <button type="button" class="btn-meta highlight" id="printCardBtn">🪪 <span id="txt-print-card">Print Recovery ID</span></button>
-                <button type="button" class="btn-meta" id="printBtn">📄 <span id="txt-print">Print Chart</span></button>
-                <button type="button" class="btn-meta danger" id="resetBtn">🔄 <span id="txt-reset">Reset Form</span></button>
             </div>
         </div>
     </header>
 
 
+    <!-- Centred heading, like the website -->
+    <section class="nx-hero">
+        <span class="nx-eyebrow">NEUTRIX HEALTH • <span class="nx-eyebrow-live" data-pf="eyebrow">MY PATIENT PROFILE</span></span>
+        <h1 class="nx-hero-title" data-pf="heroTitle">Your health, in one place.</h1>
+        <p class="nx-hero-sub" data-pf="heroSub">Your details, medical baseline and caregiver contact. Saved to your account and used across Neutrix.</p>
+    </section>
+
     <!-- Main Workspace -->
     <main class="ehr-workspace">
         <!-- Intake Form Section -->
         <section class="ehr-card intake-card">
+            <div class="pf-toolbar">
+                <button type="button" class="btn-meta highlight" id="printCardBtn">🪪 <span id="txt-print-card">Print Recovery ID</span></button>
+                <button type="button" class="btn-meta" id="printBtn">📄 <span id="txt-print">Print Chart</span></button>
+                <button type="button" class="btn-meta danger" id="resetBtn">🔄 <span id="txt-reset">Reset Form</span></button>
+            </div>
             <div class="card-header">
                 <div>
                     <h2 id="txt-header-title">Patient Intake & Caregiver Registration</h2>
@@ -405,7 +453,65 @@
     </div>
 
 
+    <footer class="px-footer nx-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-col brand-col">
+                    <div class="nx-footer-logo"><a href="home.html" class="brand-logo-link"><img class="brand-logo-svg" src="assets/neutrix-logo.png" alt="Neutrix Health"></a></div>
+                    <p class="copyright">Neutrix Health © 2026</p>
+                </div>
+                <div class="footer-col"><span class="col-title" data-pf="fApp">PATIENT PORTAL</span><a href="issues.html" data-pf="navIssues">My Issues</a><a href="profile.html" data-pf="navProfile">Patient Profile</a></div>
+                <div class="footer-col"><span class="col-title" data-pf="fHelp">HELP</span><a href="home.html" data-pf="fWebsite">Neutrix website</a><a href="home.html#safety" data-pf="fSafety">Responsible AI</a></div>
+                <div class="footer-col"></div>
+                <div class="footer-col nx-footer-note"><p data-pf="fNote">Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace advice from a qualified doctor.</p></div>
+            </div>
+            <div class="footer-watermark">NEUTRIX HEALTH</div>
+        </div>
+    </footer>
+
     <script src="profile.js"></script>
     <script src="account-menu.js"></script>
+    <script>
+        // Website layout texts + remember theme and language (same settings as the rest of Neutrix)
+        document.addEventListener('DOMContentLoaded', () => setTimeout(function () {   // after profile.js has set up its buttons
+            const PF = {
+                English: { navIssues: 'My Issues', navProfile: 'Patient Profile', navWebsite: 'Website', eyebrow: 'MY PATIENT PROFILE',
+                    heroTitle: 'Your health, in one place.', heroSub: 'Your details, medical baseline and caregiver contact. Saved to your account and used across Neutrix.',
+                    fApp: 'PATIENT PORTAL', fHelp: 'HELP', fWebsite: 'Neutrix website', fSafety: 'Responsible AI',
+                    fNote: 'Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace advice from a qualified doctor.' },
+                Malayalam: { navIssues: 'എന്റെ പ്രശ്നങ്ങൾ', navProfile: 'രോഗി പ്രൊഫൈൽ', navWebsite: 'വെബ്സൈറ്റ്', eyebrow: 'എന്റെ രോഗി പ്രൊഫൈൽ',
+                    heroTitle: 'നിങ്ങളുടെ ആരോഗ്യം, ഒരിടത്ത്.', heroSub: 'നിങ്ങളുടെ വിവരങ്ങൾ, ആരോഗ്യ അടിസ്ഥാന വിവരങ്ങൾ, പരിചാരകന്റെ ബന്ധപ്പെടൽ. നിങ്ങളുടെ അക്കൗണ്ടിൽ സേവ് ചെയ്യുന്നു.',
+                    fApp: 'രോഗി പോർട്ടൽ', fHelp: 'സഹായം', fWebsite: 'ന്യൂട്രിക്സ് വെബ്സൈറ്റ്', fSafety: 'ഉത്തരവാദിത്തമുള്ള AI',
+                    fNote: 'ന്യൂട്രിക്സ് മെഡിക്കൽ വിവരങ്ങൾ ക്രമീകരിക്കുകയും വിശദീകരിക്കുകയും മാത്രം ചെയ്യുന്നു. ഇത് ഡോക്ടറുടെ ഉപദേശത്തിന് പകരമല്ല.' }
+            };
+            let lang = 'English';
+            function paint() {
+                const d = PF[lang];
+                document.querySelectorAll('[data-pf]').forEach(el => { if (d[el.dataset.pf]) el.textContent = d[el.dataset.pf]; });
+                document.documentElement.lang = lang === 'Malayalam' ? 'ml' : 'en';
+                window.neutrixLang = lang;
+                document.dispatchEvent(new CustomEvent('neutrix:langchange'));   // account menu
+            }
+            const langBtn = document.getElementById('langToggleBtn');
+            langBtn.addEventListener('click', () => {
+                lang = lang === 'English' ? 'Malayalam' : 'English';
+                try { localStorage.setItem('neutrixLang', lang); } catch (e) {}
+                paint();
+            });
+            const themeBtn = document.getElementById('themeToggleBtn');
+            function themeLabel() {
+                const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+                document.getElementById('themeIcon').textContent = dark ? '☀️' : '🌙';
+                document.getElementById('txt-theme').textContent = dark ? 'Light Mode' : 'Dark Mode';
+            }
+            themeBtn.addEventListener('click', () => {
+                try { localStorage.setItem('neutrixTheme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'); } catch (e) {}
+            });
+            themeLabel();
+            let saved = 'English';
+            try { saved = localStorage.getItem('neutrixLang') || 'English'; } catch (e) {}
+            if (saved === 'Malayalam') langBtn.click(); else paint();
+        }, 0));
+    </script>
 </body>
 </html>
