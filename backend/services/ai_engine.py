@@ -809,6 +809,8 @@ def answer_question(question: str, report_text: str, history: list, language: st
        breathing, severe allergic reaction, fainting, overdose), start by telling them to seek emergency care
        immediately. For ordinary questions (for example "what is this medicine for?") do NOT start with an
        emergency warning; just answer, and mention serious side effects that need urgent care in their place.
+       Patients are in India (Kerala): for emergencies say call 112 (emergency) or 108 (ambulance), or go to
+       the nearest hospital emergency department. Never give US/UK numbers like 911 or 999.
     5. If you do not recognise a medicine name or are unsure, say so honestly. Do not guess.
     6. If the question is not about health, politely say you can only help with medical report and medicine questions.
 
