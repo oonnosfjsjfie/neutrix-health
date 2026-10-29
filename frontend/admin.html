@@ -61,6 +61,20 @@
         .ad-error { padding: 12px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 600; background: rgba(220, 38, 38, 0.08); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.3); margin-bottom: 14px; }
         [data-theme="dark"] .ad-error { color: #fca5a5; }
         .ad-note { font-size: 12.5px; color: var(--text-muted); margin-top: 14px; }
+        .ad-head-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .ad-danger-btn { padding: 10px 18px; border-radius: 30px; border: 1px solid #dc2626; background: #dc2626; color: #fff;
+                         font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+        .ad-danger-btn:hover { background: #b91c1c; }
+        .ad-danger-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .ad-modal { position: fixed; inset: 0; z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.6); }
+        .ad-modal-box { width: min(520px, 100%); border-radius: 18px; padding: 22px; background: var(--card-bg); color: var(--text-primary); box-shadow: 0 30px 80px rgba(0,0,0,0.4); }
+        .ad-modal-box h3 { margin: 0 0 10px; }
+        .ad-modal-box ul { margin: 6px 0 10px; padding-left: 20px; font-size: 13.5px; }
+        .ad-modal-box input { margin: 6px 0 4px; }
+        .ad-warn { color: #dc2626; font-weight: 700; font-size: 13.5px; }
+        .ad-modal-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+        .ad-del-msg { font-size: 13px; font-weight: 600; min-height: 18px; margin-top: 6px; }
+        .ad-del-msg.ok { color: #16a34a; } .ad-del-msg.err { color: #dc2626; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -109,7 +123,7 @@
                         <tbody id="adRows"></tbody>
                     </table>
                 </div>
-                <p class="ad-note">Click a person to see everything they entered. This page can only read data. Firebase lets only the admin accounts load it.</p>
+                <p class="ad-note">Click a person to see everything they entered, or to delete them. Only the admin accounts can open this page; Firebase and the server both check.</p>
 
                 <div id="adDetail" class="ad-detail hidden"></div>
             </div>
@@ -279,7 +293,12 @@
             let html = `
                 <div class="ad-detail-head">
                     <div><h2>${esc(p.patientName || u.name || u.email)}</h2><div class="ad-muted">${esc(u.email)} · data last changed ${esc(u.latest ? fmt(new Date(u.latest)) : '–')}</div></div>
-                    <button class="btn-secondary" type="button" id="adJson">⬇ Download all data (JSON)</button>
+                    <div class="ad-head-btns">
+                        <button class="btn-secondary" type="button" id="adJson">⬇ Download all data (JSON)</button>
+                        ${NeutrixCloud.isAdminEmail(u.email)
+                            ? '<span class="ad-muted">Admin accounts can’t be deleted here.</span>'
+                            : '<button class="ad-danger-btn" type="button" id="adDelete">🗑 Delete user</button>'}
+                    </div>
                 </div>
                 <div class="ad-grid">
                     <div class="ad-box"><h3>🩺 Patient profile</h3>${Object.keys(p).length ? `<div class="ad-kv">
@@ -336,6 +355,7 @@
 
             html += `<details class="ad-issue"><summary>All saved data (${Object.keys(d).length} items)</summary><div class="ad-raw">${esc(JSON.stringify(d, null, 2).slice(0, 200000))}</div></details>`;
             $('adDetail').innerHTML = html;
+            if ($('adDelete')) $('adDelete').addEventListener('click', () => askDelete(u));
             $('adJson').addEventListener('click', () => {
                 const blob = new Blob([JSON.stringify({ uid: u.uid, email: u.email, name: u.name, data: d }, null, 2)], { type: 'application/json' });
                 const a = document.createElement('a');
@@ -361,6 +381,75 @@
             a.click();
         });
         $('adSearch').addEventListener('input', renderRows);
+        // ---------- Delete a user completely ----------
+        function askDelete(u) {
+            const p = profileOf(u);
+            const who = p.patientName || u.name || u.email;
+            const box = document.createElement('div');
+            box.className = 'ad-modal';
+            box.innerHTML = `
+                <div class="ad-modal-box" role="dialog" aria-modal="true">
+                    <h3>🗑 Delete ${esc(who)}?</h3>
+                    <p>This permanently deletes <strong>${esc(u.email)}</strong>:</p>
+                    <ul>
+                        <li>their sign-in account (they are signed out everywhere and can’t sign in with it again)</li>
+                        <li>their patient profile, medical issues, reports and summaries</li>
+                        <li>medicine ticks, readings, exercise history, messages and progress reports</li>
+                    </ul>
+                    <p class="ad-warn">This cannot be undone. Download their data first if you might need it.</p>
+                    <label class="ad-muted" for="adConfirm">Type their email to confirm:</label>
+                    <input id="adConfirm" class="modern-input" autocomplete="off" placeholder="${esc(u.email)}">
+                    <div id="adDelMsg" class="ad-del-msg"></div>
+                    <div class="ad-modal-btns">
+                        <button class="btn-secondary" type="button" data-a="cancel">Cancel</button>
+                        <button class="ad-danger-btn" type="button" data-a="go" disabled>Delete permanently</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(box);
+            const input = box.querySelector('#adConfirm');
+            const go = box.querySelector('[data-a="go"]');
+            const msg = box.querySelector('#adDelMsg');
+            const close = () => box.remove();
+            input.addEventListener('input', () => { go.disabled = input.value.trim().toLowerCase() !== String(u.email).toLowerCase(); });
+            box.querySelector('[data-a="cancel"]').addEventListener('click', close);
+            box.addEventListener('click', e => { if (e.target === box && !go.dataset.busy) close(); });
+            input.focus();
+            go.addEventListener('click', async () => {
+                go.disabled = true;
+                go.dataset.busy = '1';
+                go.textContent = 'Deleting…';
+                msg.className = 'ad-del-msg';
+                msg.textContent = '';
+                try {
+                    const me = await NeutrixCloud.currentUser();
+                    const token = await me.getIdToken(true);
+                    const res = await fetch(`${API_BASE}/api/admin/delete-user`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                        body: JSON.stringify({ uid: u.uid })
+                    });
+                    const d = await res.json();
+                    if (!d.ok) throw new Error(d.message || 'Delete failed');
+                    users = users.filter(x => x.uid !== u.uid);
+                    openUid = null;
+                    show('adDetail', false);
+                    renderRows();
+                    renderStats();
+                    msg.className = 'ad-del-msg ok';
+                    msg.textContent = `✓ Deleted ${u.email} (${d.deleted_documents} saved item(s)${d.account_deleted ? ' and the sign-in account' : ''}).`;
+                    go.textContent = 'Done';
+                    box.querySelector('[data-a="cancel"]').textContent = 'Close';
+                    delete go.dataset.busy;
+                } catch (e) {
+                    msg.className = 'ad-del-msg err';
+                    msg.textContent = '⚠️ ' + (e instanceof TypeError ? 'Could not reach the Neutrix server.' : e.message);
+                    go.textContent = 'Delete permanently';
+                    go.disabled = false;
+                    delete go.dataset.busy;
+                }
+            });
+        }
+
         $('adRefresh').addEventListener('click', () => { users = []; openUid = null; show('adDetail', false); loadUsers(); });
 
         start();

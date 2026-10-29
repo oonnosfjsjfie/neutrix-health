@@ -5,3 +5,7 @@ backend/.env
 # Python junk
 __pycache__/
 .venv/
+# Firebase admin key (never commit)
+*serviceAccount*.json
+*service-account*.json
+*firebase-adminsdk*.json

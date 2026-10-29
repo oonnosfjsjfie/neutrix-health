@@ -10,6 +10,8 @@ from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, Form, File
 from fastapi.middleware.cors import CORSMiddleware
 from services.email_sender import send_doctor_email
+from services import admin_tools
+from fastapi import Header
 from services.ai_engine import (
     process_documents_to_summary,
     answer_question,
@@ -84,6 +86,27 @@ def check_report_photo(file: UploadFile = File(...)):
     except Exception as e:
         print(f"[photo-check] error: {e}")
         return {"status": "error", "message": friendly_error(e), "ok": False}
+
+
+# ---------- Admin: delete a user completely (data + sign-in account) ----------
+class DeleteUserRequest(BaseModel):
+    uid: str
+
+
+@app.post("/api/admin/delete-user")
+def admin_delete_user(req: DeleteUserRequest, authorization: str = Header("")):
+    token = authorization.split(" ", 1)[1] if authorization.lower().startswith("bearer ") else ""
+    try:
+        admin = admin_tools.verify_admin(token)
+        result = admin_tools.delete_user_completely(req.uid.strip(), admin)
+        return {"ok": True, **result}
+    except admin_tools.AdminNotConfigured as e:
+        return {"ok": False, "message": str(e), "setup": True}
+    except (PermissionError, ValueError) as e:
+        return {"ok": False, "message": str(e)}
+    except Exception as e:
+        print(f"[admin] delete failed: {e}")
+        return {"ok": False, "message": f"Could not delete this user: {e}"}
 
 
 # ---------- Chat ----------
