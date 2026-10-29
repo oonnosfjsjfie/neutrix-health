@@ -3,20 +3,51 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Neutrix admins (read-only access to everyone's data, for the Admin page).
-    // The email must be verified (Google sign-in is), so nobody can pose as an admin
-    // by signing up with an admin's email and a password.
+    // Neutrix admins. The email must be verified (Google sign-in is), so nobody can pose as an
+    // admin by signing up with an admin's email and a password.
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email_verified == true
         && request.auth.token.email.lower() in ['altlol2102@gmail.com', 'ajay21022010@gmail.com'];
     }
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
 
+    // ---------- Each person's own data ----------
+    // Only the owner can read or write anything here (medical records, plans, readings...).
     match /users/{uid}/{document=**} {
-      // Each Neutrix user can read and write only their own data
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-      // Admins can read (not change) every user's data
+      allow read, write: if isOwner(uid);
+    }
+    // Admins: the account card (name, email, last sign-in) ...
+    match /users/{uid} {
       allow read: if isAdmin();
+    }
+    // ... and ONLY the patient profile + caregiver details and the doctor's email. Never medical records.
+    match /users/{uid}/store/{key} {
+      allow read: if isAdmin() && key in ['neutrix_hospital_profile', 'neutrixDoctorEmail'];
+    }
+    match /users/{uid}/chunks/{key} {
+      allow read: if isAdmin() && key.matches('neutrix_hospital_profile~[0-9]+');
+    }
+
+    // ---------- Ratings and problem reports ----------
+    // Anyone (signed in or not) can send one; only admins can read or delete them.
+    match /feedback/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['kind', 'rating', 'message', 'page', 'uid', 'email', 'name', 'lang', 'device', 'createdAt'])
+        && request.resource.data.kind in ['rating', 'report']
+        && request.resource.data.rating is int && request.resource.data.rating >= 0 && request.resource.data.rating <= 5
+        && request.resource.data.message is string && request.resource.data.message.size() <= 2000
+        && request.resource.data.page is string && request.resource.data.page.size() <= 100
+        && request.resource.data.name is string && request.resource.data.name.size() <= 100
+        && request.resource.data.device is string && request.resource.data.device.size() <= 300
+        && request.resource.data.lang in ['English', 'Malayalam']
+        && request.resource.data.createdAt == request.time
+        // can't pretend to be someone else
+        && ((request.auth == null && request.resource.data.uid == '' && request.resource.data.email == '')
+            || (request.auth != null && request.resource.data.uid == request.auth.uid
+                && (request.resource.data.email == '' || request.resource.data.email == request.auth.token.email)));
+      allow read, delete: if isAdmin();
     }
   }
 }

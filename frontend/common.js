@@ -825,7 +825,7 @@ const NX_LAYOUT = {
             briefing:     ['DOCTOR BRIEF', 'Tell your doctor, clearly.', 'Prepare a clear, structured message and send it straight to your doctor.'],
             exercise:     ['AI EXERCISE COACH', 'Move right. Recover stronger.', 'The exercises from your reports, with your camera checking each movement as you go.'],
             progress:     ['OVERALL PROGRESS REPORT', 'Everything, in one report.', 'Your medicines, readings, exercise and reports, turned into one clear report for your doctor.'],
-            admin:        ['ADMIN ACCESS', 'Neutrix admin.', 'Everyone who uses Neutrix and the data they entered. Only admin accounts can open this page.']
+            admin:        ['ADMIN ACCESS', 'Neutrix admin.', 'People using Neutrix, their profiles, ratings and problem reports. Medical records stay private.']
         },
         footer: { app: 'PATIENT PORTAL', tools: 'RECOVERY TOOLS', help: 'HELP', note: 'Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace advice from a qualified doctor.',
                   website: 'Neutrix website', safety: 'Responsible AI', top: '↑ Top' }
@@ -845,7 +845,7 @@ const NX_LAYOUT = {
             briefing:     ['ഡോക്ടർ ബ്രീഫ്', 'ഡോക്ടറോട് വ്യക്തമായി പറയൂ.', 'വ്യക്തമായ ഒരു സന്ദേശം തയ്യാറാക്കി ഡോക്ടർക്ക് നേരിട്ട് അയക്കുക.'],
             exercise:     ['AI വ്യായാമ സഹായി', 'ശരിയായി ചെയ്യൂ. വേഗം സുഖപ്പെടൂ.', 'നിങ്ങളുടെ റിപ്പോർട്ടുകളിലെ വ്യായാമങ്ങൾ, ഓരോ ചലനവും ക്യാമറ പരിശോധിക്കുന്നു.'],
             progress:     ['മൊത്തം പുരോഗതി റിപ്പോർട്ട്', 'എല്ലാം, ഒരു റിപ്പോർട്ടിൽ.', 'മരുന്നുകൾ, റീഡിംഗുകൾ, വ്യായാമം, റിപ്പോർട്ടുകൾ — ഡോക്ടർക്കായി ഒരു വ്യക്തമായ റിപ്പോർട്ട്.'],
-            admin:        ['അഡ്മിൻ ആക്സസ്', 'ന്യൂട്രിക്സ് അഡ്മിൻ.', 'ന്യൂട്രിക്സ് ഉപയോഗിക്കുന്ന എല്ലാവരും അവർ നൽകിയ വിവരങ്ങളും. അഡ്മിൻ അക്കൗണ്ടുകൾക്ക് മാത്രമേ ഈ പേജ് തുറക്കാനാകൂ.']
+            admin:        ['അഡ്മിൻ ആക്സസ്', 'ന്യൂട്രിക്സ് അഡ്മിൻ.', 'ന്യൂട്രിക്സ് ഉപയോക്താക്കൾ, പ്രൊഫൈലുകൾ, റേറ്റിംഗുകൾ, പ്രശ്ന റിപ്പോർട്ടുകൾ. മെഡിക്കൽ രേഖകൾ സ്വകാര്യമായി തുടരും.']
         },
         footer: { app: 'രോഗി പോർട്ടൽ', tools: 'ടൂളുകൾ', help: 'സഹായം', note: 'ന്യൂട്രിക്സ് മെഡിക്കൽ വിവരങ്ങൾ ക്രമീകരിക്കുകയും വിശദീകരിക്കുകയും മാത്രം ചെയ്യുന്നു. ഇത് ഡോക്ടറുടെ ഉപദേശത്തിന് പകരമല്ല.',
                   website: 'ന്യൂട്രിക്സ് വെബ്സൈറ്റ്', safety: 'ഉത്തരവാദിത്തമുള്ള AI', top: '↑ മുകളിലേക്ക്' }

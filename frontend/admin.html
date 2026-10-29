@@ -5,8 +5,8 @@
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts (must load first) -->
-    <script src="firebase-config.js?v=20261029c"></script>
-    <script src="neutrix-cloud.js?v=20261029c"></script>
+    <script src="firebase-config.js?v=20261029d"></script>
+    <script src="neutrix-cloud.js?v=20261029d"></script>
     <script>
         // Signed-in users only (the admin check itself happens below, and in the Firestore rules)
         if (localStorage.getItem('neutrix_authenticated') !== 'true') location.replace('signin.html?next=admin.html');
@@ -75,6 +75,31 @@
         .ad-modal-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
         .ad-del-msg { font-size: 13px; font-weight: 600; min-height: 18px; margin-top: 6px; }
         .ad-del-msg.ok { color: #16a34a; } .ad-del-msg.err { color: #dc2626; }
+        .ad-tabs { display: flex; gap: 6px; padding: 5px; border-radius: 30px; background: var(--pill-bg); width: fit-content; margin: 4px 0 18px; flex-wrap: wrap; }
+        .ad-tab { border: none; background: transparent; color: var(--text-secondary); padding: 9px 18px; border-radius: 30px; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+        .ad-tab.active { background: var(--text-primary); color: var(--card-bg); }
+        .ad-count { display: inline-block; min-width: 18px; padding: 0 6px; border-radius: 10px; font-size: 11px; background: #f59e0b; color: #fff; }
+        .ad-count:empty { display: none; }
+        .ad-filters { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+        .ad-filter { padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .ad-filter.active { border-color: var(--text-primary); background: var(--text-primary); color: var(--card-bg); }
+        .ad-stars { color: #f59e0b; letter-spacing: 1px; } .ad-stars .off { color: var(--border-color); }
+        .ad-stars-box { display: flex; gap: 28px; flex-wrap: wrap; align-items: center; padding: 16px 18px; border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 14px; }
+        .ad-avg { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; } .ad-avg b { font-size: 40px; line-height: 1; } .ad-avg .ad-stars { font-size: 20px; }
+        .ad-dist { flex: 1; min-width: 220px; display: grid; gap: 5px; }
+        .ad-dist-row { display: grid; grid-template-columns: 34px 1fr 30px; gap: 8px; align-items: center; font-size: 12.5px; }
+        .ad-dist-bar { height: 8px; border-radius: 6px; background: var(--pill-bg); overflow: hidden; } .ad-dist-bar i { display: block; height: 100%; background: #f59e0b; border-radius: 6px; }
+        .ad-fb-list { display: grid; gap: 10px; }
+        .ad-fb { border: 1px solid var(--border-color); border-left: 4px solid #f59e0b; border-radius: 14px; padding: 12px 16px; background: var(--card-bg); }
+        .ad-fb.report { border-left-color: #dc2626; }
+        .ad-fb-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .ad-fb-kind { font-weight: 800; font-size: 14px; }
+        .ad-fb-msg { margin: 6px 0; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+        .ad-fb-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); align-items: center; }
+        .ad-fb-del { margin-left: auto; border: none; background: none; color: #dc2626; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .ad-mini-fb { font-size: 13px; padding: 6px 0; border-top: 1px dashed var(--border-color); } .ad-mini-fb:first-of-type { border-top: none; }
+        .ad-who { display: flex; gap: 14px; align-items: center; }
+        .ad-photo { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -111,36 +136,60 @@
                 <div id="adError" class="ad-error hidden"></div>
                 <div class="ad-stats" id="adStats"></div>
 
-                <div class="section-title">People using Neutrix</div>
-                <div class="ad-bar">
-                    <input id="adSearch" class="modern-input" placeholder="Search by name or email…">
-                    <button class="btn-secondary" type="button" id="adRefresh">🔄 Refresh</button>
-                    <button class="btn-secondary" type="button" id="adCsv">⬇ Download CSV</button>
+                <div class="ad-tabs" role="tablist">
+                    <button type="button" class="ad-tab active" data-tab="people">👥 People</button>
+                    <button type="button" class="ad-tab" data-tab="feedback">⭐ Ratings &amp; reports <span id="adFbCount" class="ad-count"></span></button>
                 </div>
-                <div class="ad-table-wrap">
-                    <table class="ad-table">
-                        <thead><tr><th>Name</th><th>Email</th><th>Last sign-in</th><th>Phone</th><th>Issues</th><th>Last activity</th></tr></thead>
-                        <tbody id="adRows"></tbody>
-                    </table>
-                </div>
-                <p class="ad-note">Click a person to see everything they entered, or to delete them. Only the admin accounts can open this page; Firebase and the server both check.</p>
 
-                <div id="adDetail" class="ad-detail hidden"></div>
+                <!-- People -->
+                <div id="tabPeople">
+                    <div class="ad-bar">
+                        <input id="adSearch" class="modern-input" placeholder="Search by name, email or phone…">
+                        <button class="btn-secondary" type="button" id="adRefresh">🔄 Refresh</button>
+                        <button class="btn-secondary" type="button" id="adCsv">⬇ Download CSV</button>
+                    </div>
+                    <div class="ad-table-wrap">
+                        <table class="ad-table">
+                            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Caregiver</th><th>Last sign-in</th></tr></thead>
+                            <tbody id="adRows"></tbody>
+                        </table>
+                    </div>
+                    <p class="ad-note">🔒 Admins see only the account, the patient profile and caregiver details. Medical records (summaries, medicines, readings, exercise, reports) stay private to each person; Firebase does not let admins read them.</p>
+                    <div id="adDetail" class="ad-detail hidden"></div>
+                </div>
+
+                <!-- Ratings and reports -->
+                <div id="tabFeedback" class="hidden">
+                    <div class="ad-bar">
+                        <div class="ad-filters">
+                            <button type="button" class="ad-filter active" data-f="all">All</button>
+                            <button type="button" class="ad-filter" data-f="rating">⭐ Ratings</button>
+                            <button type="button" class="ad-filter" data-f="report">⚑ Reports</button>
+                        </div>
+                        <button class="btn-secondary" type="button" id="adFbRefresh">🔄 Refresh</button>
+                        <button class="btn-secondary" type="button" id="adFbCsv">⬇ Download CSV</button>
+                    </div>
+                    <div id="adStarsBox" class="ad-stars-box"></div>
+                    <div id="adFbList" class="ad-fb-list"></div>
+                </div>
             </div>
         </section>
     </main>
 
-    <script src="common.js?v=20261029c"></script>
-    <script src="account-menu.js?v=20261029c"></script>
+    <script src="common.js?v=20261029d"></script>
+    <script src="account-menu.js?v=20261029d"></script>
     <script>
     (function () {
         const $ = id => document.getElementById(id);
         const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         const fmt = d => d ? d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '–';
         const show = (id, on) => $(id).classList.toggle('hidden', !on);
+        const dateOf = ts => (ts && ts.toDate ? ts.toDate() : null);
         let db = null;
-        let users = [];            // { uid, name, email, lastLogin, data (loaded), loading }
+        let users = [];       // { uid, name, email, lastLogin, profile, doctorEmail, loaded }
+        let feedback = [];    // { id, kind, rating, message, page, email, name, createdAt }
         let openUid = null;
+        let filter = 'all';
 
         // ---------- Who is this? ----------
         async function start() {
@@ -154,58 +203,64 @@
             show('adLoading', false);
             show('adView', true);
             loadUsers();
+            loadFeedback();
         }
         function deny(text) {
             show('adLoading', false);
             $('adDeniedText').textContent = text;
             show('adDenied', true);
         }
-
-        // ---------- Reading a user's saved data ----------
-        async function readStore(uid) {
-            const userRef = db.collection('users').doc(uid);
-            const snap = await userRef.collection('store').get();
-            const data = {};
-            let latest = 0;
-            for (const doc of snap.docs) {
-                const d = doc.data();
-                if (d.t && d.t.toMillis) latest = Math.max(latest, d.t.toMillis());
-                let value = d.v;
-                if (d.n) {
-                    value = '';
-                    for (let i = 0; i < d.n; i++) {
-                        const part = await userRef.collection('chunks').doc(`${doc.id}~${i}`).get();
-                        value += part.exists ? (part.data().v || '') : '';
-                    }
-                }
-                if (value === null || value === undefined) continue;
-                let parsed = value;
-                try { parsed = JSON.parse(value); } catch (e) {}
-                data[d.k || decodeURIComponent(doc.id)] = parsed;
-            }
-            return { data, latest };
+        function permissionNote(e) {
+            return /permission/i.test(e && e.message) ? ' (Firebase refused: the latest Firestore rules may not be published yet.)' : '';
         }
 
-        // ---------- People list ----------
+        // ---------- Only the allowed items: profile (+ caregiver) and the doctor's email ----------
+        async function readItem(uid, key) {
+            const ref = db.collection('users').doc(uid);
+            const snap = await ref.collection('store').doc(key).get();
+            if (!snap.exists) return null;
+            const d = snap.data();
+            let value = d.v;
+            if (d.n) {
+                value = '';
+                for (let i = 0; i < d.n; i++) {
+                    const part = await ref.collection('chunks').doc(`${key}~${i}`).get();
+                    value += part.exists ? (part.data().v || '') : '';
+                }
+            }
+            if (value === null || value === undefined) return null;
+            try { return JSON.parse(value); } catch (e) { return value; }
+        }
+        async function loadProfile(u) {
+            try {
+                const [profile, doctorEmail] = await Promise.all([readItem(u.uid, 'neutrix_hospital_profile'), readItem(u.uid, 'neutrixDoctorEmail')]);
+                u.profile = profile && typeof profile === 'object' ? profile : {};
+                u.doctorEmail = typeof doctorEmail === 'string' ? doctorEmail : '';
+            } catch (e) {
+                u.profile = {};
+                u.error = 'Could not read the profile' + permissionNote(e);
+            }
+            u.loaded = true;
+        }
+
+        // ---------- People ----------
         async function loadUsers() {
             $('adError').classList.add('hidden');
-            $('adRows').innerHTML = `<tr><td colspan="6"><div class="ad-loading"><span class="ad-spin"></span>Loading people…</div></td></tr>`;
+            $('adRows').innerHTML = `<tr><td colspan="5"><div class="ad-loading"><span class="ad-spin"></span>Loading people…</div></td></tr>`;
             try {
                 const snap = await db.collection('users').get();
                 users = snap.docs.map(d => {
                     const u = d.data();
-                    return { uid: d.id, name: u.name || '', email: u.email || '', lastLogin: u.lastLogin && u.lastLogin.toDate ? u.lastLogin.toDate() : null };
+                    return { uid: d.id, name: u.name || '', email: u.email || '', lastLogin: dateOf(u.lastLogin) };
                 }).sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
                 renderRows();
                 renderStats();
-                // Load everyone's data in the background (a few at a time) for phone, issues and activity
                 let next = 0;
                 const worker = async () => {
                     while (next < users.length) {
                         const u = users[next++];
-                        try { Object.assign(u, await readStore(u.uid)); } catch (e) { u.error = e.message; }
+                        await loadProfile(u);
                         renderRows();
-                        renderStats();
                         if (openUid === u.uid) renderDetail(u);
                     }
                 };
@@ -214,45 +269,44 @@
                 console.error(e);
                 $('adRows').innerHTML = '';
                 const box = $('adError');
-                box.textContent = /permission/i.test(e.message)
-                    ? '⚠️ Firebase refused to share the data. The new Firestore rules (with the admin list) are not published yet.'
-                    : '⚠️ Could not load people: ' + e.message;
+                box.textContent = '⚠️ Could not load people: ' + e.message + permissionNote(e);
                 box.classList.remove('hidden');
             }
         }
 
-        const profileOf = u => (u.data && u.data.neutrix_hospital_profile) || {};
-        const issuesOf = u => (u.data && Array.isArray(u.data.neutrixIssues) ? u.data.neutrixIssues : []);
+        const prof = u => u.profile || {};
+        const phoneOf = p => (p.patientPhone || '');
+        const caregiverOf = p => [p.caregiverName, p.caregiverPhone && p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : ''].filter(Boolean).join(' · ');
 
         function renderStats() {
             const week = Date.now() - 7 * 86400000;
-            const loaded = users.filter(u => u.data);
-            const withReports = loaded.filter(u => Object.keys(u.data).some(k => k.startsWith('neutrixReport::'))).length;
-            const issues = loaded.reduce((n, u) => n + issuesOf(u).length, 0);
+            const ratings = feedback.filter(f => f.kind === 'rating' && f.rating > 0);
+            const avg = ratings.length ? (ratings.reduce((n, f) => n + f.rating, 0) / ratings.length).toFixed(1) : '–';
             $('adStats').innerHTML = [
                 [users.length, 'People'],
                 [users.filter(u => u.lastLogin && u.lastLogin.getTime() > week).length, 'Signed in this week'],
-                [withReports, 'Uploaded reports'],
-                [issues, 'Medical issues']
-            ].map(([n, l]) => `<div class="ad-stat"><b>${n}</b><span>${l}</span></div>`).join('');
+                [avg === '–' ? '–' : `${avg} ★`, `Average rating (${ratings.length})`],
+                [feedback.filter(f => f.kind === 'report').length, 'Problem reports']
+            ].map(([n, l]) => `<div class="ad-stat"><b>${n}</b><span>${esc(l)}</span></div>`).join('');
+            const c = feedback.length;
+            $('adFbCount').textContent = c ? c : '';
         }
 
         function renderRows() {
             const q = $('adSearch').value.trim().toLowerCase();
-            const list = users.filter(u => !q || `${u.name} ${u.email} ${profileOf(u).patientName || ''}`.toLowerCase().includes(q));
+            const list = users.filter(u => !q || `${u.name} ${u.email} ${prof(u).patientName || ''} ${phoneOf(prof(u))}`.toLowerCase().includes(q));
             $('adRows').innerHTML = list.map(u => {
-                const p = profileOf(u);
+                const p = prof(u);
                 const admin = NeutrixCloud.isAdminEmail(u.email) ? '<span class="ad-badge">ADMIN</span>' : '';
-                const issues = u.data ? issuesOf(u).length : '…';
+                const wait = u.loaded ? '–' : '…';
                 return `<tr class="user-row ${openUid === u.uid ? 'open' : ''}" data-uid="${esc(u.uid)}">
                     <td><strong>${esc(p.patientName || u.name || '(no name)')}</strong>${admin}</td>
                     <td>${esc(u.email)}</td>
+                    <td>${esc(phoneOf(p) || wait)}</td>
+                    <td>${esc(caregiverOf(p) || wait)}</td>
                     <td>${esc(fmt(u.lastLogin))}</td>
-                    <td>${esc(p.patientPhone || (u.data ? '–' : '…'))}</td>
-                    <td>${issues}</td>
-                    <td>${u.latest ? esc(fmt(new Date(u.latest))) : (u.data ? '–' : '…')}</td>
                 </tr>`;
-            }).join('') || `<tr><td colspan="6" class="ad-muted">Nobody found.</td></tr>`;
+            }).join('') || `<tr><td colspan="5" class="ad-muted">Nobody found.</td></tr>`;
             $('adRows').querySelectorAll('tr.user-row').forEach(tr => tr.addEventListener('click', () => openUser(tr.dataset.uid)));
         }
 
@@ -261,129 +315,154 @@
             renderRows();
             const u = users.find(x => x.uid === uid);
             show('adDetail', true);
-            if (!u.data) {
+            if (!u.loaded) {
                 $('adDetail').innerHTML = `<div class="ad-loading"><span class="ad-spin"></span>Loading ${esc(u.email)}…</div>`;
-                try { Object.assign(u, await readStore(uid)); } catch (e) { u.error = e.message; }
+                await loadProfile(u);
             }
             renderDetail(u);
             $('adDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // ---------- One person's data ----------
-        function scheduleStats(s) {
-            if (!s || !s.startDate || typeof dosesForDay !== 'function') return null;
-            let k = s.startDate, scheduled = 0, taken = 0, guard = 0;
-            const today = dayKey(new Date());
-            while (k <= today && guard++ < 400) {
-                const ticks = (s.ticks || {})[k] || {};
-                (dosesForDay(s, k) || []).forEach(d => { scheduled++; if (ticks[d.id]) taken++; });
-                k = dayKeyShift(k, 1);
-            }
-            return { scheduled, taken, pct: scheduled ? Math.round(taken / scheduled * 100) : 0, from: s.startDate };
-        }
-
         function renderDetail(u) {
             if (openUid !== u.uid) return;
-            if (u.error) { $('adDetail').innerHTML = `<div class="ad-error">⚠️ ${esc(u.error)}</div>`; return; }
-            const d = u.data || {};
-            const p = profileOf(u);
+            const p = prof(u);
             const row = (label, value) => value ? `<span>${esc(label)}</span><span>${esc(value)}</span>` : '';
             const meds = (p.medications || []).map(m => `${m.name} ${m.dose || ''} (${m.time || ''})`).join(', ');
-
-            let html = `
+            const photo = p.profileImage && /^data:image\//.test(p.profileImage) ? `<img class="ad-photo" src="${esc(p.profileImage)}" alt="">` : '';
+            const userFb = feedback.filter(f => f.email && f.email.toLowerCase() === String(u.email).toLowerCase());
+            $('adDetail').innerHTML = `
                 <div class="ad-detail-head">
-                    <div><h2>${esc(p.patientName || u.name || u.email)}</h2><div class="ad-muted">${esc(u.email)} · data last changed ${esc(u.latest ? fmt(new Date(u.latest)) : '–')}</div></div>
+                    <div class="ad-who">${photo}<div><h2>${esc(p.patientName || u.name || u.email)}</h2>
+                        <div class="ad-muted">${esc(u.email)} · last sign-in ${esc(fmt(u.lastLogin))}</div></div></div>
                     <div class="ad-head-btns">
-                        <button class="btn-secondary" type="button" id="adJson">⬇ Download all data (JSON)</button>
+                        <button class="btn-secondary" type="button" id="adJson">⬇ Download profile (JSON)</button>
                         ${NeutrixCloud.isAdminEmail(u.email)
                             ? '<span class="ad-muted">Admin accounts can’t be deleted here.</span>'
                             : '<button class="ad-danger-btn" type="button" id="adDelete">🗑 Delete user</button>'}
                     </div>
                 </div>
+                ${u.error ? `<div class="ad-error">⚠️ ${esc(u.error)}</div>` : ''}
                 <div class="ad-grid">
                     <div class="ad-box"><h3>🩺 Patient profile</h3>${Object.keys(p).length ? `<div class="ad-kv">
                         ${row('Name', p.patientName)}${row('Age', p.age)}${row('Gender', p.gender)}${row('Blood group', p.bloodGroup !== 'Select' ? p.bloodGroup : '')}
                         ${row('Phone', p.patientPhone)}${row('Email', p.patientEmail)}${row('Condition', p.condition)}${row('Allergies', p.allergies)}
                         ${row('Regular medicines', meds)}${row('Summary language', p.language)}</div>` : '<p class="ad-muted">Not filled in.</p>'}</div>
-                    <div class="ad-box"><h3>🤝 Caregiver</h3>${p.caregiverName || p.caregiverEmail || (p.caregiverPhone && p.caregiverPhone !== 'Not provided') ? `<div class="ad-kv">
+                    <div class="ad-box"><h3>🤝 Caregiver &amp; support</h3>${p.caregiverName || p.caregiverEmail || caregiverOf(p) ? `<div class="ad-kv">
                         ${row('Name', p.caregiverName)}${row('Phone', p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : '')}${row('Email', p.caregiverEmail)}</div>` : '<p class="ad-muted">Not added.</p>'}
-                        ${d.neutrixDoctorEmail ? `<h3 style="margin-top:14px">🧑‍⚕️ Doctor email</h3><p>${esc(d.neutrixDoctorEmail)}</p>` : ''}</div>
-                </div>`;
-
-            const issues = issuesOf(u);
-            if (!issues.length) html += `<p class="ad-muted" style="margin-top:16px">No medical issues added yet.</p>`;
-            issues.forEach(issue => {
-                const g = key => d[`${key}::${issue.id}`];
-                const report = g('neutrixReport');
-                const sums = (report && report.summaries) || {};
-                const summary = sums.English || Object.values(sums)[0] || (report && report.summary) || '';
-                const files = report ? (report.files || []).map(f => f.name) : [];
-                const followups = g('neutrixFollowups') || [];
-                followups.forEach(f => (f.files || []).forEach(x => files.push(x.name + ' (later)')));
-                const sched = scheduleStats(g('neutrixSchedule'));
-                const readings = g('neutrixTracker') || [];
-                const exLog = g('neutrixExerciseLog') || {};
-                const ex = g('neutrixExercises');
-                const sessions = Object.values(exLog).reduce((n, day) => n + Object.values(day).reduce((m, e) => m + (e.sessions || 0), 0), 0);
-                const progress = g('neutrixProgressReport');
-                const briefs = g('neutrixBriefLog') || [];
-
-                html += `<div class="ad-issue">
-                    <h3>${esc(issue.icon || '🩺')} ${esc(issue.title || 'Issue')}</h3>
-                    <div class="ad-muted">${esc([issue.startDate && 'Since ' + issue.startDate, issue.hospital, issue.notes].filter(Boolean).join(' · '))}</div>
-                    <div style="margin-top:8px">
-                        <span class="ad-pill">📋 ${report ? files.length + ' file(s)' : 'No reports'}</span>
-                        ${sched ? `<span class="ad-pill">💊 ${sched.taken}/${sched.scheduled} doses (${sched.pct}%)</span>` : ''}
-                        <span class="ad-pill">📈 ${readings.length} reading(s)</span>
-                        <span class="ad-pill">🏃 ${sessions} exercise session(s)</span>
-                        <span class="ad-pill">🧑‍⚕️ ${briefs.length} message(s) to doctor</span>
-                        ${progress ? `<span class="ad-pill">📊 Progress report</span>` : ''}
-                    </div>
-                    ${summary ? `<details><summary>AI discharge summary${files.length ? ' — ' + esc(files.join(', ')) : ''}</summary><div class="ad-md md-content">${renderMarkdown(summary)}</div></details>` : ''}
-                    ${readings.length ? `<details><summary>Home readings (${readings.length})</summary><table class="ad-mini"><thead><tr><th>When</th><th>Temp</th><th>BP</th><th>Sugar</th><th>Weight</th><th>Symptoms</th></tr></thead><tbody>
-                        ${readings.slice(-30).reverse().map(r => `<tr><td>${esc(fmt(new Date(r.at)))}</td><td>${esc(r.temp || '–')}</td><td>${esc(r.bp || '–')}</td><td>${esc(r.sugar || '–')}</td><td>${esc(r.weight || '–')}</td><td>${esc(r.symptoms || '–')}</td></tr>`).join('')}
-                        </tbody></table></details>` : ''}
-                    ${(ex && ex.exercises && ex.exercises.length) || sessions ? `<details><summary>Exercise</summary>
-                        ${ex && ex.exercises ? `<p class="ad-muted" style="margin-top:8px">Prescribed: ${esc(ex.exercises.map(e => e.name_en).join(', ') || 'none')}</p>` : ''}
-                        <table class="ad-mini"><thead><tr><th>Day</th><th>Exercise</th><th>Sessions</th><th>Reps</th></tr></thead><tbody>
-                        ${Object.keys(exLog).sort().reverse().flatMap(day => Object.entries(exLog[day]).map(([id, e]) => `<tr><td>${esc(day)}</td><td>${esc(e.name_en || id)}</td><td>${e.sessions || 0}</td><td>${e.reps || 0}</td></tr>`)).join('') || '<tr><td colspan="4">No sessions yet</td></tr>'}
-                        </tbody></table></details>` : ''}
-                    ${briefs.length ? `<details><summary>Messages sent to the doctor (${briefs.length})</summary>${briefs.slice().reverse().map(b => `<div style="margin-top:10px"><div class="ad-muted">${esc(fmt(new Date(b.at)))} → ${esc(b.to)}</div><div class="ad-raw">${esc(b.text)}</div></div>`).join('')}</details>` : ''}
-                    ${progress && progress.markdown ? `<details><summary>Latest progress report (${esc(fmt(new Date(progress.createdAt)))})</summary><div class="ad-md md-content">${renderMarkdown(progress.markdown)}</div></details>` : ''}
-                </div>`;
-            });
-
-            html += `<details class="ad-issue"><summary>All saved data (${Object.keys(d).length} items)</summary><div class="ad-raw">${esc(JSON.stringify(d, null, 2).slice(0, 200000))}</div></details>`;
-            $('adDetail').innerHTML = html;
+                        ${u.doctorEmail ? `<h3 style="margin-top:14px">🧑‍⚕️ Doctor email</h3><p>${esc(u.doctorEmail)}</p>` : ''}</div>
+                    <div class="ad-box"><h3>⭐ Their ratings &amp; reports</h3>${userFb.length
+                        ? userFb.map(f => `<div class="ad-mini-fb">${f.kind === 'rating' ? stars(f.rating) : '⚑ Report'} <span class="ad-muted">${esc(fmt(f.createdAt))}</span>${f.message ? `<div>${esc(f.message)}</div>` : ''}</div>`).join('')
+                        : '<p class="ad-muted">None sent while signed in.</p>'}</div>
+                </div>
+                <p class="ad-note">🔒 Medical records are private and are not shown here.</p>`;
             if ($('adDelete')) $('adDelete').addEventListener('click', () => askDelete(u));
             $('adJson').addEventListener('click', () => {
-                const blob = new Blob([JSON.stringify({ uid: u.uid, email: u.email, name: u.name, data: d }, null, 2)], { type: 'application/json' });
+                const blob = new Blob([JSON.stringify({ uid: u.uid, email: u.email, name: u.name, profile: p, doctorEmail: u.doctorEmail }, null, 2)], { type: 'application/json' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = `neutrix_${(u.email || u.uid).replace(/[^a-z0-9]+/gi, '_')}.json`;
+                a.download = `neutrix_profile_${(u.email || u.uid).replace(/[^a-z0-9]+/gi, '_')}.json`;
                 a.click();
                 setTimeout(() => URL.revokeObjectURL(a.href), 2000);
             });
         }
 
-        // ---------- CSV of everyone ----------
-        $('adCsv').addEventListener('click', () => {
+        // ---------- Ratings and problem reports ----------
+        const stars = n => `<span class="ad-stars">${'★'.repeat(n)}<span class="off">${'★'.repeat(5 - n)}</span></span>`;
+        async function loadFeedback() {
+            $('adFbList').innerHTML = `<div class="ad-loading"><span class="ad-spin"></span>Loading ratings and reports…</div>`;
+            try {
+                const snap = await db.collection('feedback').orderBy('createdAt', 'desc').limit(500).get();
+                feedback = snap.docs.map(d => ({ id: d.id, ...d.data(), createdAt: dateOf(d.data().createdAt) }));
+                renderFeedback();
+                renderStats();
+                if (openUid) { const u = users.find(x => x.uid === openUid); if (u) renderDetail(u); }
+            } catch (e) {
+                console.error(e);
+                $('adFbList').innerHTML = `<div class="ad-error">⚠️ Could not load ratings and reports: ${esc(e.message)}${esc(permissionNote(e))}</div>`;
+            }
+        }
+
+        function renderFeedback() {
+            const ratings = feedback.filter(f => f.kind === 'rating' && f.rating > 0);
+            const counts = [5, 4, 3, 2, 1].map(n => [n, ratings.filter(f => f.rating === n).length]);
+            const max = Math.max(1, ...counts.map(c => c[1]));
+            const avg = ratings.length ? ratings.reduce((n, f) => n + f.rating, 0) / ratings.length : 0;
+            $('adStarsBox').innerHTML = ratings.length ? `
+                <div class="ad-avg"><b>${avg.toFixed(1)}</b>${stars(Math.round(avg))}<span class="ad-muted">${ratings.length} rating(s)</span></div>
+                <div class="ad-dist">${counts.map(([n, c]) => `<div class="ad-dist-row"><span>${n} ★</span><div class="ad-dist-bar"><i style="width:${Math.round(c / max * 100)}%"></i></div><span>${c}</span></div>`).join('')}</div>`
+                : '<p class="ad-muted">No ratings yet.</p>';
+
+            const list = feedback.filter(f => filter === 'all' || f.kind === filter);
+            $('adFbList').innerHTML = list.map(f => `
+                <div class="ad-fb ${f.kind}">
+                    <div class="ad-fb-top">
+                        <span class="ad-fb-kind">${f.kind === 'rating' ? (f.rating ? stars(f.rating) : '⭐ Rating') : '⚑ Problem report'}</span>
+                        <span class="ad-muted">${esc(fmt(f.createdAt))}</span>
+                    </div>
+                    ${f.message ? `<div class="ad-fb-msg">${esc(f.message)}</div>` : '<div class="ad-muted">(no message)</div>'}
+                    <div class="ad-fb-meta">
+                        <span>👤 ${esc(f.name || f.email || 'Not signed in')}${f.name && f.email ? ' · ' + esc(f.email) : ''}</span>
+                        <span>📄 ${esc(f.page || '–')}</span>
+                        <span>🌐 ${esc(f.lang || '–')}</span>
+                        <span title="${esc(f.device)}">💻 ${esc(deviceName(f.device))}</span>
+                        <button type="button" class="ad-fb-del" data-id="${esc(f.id)}">Delete</button>
+                    </div>
+                </div>`).join('') || `<p class="ad-muted">Nothing here yet.</p>`;
+            $('adFbList').querySelectorAll('.ad-fb-del').forEach(b => b.addEventListener('click', () => deleteFeedback(b)));
+        }
+        function deviceName(ua) {
+            ua = ua || '';
+            const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iPhone/iPad' : /Windows/i.test(ua) ? 'Windows' : /Mac OS/i.test(ua) ? 'Mac' : /Linux/i.test(ua) ? 'Linux' : '';
+            const br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
+            return [br, os].filter(Boolean).join(' on ') || 'Unknown device';
+        }
+        async function deleteFeedback(btn) {
+            if (btn.dataset.sure !== '1') { btn.dataset.sure = '1'; btn.textContent = 'Click again to delete'; setTimeout(() => { if (btn.isConnected) { btn.dataset.sure = ''; btn.textContent = 'Delete'; } }, 3000); return; }
+            btn.disabled = true;
+            try {
+                await db.collection('feedback').doc(btn.dataset.id).delete();
+                feedback = feedback.filter(f => f.id !== btn.dataset.id);
+                renderFeedback();
+                renderStats();
+            } catch (e) {
+                btn.textContent = 'Could not delete';
+            }
+        }
+
+        document.querySelectorAll('.ad-filter').forEach(b => b.addEventListener('click', () => {
+            filter = b.dataset.f;
+            document.querySelectorAll('.ad-filter').forEach(x => x.classList.toggle('active', x === b));
+            renderFeedback();
+        }));
+        document.querySelectorAll('.ad-tab').forEach(b => b.addEventListener('click', () => {
+            document.querySelectorAll('.ad-tab').forEach(x => x.classList.toggle('active', x === b));
+            show('tabPeople', b.dataset.tab === 'people');
+            show('tabFeedback', b.dataset.tab === 'feedback');
+        }));
+
+        // ---------- CSV files ----------
+        function downloadCsv(name, header, rows) {
             const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-            const lines = [['Name', 'Email', 'Last sign-in', 'Phone', 'Age', 'Gender', 'Condition', 'Allergies', 'Caregiver', 'Issues', 'Last activity'].map(cell).join(',')];
-            users.forEach(u => {
-                const p = profileOf(u);
-                lines.push([p.patientName || u.name, u.email, fmt(u.lastLogin), p.patientPhone, p.age, p.gender, p.condition, p.allergies,
-                            p.caregiverName, issuesOf(u).map(i => i.title).join('; '), u.latest ? fmt(new Date(u.latest)) : ''].map(cell).join(','));
-            });
+            const text = [header, ...rows].map(r => r.map(cell).join(',')).join('\n');
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' }));
-            a.download = `neutrix_users_${dayKey(new Date())}.csv`;
+            a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/csv' }));
+            a.download = name;
             a.click();
-        });
+        }
+        $('adCsv').addEventListener('click', () => downloadCsv(`neutrix_users_${dayKey(new Date())}.csv`,
+            ['Name', 'Email', 'Phone', 'Age', 'Gender', 'Blood group', 'Caregiver', 'Caregiver phone', 'Caregiver email', 'Last sign-in'],
+            users.map(u => { const p = prof(u); return [p.patientName || u.name, u.email, p.patientPhone, p.age, p.gender, p.bloodGroup !== 'Select' ? p.bloodGroup : '',
+                p.caregiverName, p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : '', p.caregiverEmail, fmt(u.lastLogin)]; })));
+        $('adFbCsv').addEventListener('click', () => downloadCsv(`neutrix_feedback_${dayKey(new Date())}.csv`,
+            ['Type', 'Rating', 'Message', 'Page', 'Name', 'Email', 'Language', 'Device', 'When'],
+            feedback.map(f => [f.kind, f.rating || '', f.message, f.page, f.name, f.email, f.lang, deviceName(f.device), fmt(f.createdAt)])));
         $('adSearch').addEventListener('input', renderRows);
+        $('adRefresh').addEventListener('click', () => { users = []; openUid = null; show('adDetail', false); loadUsers(); });
+        $('adFbRefresh').addEventListener('click', loadFeedback);
+
         // ---------- Delete a user completely ----------
         function askDelete(u) {
-            const p = profileOf(u);
+            const p = prof(u);
             const who = p.patientName || u.name || u.email;
             const box = document.createElement('div');
             box.className = 'ad-modal';
@@ -393,10 +472,10 @@
                     <p>This permanently deletes <strong>${esc(u.email)}</strong>:</p>
                     <ul>
                         <li>their sign-in account (they are signed out everywhere and can’t sign in with it again)</li>
-                        <li>their patient profile, medical issues, reports and summaries</li>
-                        <li>medicine ticks, readings, exercise history, messages and progress reports</li>
+                        <li>their patient profile and caregiver details</li>
+                        <li>all their private medical records (reports, medicines, readings, exercise, messages)</li>
                     </ul>
-                    <p class="ad-warn">This cannot be undone. Download their data first if you might need it.</p>
+                    <p class="ad-warn">This cannot be undone.</p>
                     <label class="ad-muted" for="adConfirm">Type their email to confirm:</label>
                     <input id="adConfirm" class="modern-input" autocomplete="off" placeholder="${esc(u.email)}">
                     <div id="adDelMsg" class="ad-del-msg"></div>
@@ -449,8 +528,6 @@
                 }
             });
         }
-
-        $('adRefresh').addEventListener('click', () => { users = []; openUid = null; show('adDetail', false); loadUsers(); });
 
         start();
     })();
