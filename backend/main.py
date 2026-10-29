@@ -26,6 +26,17 @@ from services.ai_engine import (
 
 app = FastAPI(title="Neutrix Core Engine APIs")
 
+# Always check for a newer version of pages, scripts and styles (the browser re-uses its copy
+# only if nothing changed, using the ETag), so updates show up without pressing Ctrl + F5.
+@app.middleware("http")
+async def no_stale_pages(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.endswith((".html", ".js", ".css")):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
