@@ -8,7 +8,7 @@
     <script src="firebase-config.js"></script>
     <script src="neutrix-cloud.js"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261029a"></script>
+    <script src="issue-scope.js?v=20261029b"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | AI Medical Assistant</title>
     <link rel="stylesheet" href="theme.css">
@@ -16,6 +16,27 @@
     <link rel="stylesheet" href="skin.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        .ph-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+        .ph-status { margin-top: 4px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .ph-status.checking { color: var(--text-secondary); font-weight: 600; }
+        .ph-status.clear { color: #16a34a; }
+        .ph-status.unclear, .ph-status.error { color: #b45309; }
+        .ph-status.unreadable { color: #dc2626; }
+        [data-theme="dark"] .ph-status.clear { color: #4ade80; }
+        [data-theme="dark"] .ph-status.unclear, [data-theme="dark"] .ph-status.error { color: #fbbf24; }
+        [data-theme="dark"] .ph-status.unreadable { color: #f87171; }
+        .ph-tip { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .ph-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border-color); border-top-color: #a855f7; animation: phSpin 0.8s linear infinite; }
+        @keyframes phSpin { to { transform: rotate(360deg); } }
+        .file-chip.ph-unclear, .file-chip.ph-error { border-color: rgba(245, 158, 11, 0.6) !important; background: rgba(245, 158, 11, 0.06) !important; }
+        .file-chip.ph-unreadable { border-color: rgba(220, 38, 38, 0.55) !important; background: rgba(220, 38, 38, 0.05) !important; }
+        .file-chip.ph-clear { border-color: rgba(22, 163, 74, 0.45) !important; }
+        .ph-btn { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary);
+                  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .ph-btn:hover { border-color: #a855f7; }
+        @media (max-width: 640px) { .file-chip { flex-wrap: wrap; } .ph-actions { width: 100%; justify-content: flex-start; } }
+    </style>
 </head>
 <body data-page="upload" data-title-key="pageTitle">
 
@@ -176,7 +197,7 @@
 
     </main>
 
-    <script src="common.js?v=20261029a"></script>
+    <script src="common.js?v=20261029b"></script>
     <script src="account-menu.js"></script>
     <script src="camera-capture.js"></script>
     <script>
@@ -192,6 +213,71 @@
         function isImage(file) {
             return /^image\//i.test(file.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name);
         }
+
+        // ---------- Photo check: can the AI clearly read this photo? ----------
+        const PH = {
+            English: { checking: 'Checking if the AI can read this photo…', clear: '✓ Clear: the AI can read this page',
+                       unclear: '⚠ Not clear enough: please retake or replace this photo', unreadable: '✕ The AI cannot read this photo: retake or replace it',
+                       error: '⚠ Could not check this photo', retake: '📷 Retake', replace: '🔁 Replace', again: '↻ Check again',
+                       takeAnother: '📷 Take another page', waitCheck: 'Please wait: the photos are still being checked.',
+                       fixPhotos: 'Some photos are not clear enough for the AI. Retake or replace the photos marked ⚠ / ✕ (or remove them), then try again.',
+                       readable: '{p}% readable',
+                       problems: { blurry: 'blurry', too_dark: 'too dark', glare: 'light glare', cut_off: 'page edges cut off', too_far: 'too far away',
+                                   tilted: 'page tilted', not_a_document: 'not a document page', handwriting_unclear: 'handwriting hard to read',
+                                   not_a_photo: 'not a photo', too_big: 'file too big' },
+                       tip: 'Tip: hold the phone straight above the page, fill the frame, use good light and keep still.' },
+            Malayalam: { checking: 'ഈ ഫോട്ടോ AI-ക്ക് വായിക്കാനാകുമോ എന്ന് പരിശോധിക്കുന്നു…', clear: '✓ വ്യക്തം: AI-ക്ക് ഈ പേജ് വായിക്കാം',
+                       unclear: '⚠ വേണ്ടത്ര വ്യക്തമല്ല: ഫോട്ടോ വീണ്ടും എടുക്കുകയോ മാറ്റുകയോ ചെയ്യുക', unreadable: '✕ AI-ക്ക് ഈ ഫോട്ടോ വായിക്കാൻ കഴിയില്ല: വീണ്ടും എടുക്കുക അല്ലെങ്കിൽ മാറ്റുക',
+                       error: '⚠ ഈ ഫോട്ടോ പരിശോധിക്കാൻ കഴിഞ്ഞില്ല', retake: '📷 വീണ്ടും എടുക്കുക', replace: '🔁 മാറ്റുക', again: '↻ വീണ്ടും പരിശോധിക്കുക',
+                       takeAnother: '📷 അടുത്ത പേജ് എടുക്കുക', waitCheck: 'ദയവായി കാത്തിരിക്കുക: ഫോട്ടോകൾ പരിശോധിക്കുന്നു.',
+                       fixPhotos: 'ചില ഫോട്ടോകൾ AI-ക്ക് വേണ്ടത്ര വ്യക്തമല്ല. ⚠ / ✕ അടയാളമുള്ള ഫോട്ടോകൾ വീണ്ടും എടുക്കുക, മാറ്റുക അല്ലെങ്കിൽ നീക്കം ചെയ്യുക.',
+                       readable: '{p}% വായിക്കാം',
+                       problems: { blurry: 'മങ്ങിയത്', too_dark: 'ഇരുട്ട് കൂടുതൽ', glare: 'വെളിച്ചം തിളങ്ങുന്നു', cut_off: 'പേജിന്റെ അരികുകൾ മുറിഞ്ഞു', too_far: 'വളരെ ദൂരെ',
+                                   tilted: 'പേജ് ചരിഞ്ഞു', not_a_document: 'ഇത് ഒരു രേഖയല്ല', handwriting_unclear: 'കൈയക്ഷരം വായിക്കാൻ പ്രയാസം',
+                                   not_a_photo: 'ഫോട്ടോ അല്ല', too_big: 'ഫയൽ വളരെ വലുത്' },
+                       tip: 'ടിപ്പ്: ഫോൺ പേജിന് നേരെ മുകളിൽ പിടിക്കുക, ഫ്രെയിം നിറയ്ക്കുക, നല്ല വെളിച്ചം ഉപയോഗിക്കുക, അനങ്ങാതെ പിടിക്കുക.' }
+        };
+        const ph = key => (PH[neutrixLang] || PH.English)[key];
+        const photoChecks = new WeakMap();      // file -> { state, problems, percent, doc }
+        const checkQueue = [];
+        let checksRunning = 0;
+        const rerenders = new Set();
+        const rerenderAll = () => rerenders.forEach(fn => fn());
+
+        function queueCheck(file) {
+            photoChecks.set(file, { state: 'checking' });
+            checkQueue.push(file);
+            pumpChecks();
+        }
+        function pumpChecks() {
+            while (checksRunning < 2 && checkQueue.length) {
+                const file = checkQueue.shift();
+                checksRunning++;
+                const fd = new FormData();
+                fd.append('file', file);
+                fetch(`${API_BASE}/api/check-photo`, { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(d => photoChecks.set(file, d.ok
+                        ? { state: d.status, problems: d.problems || [], percent: d.readable_percent, doc: d.doc_type }
+                        : { state: 'error', message: d.message }))
+                    .catch(() => photoChecks.set(file, { state: 'error' }))
+                    .finally(() => { checksRunning--; rerenderAll(); pumpChecks(); });
+            }
+        }
+
+        // Used by summary.js before sending: null = ready, 'checking' or 'bad'
+        window.neutrixPhotoProblem = function (prefixes) {
+            let result = null;
+            prefixes.forEach(p => (window.neutrixUploads[p] || []).forEach(f => {
+                if (!isImage(f)) return;
+                const c = photoChecks.get(f) || { state: 'checking' };
+                if (c.state === 'checking' && result !== 'bad') result = 'checking';
+                else if (c.state !== 'clear') result = 'bad';
+            }));
+            if (result === 'checking') showStatus('info', 'rawMsg', { msg: ph('waitCheck') });
+            if (result === 'bad') showStatus('error', 'rawMsg', { msg: ph('fixPhotos') });
+            return result;
+        };
 
         function setupUploader(prefix, onChange) {
             const files = window.neutrixUploads[prefix];
@@ -219,6 +305,46 @@
                     size.textContent = formatSize(file.size);
                     info.append(name, size);
 
+                    // Photo check result
+                    const actions = document.createElement('div');
+                    actions.className = 'ph-actions';
+                    if (isImage(file)) {
+                        const c = photoChecks.get(file) || { state: 'checking' };
+                        const line = document.createElement('div');
+                        line.className = 'ph-status ' + c.state;
+                        let text = ph(c.state) || ph('error');
+                        const extra = [];
+                        if (c.doc && c.state === 'clear') extra.push(c.doc);
+                        if (c.state === 'unclear' || c.state === 'unreadable') {
+                            (c.problems || []).forEach(pr => extra.push(ph('problems')[pr] || pr));
+                            if (c.percent) extra.push(ph('readable').replace('{p}', c.percent));
+                        }
+                        if (extra.length) text += ` (${extra.join(', ')})`;
+                        line.textContent = text;
+                        if (c.state === 'checking') line.prepend(Object.assign(document.createElement('span'), { className: 'ph-spin' }));
+                        info.appendChild(line);
+                        if (c.state === 'unclear' || c.state === 'unreadable') {
+                            const tip = document.createElement('div');
+                            tip.className = 'ph-tip';
+                            tip.textContent = ph('tip');
+                            info.appendChild(tip);
+                        }
+                        chip.classList.add('ph-' + c.state);
+                        if (c.state !== 'checking' && c.state !== 'clear') {
+                            const mk = (label, fn) => {
+                                const b = document.createElement('button');
+                                b.type = 'button';
+                                b.className = 'ph-btn';
+                                b.textContent = label;
+                                b.addEventListener('click', fn);
+                                actions.appendChild(b);
+                            };
+                            mk(ph('retake'), () => replaceAt(index, true));
+                            mk(ph('replace'), () => replaceAt(index, false));
+                            if (c.state === 'error') mk(ph('again'), () => { queueCheck(file); render(); });
+                        }
+                    }
+
                     const remove = document.createElement('button');
                     remove.type = 'button';
                     remove.className = 'btn-remove';
@@ -231,11 +357,41 @@
                         if (onChange) onChange();
                     });
 
-                    chip.append(icon, info, remove);
+                    actions.appendChild(remove);
+                    chip.append(icon, info, actions);
                     list.appendChild(chip);
                 });
                 zone.classList.toggle('compact', files.length > 0);
+                if (camBtn) camBtn.textContent = files.some(isImage) ? ph('takeAnother') : t('takePhoto');
             }
+            rerenders.add(render);
+            document.addEventListener('neutrix:langchange', render);
+
+            // Retake (camera) or Replace (choose a file) one photo, keeping its place in the list
+            const replaceInput = document.createElement('input');
+            replaceInput.type = 'file';
+            replaceInput.accept = 'image/*,.pdf,application/pdf';
+            replaceInput.style.display = 'none';
+            document.body.appendChild(replaceInput);
+            let replaceIndex = -1;
+            function replaceAt(index, camera) {
+                replaceIndex = index;
+                if (camera && window.NxCamera) NxCamera.open(replaceInput, { multiple: false, facing: 'environment' });
+                else replaceInput.click();
+            }
+            replaceInput.addEventListener('change', async () => {
+                const picked = replaceInput.files[0];
+                replaceInput.value = '';
+                if (!picked || replaceIndex < 0 || replaceIndex >= files.length) return;
+                const isPdf = picked.type === 'application/pdf' || picked.name.toLowerCase().endsWith('.pdf');
+                if (!isPdf && !isImage(picked)) { showStatus('warning', 'onlyPdf'); return; }
+                const file = isImage(picked) && window.NxCamera ? await NxCamera.shrink(picked) : picked;
+                files[replaceIndex] = file;
+                if (isImage(file)) queueCheck(file);
+                showStatus(null);
+                render();
+                if (onChange) onChange();
+            });
 
             async function addFiles(fileList) {
                 let rejected = false;
@@ -247,7 +403,10 @@
                     }
                     if (isImage(file) && window.NxCamera) file = await NxCamera.shrink(file);   // photos: smaller, faster upload
                     const duplicate = files.some(f => f.name === file.name && f.size === file.size);
-                    if (!duplicate) files.push(file);
+                    if (!duplicate) {
+                        files.push(file);
+                        if (isImage(file)) queueCheck(file);   // ask the AI if it can read it
+                    }
                 }
                 if (rejected) showStatus('warning', 'onlyPdf');
                 else showStatus(null);
@@ -255,7 +414,7 @@
                 if (onChange) onChange();
             }
 
-            if (window.NxCamera) NxCamera.attach(input, { after: zone, multiple: true, facing: 'environment' });
+            const camBtn = window.NxCamera ? NxCamera.attach(input, { after: zone, multiple: true, facing: 'environment', label: () => (files.some(isImage) ? ph('takeAnother') : t('takePhoto')) }) : null;
             zone.addEventListener('click', () => input.click());
             zone.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {

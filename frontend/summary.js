@@ -89,6 +89,7 @@ document.getElementById('processBtn').addEventListener('click', async () => {
         showStatus('warning', 'noFile');
         return;
     }
+    if (window.neutrixPhotoProblem && neutrixPhotoProblem(['pdf', 'bill'])) return;   // photos must be clear first
 
     const formData = new FormData();
     reports.forEach(file => formData.append("files", file));
@@ -201,6 +202,7 @@ document.getElementById('updateBtn').addEventListener('click', async () => {
         showStatus('warning', 'noMoreFile');
         return;
     }
+    if (window.neutrixPhotoProblem && neutrixPhotoProblem(['more', 'morebill'])) return;   // photos must be clear first
 
     const formData = new FormData();
     moreReports.forEach(file => formData.append("files", file));
@@ -294,6 +296,7 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
         showStatus('warning', 'noNewFile');
         return;
     }
+    if (window.neutrixPhotoProblem && neutrixPhotoProblem(['new'])) return;   // photos must be clear first
 
     const formData = new FormData();
     newFiles.forEach(file => formData.append("files", file));

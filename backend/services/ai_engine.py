@@ -122,8 +122,79 @@ def image_mime(name: str, data: bytes):
             "heic": "image/heic", "heif": "image/heif"}.get(ext)
 
 
+# Text already read from a photo (by the photo check), so the summary doesn't read it twice
+import hashlib
+from collections import OrderedDict
+PHOTO_TEXT_CACHE = OrderedDict()   # sha256 -> text
+PHOTO_CACHE_MAX = 300
+
+
+def _photo_key(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _remember_photo_text(data: bytes, text: str):
+    PHOTO_TEXT_CACHE[_photo_key(data)] = text
+    PHOTO_TEXT_CACHE.move_to_end(_photo_key(data))
+    while len(PHOTO_TEXT_CACHE) > PHOTO_CACHE_MAX:
+        PHOTO_TEXT_CACHE.popitem(last=False)
+
+
+PHOTO_PROBLEMS = {"blurry", "too_dark", "glare", "cut_off", "too_far", "tilted", "not_a_document", "handwriting_unclear"}
+
+
+def check_photo(data: bytes, name: str) -> dict:
+    """Checks one photo of a report before it is used.
+    Returns {status: clear|unclear|unreadable, problems: [...], doc_type, readable_percent}."""
+    mime = image_mime(name, data)
+    if not mime:
+        return {"status": "unreadable", "problems": ["not_a_photo"], "doc_type": "", "readable_percent": 0, "ok": True}
+    prompt = """
+    You check a photo that a patient took of ONE page of a medical document (discharge summary, lab report,
+    prescription, physiotherapy sheet or pharmacy bill) before an AI reads it.
+    Return ONLY JSON:
+    {"status": "clear" | "unclear" | "unreadable",
+     "readable_percent": 0-100,
+     "problems": [zero or more of "blurry", "too_dark", "glare", "cut_off", "too_far", "tilted", "not_a_document", "handwriting_unclear"],
+     "doc_type": "short name of the document, e.g. Discharge summary / Lab report / Pharmacy bill / Not a medical document",
+     "text": "ALL the text on the page, copied exactly (tables as rows with ' | '), or empty if unreadable"}
+
+    How to decide:
+    - "clear": almost all text (about 90% or more) can be read with confidence, including medicine names,
+      doses, numbers and dates.
+    - "unclear": part of the page can be read but some important words/numbers cannot (blur, shadow,
+      glare, edges cut off, too far away). The patient should retake it.
+    - "unreadable": the text cannot be read, or the photo is not a document page.
+    Be strict about medicine names, doses and numbers: if those cannot be read, it is not "clear".
+    In "text", write [unclear] for words you cannot read. Never guess.
+    """
+    raw = generate([types.Part.from_bytes(data=data, mime_type=mime), prompt], json_mode=True)
+    try:
+        result = parse_json(raw)
+    except Exception:
+        return {"status": "unclear", "problems": [], "doc_type": "", "readable_percent": 0, "ok": True}
+    status = str(result.get("status", "unclear")).lower()
+    if status not in ("clear", "unclear", "unreadable"):
+        status = "unclear"
+    problems = [p for p in (result.get("problems") or []) if p in PHOTO_PROBLEMS]
+    try:
+        percent = max(0, min(100, int(float(result.get("readable_percent", 0)))))
+    except (TypeError, ValueError):
+        percent = 0
+    text = str(result.get("text") or "").strip()
+    if status == "clear" and text:
+        _remember_photo_text(data, text)
+    print(f"[photo-check] {name}: {status} {percent}% {problems}")
+    return {"status": status, "problems": problems, "doc_type": str(result.get("doc_type") or "")[:60],
+            "readable_percent": percent, "ok": True}
+
+
 def read_image_text(data: bytes, mime: str) -> str:
     """Copies the text from a photo of a medical document (AI reads the picture)."""
+    cached = PHOTO_TEXT_CACHE.get(_photo_key(data))
+    if cached:
+        print("[photo] Using the text read during the photo check")
+        return cached
     prompt = (
         "This is a photo or scan of one page of a medical document (discharge summary, lab report, "
         "prescription, physiotherapy advice or pharmacy bill). Copy ALL the text exactly as written, "

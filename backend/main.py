@@ -18,6 +18,8 @@ from services.ai_engine import (
     generate_schedule,
     generate_exercises,
     generate_progress_report,
+    check_photo,
+    friendly_error,
     translate_markdown,
     compare_reports,
 )
@@ -58,6 +60,19 @@ def summarize_documents(
         "summary": result["summary"],
         "ok": result["ok"],
     }
+
+
+# ---------- Check a photo of a report before it is used ----------
+@app.post("/api/check-photo")
+def check_report_photo(file: UploadFile = File(...)):
+    data = file.file.read()
+    if len(data) > 15 * 1024 * 1024:
+        return {"status": "unreadable", "problems": ["too_big"], "doc_type": "", "readable_percent": 0, "ok": True}
+    try:
+        return check_photo(data, file.filename or "photo.jpg")
+    except Exception as e:
+        print(f"[photo-check] error: {e}")
+        return {"status": "error", "message": friendly_error(e), "ok": False}
 
 
 # ---------- Chat ----------
