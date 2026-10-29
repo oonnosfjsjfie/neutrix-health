@@ -109,6 +109,16 @@ def admin_delete_user(req: DeleteUserRequest, authorization: str = Header("")):
         return {"ok": False, "message": f"Could not delete this user: {e}"}
 
 
+# ---------- Calendar file for medicine reminders (iPhone opens it from a real address) ----------
+@app.post("/api/calendar-file")
+def calendar_file(ics: str = Form(...)):
+    # Hands the calendar file made on the page straight back (nothing is saved)
+    if not ics.startswith("BEGIN:VCALENDAR") or len(ics) > 100_000:
+        return Response("Not a calendar file", status_code=400)
+    return Response(ics, media_type="text/calendar; charset=utf-8",
+                    headers={"Content-Disposition": 'inline; filename="Neutrix_medicine_reminders.ics"'})
+
+
 # ---------- Chat ----------
 class ChatMessage(BaseModel):
     role: str
