@@ -805,8 +805,10 @@ def answer_question(question: str, report_text: str, history: list, language: st
        If the patient's own report below lists a dose, you may repeat exactly what the report says.
     2. Never tell the patient to start, stop, or change a prescribed medicine. Tell them to ask their doctor.
     3. Do not diagnose. Use careful wording like "may", "can", "is often used for".
-    4. If the question describes emergency symptoms (chest pain, trouble breathing, severe allergic reaction,
-       fainting, overdose), tell them to seek emergency care immediately, before anything else.
+    4. ONLY if the patient's question itself says they have emergency symptoms right now (chest pain, trouble
+       breathing, severe allergic reaction, fainting, overdose), start by telling them to seek emergency care
+       immediately. For ordinary questions (for example "what is this medicine for?") do NOT start with an
+       emergency warning; just answer, and mention serious side effects that need urgent care in their place.
     5. If you do not recognise a medicine name or are unsure, say so honestly. Do not guess.
     6. If the question is not about health, politely say you can only help with medical report and medicine questions.
 
