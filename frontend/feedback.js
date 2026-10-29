@@ -43,8 +43,16 @@
         .nx-fb-btn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 14px; border-radius: 30px; cursor: pointer; white-space: nowrap;
             border: 1px solid var(--border-color, #e5e3df); background: transparent; color: var(--text-primary, #191919);
             font: inherit; font-size: 13px; font-weight: 600; transition: all 0.2s ease; }
-        .nx-fb-btn:hover { border-color: #f59e0b; color: #b45309; }
-        [data-theme="dark"] .nx-fb-btn:hover { color: #fbbf24; }
+        .nx-fb-btn { border-color: rgba(245, 158, 11, 0.6); color: #b45309; background: rgba(245, 158, 11, 0.08); }
+        [data-theme="dark"] .nx-fb-btn { color: #fbbf24; background: rgba(245, 158, 11, 0.12); }
+        .nx-fb-btn:hover { border-color: #f59e0b; background: rgba(245, 158, 11, 0.18); transform: translateY(-1px); }
+        .nx-fb-btn .ic { font-size: 14px; }
+        @media (max-width: 900px) {
+            .nx-fb-btn { padding: 7px 10px; }
+            .nx-fb-btn .lbl { display: none; }
+        }
+        .nx-fb-btn.floating { position: fixed; left: 16px; bottom: 18px; z-index: 2500; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); background: var(--card-bg, #fff); }
+        .nx-fb-btn.floating .lbl { display: inline; }
         .nx-fb-modal { position: fixed; inset: 0; z-index: 6000; display: flex; align-items: center; justify-content: center; padding: 16px;
             background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(3px); animation: nxFbIn 0.2s ease both; }
         @keyframes nxFbIn { from { opacity: 0; } to { opacity: 1; } }
@@ -153,7 +161,11 @@
         btn.type = 'button';
         btn.className = 'nx-fb-btn';
         btn.id = 'nxReportBtn';
-        const paint = () => { btn.textContent = tx('report'); btn.title = tx('reportTitle'); };
+        const paint = () => {
+            btn.innerHTML = `<span class="ic">⚑</span><span class="lbl">${tx('report').replace(/^⚑\s*/, '')}</span>`;
+            btn.title = tx('reportTitle');
+            btn.setAttribute('aria-label', tx('reportTitle'));
+        };
         paint();
         btn.addEventListener('click', openReport);
         document.addEventListener('neutrix:langchange', paint);
@@ -161,10 +173,25 @@
         const controls = document.querySelector('.ehr-navbar .system-controls') || document.querySelector('.px-nav .nav-right');
         if (slot && slot.parentNode) slot.parentNode.insertBefore(btn, slot);
         else if (controls) controls.appendChild(btn);
-        else {   // pages without a top bar
-            btn.style.cssText = 'position:fixed;top:14px;right:14px;z-index:2500;background:var(--card-bg,#fff)';
-            document.body.appendChild(btn);
-        }
+        else { btn.classList.add('floating'); document.body.appendChild(btn); }   // pages without a top bar
+
+        // If the top bar has no room (small screens), keep the button on screen at the bottom left
+        const home = btn.parentNode;          // where it sits in the top bar
+        const anchor = btn.nextSibling;
+        const fit = () => {
+            if (!(slot || controls)) return;
+            // put it back in the top bar and measure
+            btn.classList.remove('floating');
+            if (btn.parentNode !== home) home.insertBefore(btn, anchor && anchor.parentNode === home ? anchor : null);
+            const r = btn.getBoundingClientRect();
+            if (r.width === 0 || r.right > innerWidth + 1 || r.left < 0) {
+                btn.classList.add('floating');
+                document.body.appendChild(btn);   // out of the top bar, so it really sits at the screen corner
+            }
+        };
+        fit();
+        window.addEventListener('resize', fit);
+        setTimeout(fit, 1500);   // after the account button has loaded
     }
 
     // ---------- Rating pop-up (website only, skippable; comes back every 8 days) ----------
