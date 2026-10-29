@@ -833,6 +833,9 @@ Emergencies in India: 112 (emergency) or 108 (ambulance), or the nearest hospita
 """
 
 
+LAST_CHAT_INFO = {}
+
+
 def _grounded_generate(prompt: str):
     """Answer with Google Search available (for questions that need outside or current information).
     Returns (text, sources). Falls back to a normal answer if search is not available."""
@@ -846,16 +849,20 @@ def _grounded_generate(prompt: str):
         try:
             response = client.models.generate_content(model=model, contents=prompt, config=config)
             text = response.text or ""
-            sources = []
-            try:
-                meta = response.candidates[0].grounding_metadata
+            sources, queries = [], []
+            for cand in (getattr(response, "candidates", None) or []):
+                meta = getattr(cand, "grounding_metadata", None)
+                if not meta:
+                    continue
+                queries += list(getattr(meta, "web_search_queries", None) or [])
                 for chunk in (getattr(meta, "grounding_chunks", None) or []):
                     web = getattr(chunk, "web", None)
-                    if web and getattr(web, "uri", None):
-                        sources.append({"title": getattr(web, "title", "") or web.uri, "url": web.uri})
-            except Exception:
-                pass
-            print(f"[ok] Answered by {model} (search available, {len(sources)} sources)")
+                    uri = getattr(web, "uri", None) if web else None
+                    if uri and not any(x["url"] == uri for x in sources):
+                        title = getattr(web, "title", "") or getattr(web, "domain", "") or "Source"
+                        sources.append({"title": title, "url": uri})
+            LAST_CHAT_INFO.update(model=model, searched=bool(queries or sources), queries=queries[:3], sources=len(sources))
+            print(f"[ok] Answered by {model} (searched: {bool(queries)}, {len(sources)} sources)")
             return text, sources[:5]
         except Exception as e:
             last = e
@@ -864,6 +871,7 @@ def _grounded_generate(prompt: str):
                 continue
             break
     print(f"[ask] search unavailable ({last}); answering without it")
+    LAST_CHAT_INFO.update(model="fallback", searched=False, queries=[], sources=0, error=str(last)[:200])
     return generate(prompt), []
 
 

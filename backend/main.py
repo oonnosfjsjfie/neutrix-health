@@ -171,9 +171,11 @@ class AskRequest(BaseModel):
 def ask_question(req: AskRequest):
     print(f"[ask] Question: {req.question}")
     history = [m.model_dump() for m in req.history]
+    from services import ai_engine
+    ai_engine.LAST_CHAT_INFO.clear()
     answer = answer_question(req.question, req.report_text, history, req.language,
                              app_context=req.app_context, page=req.page)
-    return {"answer": answer}
+    return {"answer": answer, "info": dict(ai_engine.LAST_CHAT_INFO)}
 
 
 # ---------- Medicine plan, check-ups, schedule ----------
