@@ -10,7 +10,7 @@ import re
 import json
 import base64
 
-ADMIN_EMAILS = {"altlol2102@gmail.com", "ajay21022010@gmail.com"}
+ADMIN_EMAILS = {"altlol2102@gmail.com", "ajay21022010@gmail.com", "lingesh.ganesh2@gmail.com", "adamspencer.miranda2010@gmail.com", "abcd6162@gmail.com"}
 
 _app = None
 

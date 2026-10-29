@@ -3,13 +3,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Neutrix admins. They can read ONLY contact cards (email + phone) and feedback.
+    // Neutrix admins. They can read ONLY contact cards (email, phone, gender) and feedback.
     // The email must be verified (Google sign-in is), so nobody can pose as an
     // admin by signing up with an admin's email and a password.
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email.lower() in ['altlol2102@gmail.com', 'ajay21022010@gmail.com'];
+        && request.auth.token.email.lower() in ['altlol2102@gmail.com', 'ajay21022010@gmail.com', 'lingesh.ganesh2@gmail.com', 'adamspencer.miranda2010@gmail.com', 'abcd6162@gmail.com'];
     }
     function isOwner(uid) {
       return request.auth != null && request.auth.uid == uid;
@@ -20,13 +20,14 @@ service cloud.firestore {
     match /users/{uid}/{document=**} {
       allow read, write: if isOwner(uid);
     }
-    // ---------- Contact card: ONLY email + phone (the only thing admins can see about a person) ----------
+    // ---------- Contact card: ONLY email, phone and gender (the only things admins can see about a person) ----------
     match /contacts/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create, update: if isOwner(uid)
-        && request.resource.data.keys().hasOnly(['email', 'phone', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['email', 'phone', 'gender', 'updatedAt'])
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.phone is string && request.resource.data.phone.size() <= 30
+        && (!('gender' in request.resource.data) || (request.resource.data.gender is string && request.resource.data.gender.size() <= 20))
         && request.resource.data.updatedAt == request.time;
       allow delete: if isOwner(uid);
     }

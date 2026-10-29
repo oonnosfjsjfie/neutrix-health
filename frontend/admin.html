@@ -5,8 +5,8 @@
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts (must load first) -->
-    <script src="firebase-config.js?v=20261029e"></script>
-    <script src="neutrix-cloud.js?v=20261029e"></script>
+    <script src="firebase-config.js?v=20261029f"></script>
+    <script src="neutrix-cloud.js?v=20261029f"></script>
     <script>
         // Signed-in users only (the admin check itself happens below, and in the Firestore rules)
         if (localStorage.getItem('neutrix_authenticated') !== 'true') location.replace('signin.html?next=admin.html');
@@ -161,18 +161,18 @@
                 <!-- People: contact details only -->
                 <div id="tabPeople">
                     <div class="ad-bar">
-                        <input id="adSearch" class="modern-input" placeholder="Search by email or phone…">
+                        <input id="adSearch" class="modern-input" placeholder="Search by email, phone or gender…">
                         <button class="btn-primary" type="button" id="adEmailSelected" disabled>✉ Email selected</button>
                         <button class="btn-secondary" type="button" id="adRefresh">🔄 Refresh</button>
                         <button class="btn-secondary" type="button" id="adCsv">⬇ Download CSV</button>
                     </div>
                     <div class="ad-table-wrap">
                         <table class="ad-table">
-                            <thead><tr><th style="width:36px"><input type="checkbox" id="adAll" aria-label="Select all"></th><th>Email</th><th>Phone</th><th style="width:1%"></th></tr></thead>
+                            <thead><tr><th style="width:36px"><input type="checkbox" id="adAll" aria-label="Select all"></th><th>Email</th><th>Phone</th><th>Gender</th><th style="width:1%"></th></tr></thead>
                             <tbody id="adRows"></tbody>
                         </table>
                     </div>
-                    <p class="ad-note">🔒 For contact only: admins see each registered person’s email and phone number, nothing else. Profiles, caregivers and medical records stay private to each person (Firebase does not let admins read them). People appear here after they open Neutrix once since this update.</p>
+                    <p class="ad-note">🔒 For contact only: admins see each registered person’s email, phone number and gender, nothing else. Profiles, caregivers and medical records stay private to each person (Firebase does not let admins read them). People appear here after they open Neutrix once since this update.</p>
                 </div>
 
                 <!-- Ratings and reports -->
@@ -216,8 +216,8 @@
         </section>
     </main>
 
-    <script src="common.js?v=20261029e"></script>
-    <script src="account-menu.js?v=20261029e"></script>
+    <script src="common.js?v=20261029f"></script>
+    <script src="account-menu.js?v=20261029f"></script>
     <script>
     (function () {
         const $ = id => document.getElementById(id);
@@ -257,10 +257,10 @@
         // ---------- People (contact cards: email + phone) ----------
         async function loadPeople() {
             $('adError').classList.add('hidden');
-            $('adRows').innerHTML = `<tr><td colspan="4"><div class="ad-loading"><span class="ad-spin"></span>Loading people…</div></td></tr>`;
+            $('adRows').innerHTML = `<tr><td colspan="5"><div class="ad-loading"><span class="ad-spin"></span>Loading people…</div></td></tr>`;
             try {
                 const snap = await db.collection('contacts').get();
-                people = snap.docs.map(d => ({ uid: d.id, email: d.data().email || '', phone: d.data().phone || '' }))
+                people = snap.docs.map(d => ({ uid: d.id, email: d.data().email || '', phone: d.data().phone || '', gender: d.data().gender || '' }))
                     .sort((a, b) => a.email.localeCompare(b.email));
                 [...selected].forEach(uid => { if (!people.some(p => p.uid === uid)) selected.delete(uid); });
                 renderRows();
@@ -289,7 +289,7 @@
 
         function visiblePeople() {
             const q = $('adSearch').value.trim().toLowerCase();
-            return people.filter(p => !q || `${p.email} ${p.phone}`.toLowerCase().includes(q));
+            return people.filter(p => !q || `${p.email} ${p.phone} ${p.gender}`.toLowerCase().includes(q));
         }
         function renderRows() {
             const list = visiblePeople();
@@ -299,12 +299,13 @@
                     <td><input type="checkbox" class="ad-pick" ${selected.has(p.uid) ? 'checked' : ''} aria-label="Select ${esc(p.email)}"></td>
                     <td><a href="mailto:${esc(p.email)}" class="ad-mail">${esc(p.email)}</a>${admin ? '<span class="ad-badge">ADMIN</span>' : ''}</td>
                     <td>${p.phone ? `<a href="tel:${esc(p.phone.replace(/[^+\d]/g, ''))}" class="ad-mail">${esc(p.phone)}</a>` : '<span class="ad-muted">–</span>'}</td>
+                    <td>${p.gender ? esc(p.gender) : '<span class="ad-muted">–</span>'}</td>
                     <td class="ad-row-btns">
                         <button type="button" class="ad-mini-btn" data-email="${esc(p.email)}">✉ Email</button>
                         ${admin ? '' : `<button type="button" class="ad-mini-btn danger" data-del="${esc(p.uid)}">🗑 Delete</button>`}
                     </td>
                 </tr>`;
-            }).join('') || `<tr><td colspan="4" class="ad-muted">Nobody yet.</td></tr>`;
+            }).join('') || `<tr><td colspan="5" class="ad-muted">Nobody yet.</td></tr>`;
             $('adRows').querySelectorAll('.ad-pick').forEach(cb => cb.addEventListener('change', () => {
                 const uid = cb.closest('tr').dataset.uid;
                 if (cb.checked) selected.add(uid); else selected.delete(uid);
@@ -482,7 +483,7 @@
             a.download = name;
             a.click();
         }
-        $('adCsv').addEventListener('click', () => downloadCsv(`neutrix_contacts_${dayKey(new Date())}.csv`, ['Email', 'Phone'], people.map(p => [p.email, p.phone])));
+        $('adCsv').addEventListener('click', () => downloadCsv(`neutrix_contacts_${dayKey(new Date())}.csv`, ['Email', 'Phone', 'Gender'], people.map(p => [p.email, p.phone, p.gender])));
         $('adFbCsv').addEventListener('click', () => downloadCsv(`neutrix_feedback_${dayKey(new Date())}.csv`,
             ['Type', 'Rating', 'Message', 'Page', 'Email', 'Language', 'Device', 'When'],
             feedback.map(f => [f.kind, f.rating || '', f.message, f.page, f.email, f.lang, deviceName(f.device), fmt(f.createdAt)])));

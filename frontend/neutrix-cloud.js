@@ -215,14 +215,19 @@
         return changed;
     }
 
-    // ---------- Contact card for the Neutrix team: ONLY email + phone ----------
+    // ---------- Contact card for the Neutrix team: ONLY email, phone and gender ----------
     // contacts/{uid} is the only thing admins can read about a person (see firestore.rules).
     async function syncContact(user) {
         if (!user) return;
         let phone = '';
-        try { phone = String((JSON.parse(rawGet.call(localStorage, 'neutrix_hospital_profile') || '{}') || {}).patientPhone || '').slice(0, 30); } catch (e) {}
-        const card = { email: user.email || '', phone };
-        const sig = user.uid + '|' + card.email + '|' + card.phone;
+        let gender = '';
+        try {
+            const p = JSON.parse(rawGet.call(localStorage, 'neutrix_hospital_profile') || '{}') || {};
+            phone = String(p.patientPhone || '').slice(0, 30);
+            if (p.patientName) gender = String(p.gender || '').slice(0, 20);   // only once the profile was really filled in
+        } catch (e) {}
+        const card = { email: user.email || '', phone, gender };
+        const sig = user.uid + '|' + card.email + '|' + card.phone + '|' + card.gender;
         if (rawGet.call(localStorage, 'neutrixCloudContact') === sig) return;
         const { db } = await init();
         await db.collection('contacts').doc(user.uid).set({ ...card, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -326,7 +331,7 @@
 
     // ---------- Admins (the Admin page) ----------
     // Only shows the button. The real protection is in firestore.rules (same list there).
-    const ADMIN_EMAILS = ['altlol2102@gmail.com', 'ajay21022010@gmail.com'];
+    const ADMIN_EMAILS = ['altlol2102@gmail.com', 'ajay21022010@gmail.com', 'lingesh.ganesh2@gmail.com', 'adamspencer.miranda2010@gmail.com', 'abcd6162@gmail.com'];
     function isAdminEmail(email) { return ADMIN_EMAILS.includes(String(email || '').toLowerCase()); }
     function isAdmin(user) { return !!user && user.emailVerified !== false && isAdminEmail(user.email); }
 
