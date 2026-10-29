@@ -5,8 +5,8 @@
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts (must load first) -->
-    <script src="firebase-config.js?v=20261029d"></script>
-    <script src="neutrix-cloud.js?v=20261029d"></script>
+    <script src="firebase-config.js?v=20261029e"></script>
+    <script src="neutrix-cloud.js?v=20261029e"></script>
     <script>
         // Signed-in users only (the admin check itself happens below, and in the Firestore rules)
         if (localStorage.getItem('neutrix_authenticated') !== 'true') location.replace('signin.html?next=admin.html');
@@ -100,6 +100,22 @@
         .ad-mini-fb { font-size: 13px; padding: 6px 0; border-top: 1px dashed var(--border-color); } .ad-mini-fb:first-of-type { border-top: none; }
         .ad-who { display: flex; gap: 14px; align-items: center; }
         .ad-photo { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
+        .ad-row-btns { white-space: nowrap; text-align: right; }
+        .ad-mini-btn { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-left: 6px; }
+        .ad-mini-btn:hover { border-color: #3b82f6; }
+        .ad-mini-btn.danger { color: #dc2626; } .ad-mini-btn.danger:hover { border-color: #dc2626; }
+        .ad-mail { color: inherit; text-decoration: none; } .ad-mail:hover { text-decoration: underline; }
+        .ad-fb-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+        .ad-fb-actions .ad-fb-del { margin-left: 0; }
+        .ad-compose { max-width: 760px; display: flex; flex-direction: column; gap: 8px; }
+        .ad-label { font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); margin-top: 8px; }
+        .ad-to { display: flex; flex-wrap: wrap; gap: 6px; min-height: 42px; padding: 8px; border: 1px solid var(--border-color); border-radius: 12px; align-items: center; }
+        .ad-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; border-radius: 20px; background: var(--pill-bg); font-size: 13px; font-weight: 600; }
+        .ad-chip button { border: none; background: none; cursor: pointer; font-size: 16px; line-height: 1; color: var(--text-muted); }
+        .ad-add-row { display: flex; gap: 8px; flex-wrap: wrap; } .ad-add-row input { flex: 1; min-width: 220px; }
+        .ad-send-row { display: flex; justify-content: flex-end; }
+        .ad-ok { padding: 12px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 700; background: rgba(22, 163, 74, 0.08); color: #16a34a; border: 1px solid rgba(22, 163, 74, 0.3); }
+        .ad-fail { font-size: 13px; color: #dc2626; margin: 6px 0 0; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -139,23 +155,24 @@
                 <div class="ad-tabs" role="tablist">
                     <button type="button" class="ad-tab active" data-tab="people">👥 People</button>
                     <button type="button" class="ad-tab" data-tab="feedback">⭐ Ratings &amp; reports <span id="adFbCount" class="ad-count"></span></button>
+                    <button type="button" class="ad-tab" data-tab="email">✉ Send email <span id="adToCount" class="ad-count"></span></button>
                 </div>
 
-                <!-- People -->
+                <!-- People: contact details only -->
                 <div id="tabPeople">
                     <div class="ad-bar">
-                        <input id="adSearch" class="modern-input" placeholder="Search by name, email or phone…">
+                        <input id="adSearch" class="modern-input" placeholder="Search by email or phone…">
+                        <button class="btn-primary" type="button" id="adEmailSelected" disabled>✉ Email selected</button>
                         <button class="btn-secondary" type="button" id="adRefresh">🔄 Refresh</button>
                         <button class="btn-secondary" type="button" id="adCsv">⬇ Download CSV</button>
                     </div>
                     <div class="ad-table-wrap">
                         <table class="ad-table">
-                            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Caregiver</th><th>Last sign-in</th></tr></thead>
+                            <thead><tr><th style="width:36px"><input type="checkbox" id="adAll" aria-label="Select all"></th><th>Email</th><th>Phone</th><th style="width:1%"></th></tr></thead>
                             <tbody id="adRows"></tbody>
                         </table>
                     </div>
-                    <p class="ad-note">🔒 Admins see only the account, the patient profile and caregiver details. Medical records (summaries, medicines, readings, exercise, reports) stay private to each person; Firebase does not let admins read them.</p>
-                    <div id="adDetail" class="ad-detail hidden"></div>
+                    <p class="ad-note">🔒 For contact only: admins see each registered person’s email and phone number, nothing else. Profiles, caregivers and medical records stay private to each person (Firebase does not let admins read them). People appear here after they open Neutrix once since this update.</p>
                 </div>
 
                 <!-- Ratings and reports -->
@@ -172,12 +189,35 @@
                     <div id="adStarsBox" class="ad-stars-box"></div>
                     <div id="adFbList" class="ad-fb-list"></div>
                 </div>
+
+                <!-- Send email -->
+                <div id="tabEmail" class="hidden">
+                    <div class="ad-compose">
+                        <label class="ad-label">To</label>
+                        <div class="ad-to" id="adTo"></div>
+                        <div class="ad-add-row">
+                            <input id="adToSearch" class="modern-input" list="adToList" placeholder="Add a registered person (type their email)…" autocomplete="off">
+                            <datalist id="adToList"></datalist>
+                            <button class="btn-secondary" type="button" id="adToAdd">+ Add</button>
+                            <button class="btn-secondary" type="button" id="adToAll">Add everyone</button>
+                        </div>
+                        <label class="ad-label" for="adSubject">Subject</label>
+                        <input id="adSubject" class="modern-input" maxlength="150" placeholder="e.g. About the problem you reported">
+                        <label class="ad-label" for="adBody">Message</label>
+                        <textarea id="adBody" class="modern-textarea" rows="8" maxlength="5000" placeholder="Write your message…"></textarea>
+                        <p class="ad-muted">Each person gets their own email (nobody sees the other addresses). It is sent from the Neutrix email account; replies come to your admin email.</p>
+                        <div class="ad-send-row">
+                            <button class="btn-primary" type="button" id="adSend">✉ Send email</button>
+                        </div>
+                        <div id="adSendResult" class="ad-send-result"></div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
 
-    <script src="common.js?v=20261029d"></script>
-    <script src="account-menu.js?v=20261029d"></script>
+    <script src="common.js?v=20261029e"></script>
+    <script src="account-menu.js?v=20261029e"></script>
     <script>
     (function () {
         const $ = id => document.getElementById(id);
@@ -186,12 +226,12 @@
         const show = (id, on) => $(id).classList.toggle('hidden', !on);
         const dateOf = ts => (ts && ts.toDate ? ts.toDate() : null);
         let db = null;
-        let users = [];       // { uid, name, email, lastLogin, profile, doctorEmail, loaded }
-        let feedback = [];    // { id, kind, rating, message, page, email, name, createdAt }
-        let openUid = null;
+        let people = [];      // { uid, email, phone }
+        let feedback = [];
         let filter = 'all';
+        const selected = new Set();
+        let recipients = [];
 
-        // ---------- Who is this? ----------
         async function start() {
             if (!NeutrixCloud.configured) return deny('Accounts are not set up on this copy of Neutrix.');
             let user = null;
@@ -200,171 +240,91 @@
             if (NeutrixCloud.isAdminEmail(user.email) && !user.emailVerified) return deny(`${user.email} is not verified. Sign in with Google (or verify the email) to use Admin Access.`);
             if (!NeutrixCloud.isAdmin(user)) return deny(`You are signed in as ${user.email || 'this account'}, which is not a Neutrix admin.`);
             db = (await NeutrixCloud.init()).db;
+            if (NeutrixCloud.syncContact) { try { await NeutrixCloud.syncContact(user); } catch (e) {} }
             show('adLoading', false);
             show('adView', true);
-            loadUsers();
+            loadPeople();
             loadFeedback();
+            renderTo();
         }
         function deny(text) {
             show('adLoading', false);
             $('adDeniedText').textContent = text;
             show('adDenied', true);
         }
-        function permissionNote(e) {
-            return /permission/i.test(e && e.message) ? ' (Firebase refused: the latest Firestore rules may not be published yet.)' : '';
-        }
+        const permissionNote = e => /permission/i.test(e && e.message) ? ' (Firebase refused: the latest Firestore rules may not be published yet.)' : '';
 
-        // ---------- Only the allowed items: profile (+ caregiver) and the doctor's email ----------
-        async function readItem(uid, key) {
-            const ref = db.collection('users').doc(uid);
-            const snap = await ref.collection('store').doc(key).get();
-            if (!snap.exists) return null;
-            const d = snap.data();
-            let value = d.v;
-            if (d.n) {
-                value = '';
-                for (let i = 0; i < d.n; i++) {
-                    const part = await ref.collection('chunks').doc(`${key}~${i}`).get();
-                    value += part.exists ? (part.data().v || '') : '';
-                }
-            }
-            if (value === null || value === undefined) return null;
-            try { return JSON.parse(value); } catch (e) { return value; }
-        }
-        async function loadProfile(u) {
-            try {
-                const [profile, doctorEmail] = await Promise.all([readItem(u.uid, 'neutrix_hospital_profile'), readItem(u.uid, 'neutrixDoctorEmail')]);
-                u.profile = profile && typeof profile === 'object' ? profile : {};
-                u.doctorEmail = typeof doctorEmail === 'string' ? doctorEmail : '';
-            } catch (e) {
-                u.profile = {};
-                u.error = 'Could not read the profile' + permissionNote(e);
-            }
-            u.loaded = true;
-        }
-
-        // ---------- People ----------
-        async function loadUsers() {
+        // ---------- People (contact cards: email + phone) ----------
+        async function loadPeople() {
             $('adError').classList.add('hidden');
-            $('adRows').innerHTML = `<tr><td colspan="5"><div class="ad-loading"><span class="ad-spin"></span>Loading people…</div></td></tr>`;
+            $('adRows').innerHTML = `<tr><td colspan="4"><div class="ad-loading"><span class="ad-spin"></span>Loading people…</div></td></tr>`;
             try {
-                const snap = await db.collection('users').get();
-                users = snap.docs.map(d => {
-                    const u = d.data();
-                    return { uid: d.id, name: u.name || '', email: u.email || '', lastLogin: dateOf(u.lastLogin) };
-                }).sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
+                const snap = await db.collection('contacts').get();
+                people = snap.docs.map(d => ({ uid: d.id, email: d.data().email || '', phone: d.data().phone || '' }))
+                    .sort((a, b) => a.email.localeCompare(b.email));
+                [...selected].forEach(uid => { if (!people.some(p => p.uid === uid)) selected.delete(uid); });
                 renderRows();
                 renderStats();
-                let next = 0;
-                const worker = async () => {
-                    while (next < users.length) {
-                        const u = users[next++];
-                        await loadProfile(u);
-                        renderRows();
-                        if (openUid === u.uid) renderDetail(u);
-                    }
-                };
-                await Promise.all([worker(), worker(), worker()]);
+                $('adToList').innerHTML = people.map(p => `<option value="${esc(p.email)}">`).join('');
             } catch (e) {
                 console.error(e);
                 $('adRows').innerHTML = '';
-                const box = $('adError');
-                box.textContent = '⚠️ Could not load people: ' + e.message + permissionNote(e);
-                box.classList.remove('hidden');
+                $('adError').textContent = '⚠️ Could not load people: ' + e.message + permissionNote(e);
+                $('adError').classList.remove('hidden');
             }
         }
 
-        const prof = u => u.profile || {};
-        const phoneOf = p => (p.patientPhone || '');
-        const caregiverOf = p => [p.caregiverName, p.caregiverPhone && p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : ''].filter(Boolean).join(' · ');
-
         function renderStats() {
-            const week = Date.now() - 7 * 86400000;
             const ratings = feedback.filter(f => f.kind === 'rating' && f.rating > 0);
             const avg = ratings.length ? (ratings.reduce((n, f) => n + f.rating, 0) / ratings.length).toFixed(1) : '–';
             $('adStats').innerHTML = [
-                [users.length, 'People'],
-                [users.filter(u => u.lastLogin && u.lastLogin.getTime() > week).length, 'Signed in this week'],
+                [people.length, 'Registered people'],
+                [people.filter(p => p.phone).length, 'With a phone number'],
                 [avg === '–' ? '–' : `${avg} ★`, `Average rating (${ratings.length})`],
                 [feedback.filter(f => f.kind === 'report').length, 'Problem reports']
             ].map(([n, l]) => `<div class="ad-stat"><b>${n}</b><span>${esc(l)}</span></div>`).join('');
-            const c = feedback.length;
-            $('adFbCount').textContent = c ? c : '';
+            $('adFbCount').textContent = feedback.length || '';
+            $('adToCount').textContent = recipients.length || '';
         }
 
-        function renderRows() {
+        function visiblePeople() {
             const q = $('adSearch').value.trim().toLowerCase();
-            const list = users.filter(u => !q || `${u.name} ${u.email} ${prof(u).patientName || ''} ${phoneOf(prof(u))}`.toLowerCase().includes(q));
-            $('adRows').innerHTML = list.map(u => {
-                const p = prof(u);
-                const admin = NeutrixCloud.isAdminEmail(u.email) ? '<span class="ad-badge">ADMIN</span>' : '';
-                const wait = u.loaded ? '–' : '…';
-                return `<tr class="user-row ${openUid === u.uid ? 'open' : ''}" data-uid="${esc(u.uid)}">
-                    <td><strong>${esc(p.patientName || u.name || '(no name)')}</strong>${admin}</td>
-                    <td>${esc(u.email)}</td>
-                    <td>${esc(phoneOf(p) || wait)}</td>
-                    <td>${esc(caregiverOf(p) || wait)}</td>
-                    <td>${esc(fmt(u.lastLogin))}</td>
+            return people.filter(p => !q || `${p.email} ${p.phone}`.toLowerCase().includes(q));
+        }
+        function renderRows() {
+            const list = visiblePeople();
+            $('adRows').innerHTML = list.map(p => {
+                const admin = NeutrixCloud.isAdminEmail(p.email);
+                return `<tr data-uid="${esc(p.uid)}">
+                    <td><input type="checkbox" class="ad-pick" ${selected.has(p.uid) ? 'checked' : ''} aria-label="Select ${esc(p.email)}"></td>
+                    <td><a href="mailto:${esc(p.email)}" class="ad-mail">${esc(p.email)}</a>${admin ? '<span class="ad-badge">ADMIN</span>' : ''}</td>
+                    <td>${p.phone ? `<a href="tel:${esc(p.phone.replace(/[^+\d]/g, ''))}" class="ad-mail">${esc(p.phone)}</a>` : '<span class="ad-muted">–</span>'}</td>
+                    <td class="ad-row-btns">
+                        <button type="button" class="ad-mini-btn" data-email="${esc(p.email)}">✉ Email</button>
+                        ${admin ? '' : `<button type="button" class="ad-mini-btn danger" data-del="${esc(p.uid)}">🗑 Delete</button>`}
+                    </td>
                 </tr>`;
-            }).join('') || `<tr><td colspan="5" class="ad-muted">Nobody found.</td></tr>`;
-            $('adRows').querySelectorAll('tr.user-row').forEach(tr => tr.addEventListener('click', () => openUser(tr.dataset.uid)));
+            }).join('') || `<tr><td colspan="4" class="ad-muted">Nobody yet.</td></tr>`;
+            $('adRows').querySelectorAll('.ad-pick').forEach(cb => cb.addEventListener('change', () => {
+                const uid = cb.closest('tr').dataset.uid;
+                if (cb.checked) selected.add(uid); else selected.delete(uid);
+                updatePick();
+            }));
+            $('adRows').querySelectorAll('[data-email]').forEach(b => b.addEventListener('click', () => composeTo([b.dataset.email])));
+            $('adRows').querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => askDelete(people.find(p => p.uid === b.dataset.del))));
+            updatePick();
         }
-
-        async function openUser(uid) {
-            openUid = uid;
+        function updatePick() {
+            const list = visiblePeople();
+            $('adAll').checked = list.length > 0 && list.every(p => selected.has(p.uid));
+            $('adEmailSelected').disabled = selected.size === 0;
+            $('adEmailSelected').textContent = selected.size ? `✉ Email selected (${selected.size})` : '✉ Email selected';
+        }
+        $('adAll').addEventListener('change', () => {
+            visiblePeople().forEach(p => { if ($('adAll').checked) selected.add(p.uid); else selected.delete(p.uid); });
             renderRows();
-            const u = users.find(x => x.uid === uid);
-            show('adDetail', true);
-            if (!u.loaded) {
-                $('adDetail').innerHTML = `<div class="ad-loading"><span class="ad-spin"></span>Loading ${esc(u.email)}…</div>`;
-                await loadProfile(u);
-            }
-            renderDetail(u);
-            $('adDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        function renderDetail(u) {
-            if (openUid !== u.uid) return;
-            const p = prof(u);
-            const row = (label, value) => value ? `<span>${esc(label)}</span><span>${esc(value)}</span>` : '';
-            const meds = (p.medications || []).map(m => `${m.name} ${m.dose || ''} (${m.time || ''})`).join(', ');
-            const photo = p.profileImage && /^data:image\//.test(p.profileImage) ? `<img class="ad-photo" src="${esc(p.profileImage)}" alt="">` : '';
-            const userFb = feedback.filter(f => f.email && f.email.toLowerCase() === String(u.email).toLowerCase());
-            $('adDetail').innerHTML = `
-                <div class="ad-detail-head">
-                    <div class="ad-who">${photo}<div><h2>${esc(p.patientName || u.name || u.email)}</h2>
-                        <div class="ad-muted">${esc(u.email)} · last sign-in ${esc(fmt(u.lastLogin))}</div></div></div>
-                    <div class="ad-head-btns">
-                        <button class="btn-secondary" type="button" id="adJson">⬇ Download profile (JSON)</button>
-                        ${NeutrixCloud.isAdminEmail(u.email)
-                            ? '<span class="ad-muted">Admin accounts can’t be deleted here.</span>'
-                            : '<button class="ad-danger-btn" type="button" id="adDelete">🗑 Delete user</button>'}
-                    </div>
-                </div>
-                ${u.error ? `<div class="ad-error">⚠️ ${esc(u.error)}</div>` : ''}
-                <div class="ad-grid">
-                    <div class="ad-box"><h3>🩺 Patient profile</h3>${Object.keys(p).length ? `<div class="ad-kv">
-                        ${row('Name', p.patientName)}${row('Age', p.age)}${row('Gender', p.gender)}${row('Blood group', p.bloodGroup !== 'Select' ? p.bloodGroup : '')}
-                        ${row('Phone', p.patientPhone)}${row('Email', p.patientEmail)}${row('Condition', p.condition)}${row('Allergies', p.allergies)}
-                        ${row('Regular medicines', meds)}${row('Summary language', p.language)}</div>` : '<p class="ad-muted">Not filled in.</p>'}</div>
-                    <div class="ad-box"><h3>🤝 Caregiver &amp; support</h3>${p.caregiverName || p.caregiverEmail || caregiverOf(p) ? `<div class="ad-kv">
-                        ${row('Name', p.caregiverName)}${row('Phone', p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : '')}${row('Email', p.caregiverEmail)}</div>` : '<p class="ad-muted">Not added.</p>'}
-                        ${u.doctorEmail ? `<h3 style="margin-top:14px">🧑‍⚕️ Doctor email</h3><p>${esc(u.doctorEmail)}</p>` : ''}</div>
-                    <div class="ad-box"><h3>⭐ Their ratings &amp; reports</h3>${userFb.length
-                        ? userFb.map(f => `<div class="ad-mini-fb">${f.kind === 'rating' ? stars(f.rating) : '⚑ Report'} <span class="ad-muted">${esc(fmt(f.createdAt))}</span>${f.message ? `<div>${esc(f.message)}</div>` : ''}</div>`).join('')
-                        : '<p class="ad-muted">None sent while signed in.</p>'}</div>
-                </div>
-                <p class="ad-note">🔒 Medical records are private and are not shown here.</p>`;
-            if ($('adDelete')) $('adDelete').addEventListener('click', () => askDelete(u));
-            $('adJson').addEventListener('click', () => {
-                const blob = new Blob([JSON.stringify({ uid: u.uid, email: u.email, name: u.name, profile: p, doctorEmail: u.doctorEmail }, null, 2)], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `neutrix_profile_${(u.email || u.uid).replace(/[^a-z0-9]+/gi, '_')}.json`;
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-            });
-        }
+        });
+        $('adEmailSelected').addEventListener('click', () => composeTo(people.filter(p => selected.has(p.uid)).map(p => p.email)));
 
         // ---------- Ratings and problem reports ----------
         const stars = n => `<span class="ad-stars">${'★'.repeat(n)}<span class="off">${'★'.repeat(5 - n)}</span></span>`;
@@ -375,13 +335,17 @@
                 feedback = snap.docs.map(d => ({ id: d.id, ...d.data(), createdAt: dateOf(d.data().createdAt) }));
                 renderFeedback();
                 renderStats();
-                if (openUid) { const u = users.find(x => x.uid === openUid); if (u) renderDetail(u); }
             } catch (e) {
                 console.error(e);
                 $('adFbList').innerHTML = `<div class="ad-error">⚠️ Could not load ratings and reports: ${esc(e.message)}${esc(permissionNote(e))}</div>`;
             }
         }
-
+        function deviceName(ua) {
+            ua = ua || '';
+            const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iPhone/iPad' : /Windows/i.test(ua) ? 'Windows' : /Mac OS/i.test(ua) ? 'Mac' : /Linux/i.test(ua) ? 'Linux' : '';
+            const br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
+            return [br, os].filter(Boolean).join(' on ') || 'Unknown device';
+        }
         function renderFeedback() {
             const ratings = feedback.filter(f => f.kind === 'rating' && f.rating > 0);
             const counts = [5, 4, 3, 2, 1].map(n => [n, ratings.filter(f => f.rating === n).length]);
@@ -391,7 +355,6 @@
                 <div class="ad-avg"><b>${avg.toFixed(1)}</b>${stars(Math.round(avg))}<span class="ad-muted">${ratings.length} rating(s)</span></div>
                 <div class="ad-dist">${counts.map(([n, c]) => `<div class="ad-dist-row"><span>${n} ★</span><div class="ad-dist-bar"><i style="width:${Math.round(c / max * 100)}%"></i></div><span>${c}</span></div>`).join('')}</div>`
                 : '<p class="ad-muted">No ratings yet.</p>';
-
             const list = feedback.filter(f => filter === 'all' || f.kind === filter);
             $('adFbList').innerHTML = list.map(f => `
                 <div class="ad-fb ${f.kind}">
@@ -401,20 +364,22 @@
                     </div>
                     ${f.message ? `<div class="ad-fb-msg">${esc(f.message)}</div>` : '<div class="ad-muted">(no message)</div>'}
                     <div class="ad-fb-meta">
-                        <span>👤 ${esc(f.name || f.email || 'Not signed in')}${f.name && f.email ? ' · ' + esc(f.email) : ''}</span>
+                        <span>👤 ${esc(f.email || 'Not signed in')}</span>
                         <span>📄 ${esc(f.page || '–')}</span>
                         <span>🌐 ${esc(f.lang || '–')}</span>
                         <span title="${esc(f.device)}">💻 ${esc(deviceName(f.device))}</span>
-                        <button type="button" class="ad-fb-del" data-id="${esc(f.id)}">Delete</button>
+                        <span class="ad-fb-actions">
+                            ${f.email ? `<button type="button" class="ad-mini-btn" data-reply="${esc(f.id)}">✉ Reply</button>` : ''}
+                            <button type="button" class="ad-fb-del" data-id="${esc(f.id)}">Delete</button>
+                        </span>
                     </div>
                 </div>`).join('') || `<p class="ad-muted">Nothing here yet.</p>`;
             $('adFbList').querySelectorAll('.ad-fb-del').forEach(b => b.addEventListener('click', () => deleteFeedback(b)));
-        }
-        function deviceName(ua) {
-            ua = ua || '';
-            const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iPhone/iPad' : /Windows/i.test(ua) ? 'Windows' : /Mac OS/i.test(ua) ? 'Mac' : /Linux/i.test(ua) ? 'Linux' : '';
-            const br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
-            return [br, os].filter(Boolean).join(' on ') || 'Unknown device';
+            $('adFbList').querySelectorAll('[data-reply]').forEach(b => b.addEventListener('click', () => {
+                const f = feedback.find(x => x.id === b.dataset.reply);
+                composeTo([f.email], f.kind === 'report' ? 'About the problem you reported' : 'Thank you for rating Neutrix',
+                    `\n\n—\nYou wrote (${fmt(f.createdAt)}, ${f.page || 'Neutrix'}):\n${f.message ? '“' + f.message + '”' : (f.rating ? f.rating + ' star rating' : '')}`);
+            }));
         }
         async function deleteFeedback(btn) {
             if (btn.dataset.sure !== '1') { btn.dataset.sure = '1'; btn.textContent = 'Click again to delete'; setTimeout(() => { if (btn.isConnected) { btn.dataset.sure = ''; btn.textContent = 'Delete'; } }, 3000); return; }
@@ -424,60 +389,119 @@
                 feedback = feedback.filter(f => f.id !== btn.dataset.id);
                 renderFeedback();
                 renderStats();
-            } catch (e) {
-                btn.textContent = 'Could not delete';
-            }
+            } catch (e) { btn.textContent = 'Could not delete'; }
         }
-
         document.querySelectorAll('.ad-filter').forEach(b => b.addEventListener('click', () => {
             filter = b.dataset.f;
             document.querySelectorAll('.ad-filter').forEach(x => x.classList.toggle('active', x === b));
             renderFeedback();
         }));
-        document.querySelectorAll('.ad-tab').forEach(b => b.addEventListener('click', () => {
-            document.querySelectorAll('.ad-tab').forEach(x => x.classList.toggle('active', x === b));
-            show('tabPeople', b.dataset.tab === 'people');
-            show('tabFeedback', b.dataset.tab === 'feedback');
-        }));
+
+        // ---------- Tabs ----------
+        function openTab(name) {
+            document.querySelectorAll('.ad-tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name));
+            show('tabPeople', name === 'people');
+            show('tabFeedback', name === 'feedback');
+            show('tabEmail', name === 'email');
+        }
+        document.querySelectorAll('.ad-tab').forEach(b => b.addEventListener('click', () => openTab(b.dataset.tab)));
+
+        // ---------- Send email ----------
+        function composeTo(emails, subject, body) {
+            emails.forEach(addRecipient);
+            if (subject && !$('adSubject').value.trim()) $('adSubject').value = subject;
+            if (body && !$('adBody').value.trim()) { $('adBody').value = body; $('adBody').setSelectionRange(0, 0); }
+            $('adSendResult').innerHTML = '';
+            openTab('email');
+            renderTo();
+            setTimeout(() => ($('adSubject').value ? $('adBody') : $('adSubject')).focus(), 50);
+        }
+        function addRecipient(email) {
+            email = String(email || '').trim().toLowerCase();
+            if (!email || recipients.includes(email)) return;
+            recipients.push(email);
+        }
+        function renderTo() {
+            $('adTo').innerHTML = recipients.length
+                ? recipients.map(e => `<span class="ad-chip">${esc(e)}<button type="button" data-rm="${esc(e)}" aria-label="Remove ${esc(e)}">×</button></span>`).join('')
+                : '<span class="ad-muted">Nobody yet. Tick people in the People tab, use ✉ Reply on a report, or add them below.</span>';
+            $('adTo').querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => { recipients = recipients.filter(e => e !== b.dataset.rm); renderTo(); }));
+            $('adToCount').textContent = recipients.length || '';
+        }
+        $('adToAdd').addEventListener('click', () => {
+            const value = $('adToSearch').value.trim().toLowerCase();
+            const known = people.find(p => p.email.toLowerCase() === value);
+            if (!known) { $('adSendResult').innerHTML = `<div class="ad-error">⚠️ ${esc(value || 'That')} is not a registered Neutrix user.</div>`; return; }
+            addRecipient(known.email);
+            $('adToSearch').value = '';
+            $('adSendResult').innerHTML = '';
+            renderTo();
+        });
+        $('adToSearch').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('adToAdd').click(); } });
+        $('adToAll').addEventListener('click', () => { people.forEach(p => addRecipient(p.email)); renderTo(); });
+
+        $('adSend').addEventListener('click', async () => {
+            const box = $('adSendResult');
+            const subject = $('adSubject').value.trim();
+            const body = $('adBody').value.trim();
+            if (!recipients.length) { box.innerHTML = '<div class="ad-error">⚠️ Add at least one person.</div>'; return; }
+            if (!body) { box.innerHTML = '<div class="ad-error">⚠️ Write a message first.</div>'; $('adBody').focus(); return; }
+            const btn = $('adSend');
+            btn.disabled = true;
+            btn.textContent = `Sending to ${recipients.length}…`;
+            box.innerHTML = '';
+            try {
+                const me = await NeutrixCloud.currentUser();
+                const token = await me.getIdToken(true);
+                const res = await fetch(`${API_BASE}/api/admin/send-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                    body: JSON.stringify({ to: recipients, subject, body })
+                });
+                const d = await res.json();
+                if (!d.results) throw new Error(d.message || 'Could not send');
+                const failed = d.results.filter(r => !r.ok);
+                box.innerHTML = `<div class="${failed.length ? 'ad-error' : 'ad-ok'}">${failed.length ? '⚠️' : '✓'} ${esc(d.message)}</div>` +
+                    (failed.length ? `<ul class="ad-fail">${failed.map(r => `<li>${esc(r.to)}: ${esc(r.message)}</li>`).join('')}</ul>` : '');
+                if (!failed.length) { recipients = []; $('adSubject').value = ''; $('adBody').value = ''; }
+                else recipients = failed.map(r => r.to);
+                renderTo();
+            } catch (e) {
+                box.innerHTML = `<div class="ad-error">⚠️ ${esc(e instanceof TypeError ? 'Could not reach the Neutrix server.' : e.message)}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✉ Send email';
+            }
+        });
 
         // ---------- CSV files ----------
         function downloadCsv(name, header, rows) {
             const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-            const text = [header, ...rows].map(r => r.map(cell).join(',')).join('\n');
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/csv' }));
+            a.href = URL.createObjectURL(new Blob(['﻿' + [header, ...rows].map(r => r.map(cell).join(',')).join('\n')], { type: 'text/csv' }));
             a.download = name;
             a.click();
         }
-        $('adCsv').addEventListener('click', () => downloadCsv(`neutrix_users_${dayKey(new Date())}.csv`,
-            ['Name', 'Email', 'Phone', 'Age', 'Gender', 'Blood group', 'Caregiver', 'Caregiver phone', 'Caregiver email', 'Last sign-in'],
-            users.map(u => { const p = prof(u); return [p.patientName || u.name, u.email, p.patientPhone, p.age, p.gender, p.bloodGroup !== 'Select' ? p.bloodGroup : '',
-                p.caregiverName, p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : '', p.caregiverEmail, fmt(u.lastLogin)]; })));
+        $('adCsv').addEventListener('click', () => downloadCsv(`neutrix_contacts_${dayKey(new Date())}.csv`, ['Email', 'Phone'], people.map(p => [p.email, p.phone])));
         $('adFbCsv').addEventListener('click', () => downloadCsv(`neutrix_feedback_${dayKey(new Date())}.csv`,
-            ['Type', 'Rating', 'Message', 'Page', 'Name', 'Email', 'Language', 'Device', 'When'],
-            feedback.map(f => [f.kind, f.rating || '', f.message, f.page, f.name, f.email, f.lang, deviceName(f.device), fmt(f.createdAt)])));
+            ['Type', 'Rating', 'Message', 'Page', 'Email', 'Language', 'Device', 'When'],
+            feedback.map(f => [f.kind, f.rating || '', f.message, f.page, f.email, f.lang, deviceName(f.device), fmt(f.createdAt)])));
         $('adSearch').addEventListener('input', renderRows);
-        $('adRefresh').addEventListener('click', () => { users = []; openUid = null; show('adDetail', false); loadUsers(); });
+        $('adRefresh').addEventListener('click', loadPeople);
         $('adFbRefresh').addEventListener('click', loadFeedback);
 
         // ---------- Delete a user completely ----------
-        function askDelete(u) {
-            const p = prof(u);
-            const who = p.patientName || u.name || u.email;
+        function askDelete(p) {
+            if (!p) return;
             const box = document.createElement('div');
             box.className = 'ad-modal';
             box.innerHTML = `
                 <div class="ad-modal-box" role="dialog" aria-modal="true">
-                    <h3>🗑 Delete ${esc(who)}?</h3>
-                    <p>This permanently deletes <strong>${esc(u.email)}</strong>:</p>
-                    <ul>
-                        <li>their sign-in account (they are signed out everywhere and can’t sign in with it again)</li>
-                        <li>their patient profile and caregiver details</li>
-                        <li>all their private medical records (reports, medicines, readings, exercise, messages)</li>
-                    </ul>
+                    <h3>🗑 Delete ${esc(p.email)}?</h3>
+                    <p>This permanently deletes their sign-in account (signed out everywhere) and everything they saved in Neutrix.</p>
                     <p class="ad-warn">This cannot be undone.</p>
                     <label class="ad-muted" for="adConfirm">Type their email to confirm:</label>
-                    <input id="adConfirm" class="modern-input" autocomplete="off" placeholder="${esc(u.email)}">
+                    <input id="adConfirm" class="modern-input" autocomplete="off" placeholder="${esc(p.email)}">
                     <div id="adDelMsg" class="ad-del-msg"></div>
                     <div class="ad-modal-btns">
                         <button class="btn-secondary" type="button" data-a="cancel">Cancel</button>
@@ -488,44 +512,34 @@
             const input = box.querySelector('#adConfirm');
             const go = box.querySelector('[data-a="go"]');
             const msg = box.querySelector('#adDelMsg');
-            const close = () => box.remove();
-            input.addEventListener('input', () => { go.disabled = input.value.trim().toLowerCase() !== String(u.email).toLowerCase(); });
-            box.querySelector('[data-a="cancel"]').addEventListener('click', close);
-            box.addEventListener('click', e => { if (e.target === box && !go.dataset.busy) close(); });
+            input.addEventListener('input', () => { go.disabled = input.value.trim().toLowerCase() !== p.email.toLowerCase(); });
+            box.querySelector('[data-a="cancel"]').addEventListener('click', () => box.remove());
+            box.addEventListener('click', e => { if (e.target === box && !go.dataset.busy) box.remove(); });
             input.focus();
             go.addEventListener('click', async () => {
-                go.disabled = true;
-                go.dataset.busy = '1';
-                go.textContent = 'Deleting…';
-                msg.className = 'ad-del-msg';
-                msg.textContent = '';
+                go.disabled = true; go.dataset.busy = '1'; go.textContent = 'Deleting…'; msg.className = 'ad-del-msg'; msg.textContent = '';
                 try {
                     const me = await NeutrixCloud.currentUser();
                     const token = await me.getIdToken(true);
                     const res = await fetch(`${API_BASE}/api/admin/delete-user`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-                        body: JSON.stringify({ uid: u.uid })
+                        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                        body: JSON.stringify({ uid: p.uid })
                     });
                     const d = await res.json();
                     if (!d.ok) throw new Error(d.message || 'Delete failed');
-                    users = users.filter(x => x.uid !== u.uid);
-                    openUid = null;
-                    show('adDetail', false);
-                    renderRows();
-                    renderStats();
+                    people = people.filter(x => x.uid !== p.uid);
+                    selected.delete(p.uid);
+                    recipients = recipients.filter(e => e !== p.email.toLowerCase());
+                    renderRows(); renderStats(); renderTo();
                     msg.className = 'ad-del-msg ok';
-                    msg.textContent = `✓ Deleted ${u.email} (${d.deleted_documents} saved item(s)${d.account_deleted ? ' and the sign-in account' : ''}).`;
+                    msg.textContent = `✓ Deleted ${p.email}${d.account_deleted ? ' and their sign-in account' : ''}.`;
                     go.textContent = 'Done';
                     box.querySelector('[data-a="cancel"]').textContent = 'Close';
-                    delete go.dataset.busy;
                 } catch (e) {
                     msg.className = 'ad-del-msg err';
                     msg.textContent = '⚠️ ' + (e instanceof TypeError ? 'Could not reach the Neutrix server.' : e.message);
-                    go.textContent = 'Delete permanently';
-                    go.disabled = false;
-                    delete go.dataset.busy;
-                }
+                    go.textContent = 'Delete permanently'; go.disabled = false;
+                } finally { delete go.dataset.busy; }
             });
         }
 

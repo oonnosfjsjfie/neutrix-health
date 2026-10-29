@@ -6,6 +6,7 @@ Firebase console -> Project settings -> Service accounts -> Generate new private
 (Paste the whole JSON, or the same JSON base64-encoded.) Never put this key in the code or GitHub.
 """
 import os
+import re
 import json
 import base64
 
@@ -41,17 +42,31 @@ def _init():
     return _app
 
 
+def firebase_project_id() -> str:
+    """The Firebase project id, from the same FIREBASE_CONFIG the website uses."""
+    raw = os.getenv("FIREBASE_CONFIG", "")
+    pairs = dict(re.findall(r'["\']?(\w+)["\']?\s*:\s*["\']([^"\']*)["\']', raw))
+    return pairs.get("projectId", "") or os.getenv("FIREBASE_PROJECT_ID", "")
+
+
 def verify_admin(id_token: str) -> dict:
-    """Checks the signed-in person's Firebase ID token. Only verified admin emails pass."""
-    from firebase_admin import auth
+    """Checks the signed-in person's Firebase ID token (Google's public keys; no admin key needed).
+    Only verified admin emails pass."""
     if not id_token:
         raise PermissionError("Please sign in again.")
+    project = firebase_project_id()
+    if not project:
+        raise AdminNotConfigured("FIREBASE_CONFIG is missing on the server.")
     try:
-        decoded = auth.verify_id_token(id_token, app=_init(), check_revoked=True)
-    except AdminNotConfigured:
-        raise
-    except Exception:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+        decoded = google_id_token.verify_firebase_token(id_token, google_requests.Request(), audience=project)
+    except Exception as e:
+        print(f"[admin] token check failed: {e}")
         raise PermissionError("Your sign-in has expired. Please sign out and sign in again.")
+    if not decoded:
+        raise PermissionError("Please sign in again.")
+    decoded.setdefault("uid", decoded.get("user_id") or decoded.get("sub"))
     email = str(decoded.get("email") or "").lower()
     if not decoded.get("email_verified") or email not in ADMIN_EMAILS:
         raise PermissionError("Only Neutrix admins can do this.")
@@ -84,8 +99,12 @@ def delete_user_completely(uid: str, admin: dict) -> dict:
 
     # 1. All saved data: users/{uid} and everything under it (store, chunks, ...)
     deleted_docs = 0
+    contact_ref = db.collection("contacts").document(uid)
+    if contact_ref.get().exists:
+        contact_ref.delete()
+        deleted_docs += 1
     if hasattr(db, "recursive_delete"):
-        deleted_docs = db.recursive_delete(user_ref)
+        deleted_docs += db.recursive_delete(user_ref)
     else:
         for sub in user_ref.collections():
             for doc in sub.list_documents():

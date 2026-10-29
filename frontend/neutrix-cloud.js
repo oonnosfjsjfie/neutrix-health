@@ -18,7 +18,7 @@
 
     const DEVICE_ONLY = new Set([
         'neutrix_authenticated', 'neutrixTheme', 'neutrixLang', 'neutrixChatOpen', 'neutrixActiveIssue',
-        'neutrixCloudDirty', 'neutrixCloudPull', 'neutrixCloudUid', 'neutrixCloudProfile'
+        'neutrixCloudDirty', 'neutrixCloudPull', 'neutrixCloudUid', 'neutrixCloudProfile', 'neutrixCloudContact'
     ]);
     const isSynced = key => typeof key === 'string' && /^neutrix/i.test(key) && !DEVICE_ONLY.has(key);
 
@@ -70,7 +70,7 @@
         applying = true;
         try {
             localSyncedKeys().forEach(k => rawRemove.call(localStorage, k));
-            ['neutrixCloudDirty', 'neutrixCloudPull', 'neutrixCloudUid', 'neutrixCloudProfile', 'neutrix_authenticated', 'neutrixActiveIssue']
+            ['neutrixCloudDirty', 'neutrixCloudPull', 'neutrixCloudUid', 'neutrixCloudProfile', 'neutrixCloudContact', 'neutrix_authenticated', 'neutrixActiveIssue']
                 .forEach(k => rawRemove.call(localStorage, k));
         } finally {
             applying = false;
@@ -215,6 +215,20 @@
         return changed;
     }
 
+    // ---------- Contact card for the Neutrix team: ONLY email + phone ----------
+    // contacts/{uid} is the only thing admins can read about a person (see firestore.rules).
+    async function syncContact(user) {
+        if (!user) return;
+        let phone = '';
+        try { phone = String((JSON.parse(rawGet.call(localStorage, 'neutrix_hospital_profile') || '{}') || {}).patientPhone || '').slice(0, 30); } catch (e) {}
+        const card = { email: user.email || '', phone };
+        const sig = user.uid + '|' + card.email + '|' + card.phone;
+        if (rawGet.call(localStorage, 'neutrixCloudContact') === sig) return;
+        const { db } = await init();
+        await db.collection('contacts').doc(user.uid).set({ ...card, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        rawSet.call(localStorage, 'neutrixCloudContact', sig);
+    }
+
     // Name + Google photo, kept on this device for the website's profile button
     function saveProfile(user, displayName) {
         if (!user) return;
@@ -264,6 +278,7 @@
             localStorage.setItem('neutrix_patient_name', name);
         }
         await flush();
+        syncContact(user).catch(e => console.warn('[cloud] contact card', e));
     }
 
     async function signOut() {
@@ -293,6 +308,7 @@
             saveProfile(user);
             await flush();
             const changed = await pull();
+            syncContact(user).catch(e => console.warn('[cloud] contact card', e));
             // Data arrived from another device: reload once so the page shows it
             if (changed > 0 && !sessionStorage.getItem('neutrixCloudReloaded')) {
                 sessionStorage.setItem('neutrixCloudReloaded', '1');
@@ -326,7 +342,8 @@
         signOut,
         saveProfile,
         cachedProfile,
-        signInUrl
+        signInUrl,
+        syncContact
     };
 
     startPageSync();

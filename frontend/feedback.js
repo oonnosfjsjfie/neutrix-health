@@ -98,7 +98,7 @@
             page,
             uid: user ? user.uid : '',
             email: user ? (user.email || '') : '',
-            name: user ? (user.displayName || '').slice(0, 100) : '',
+            name: '',                                // admins see only the email (and phone on the contact card)
             lang: lang() === 'Malayalam' ? 'Malayalam' : 'English',
             device: (navigator.userAgent || '').slice(0, 300),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()

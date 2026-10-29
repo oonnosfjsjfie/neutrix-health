@@ -6,3 +6,5 @@ python-dotenv
 google-genai
 pymupdf
 firebase-admin
+google-auth
+requests

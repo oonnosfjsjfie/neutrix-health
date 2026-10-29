@@ -3,7 +3,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Neutrix admins. The email must be verified (Google sign-in is), so nobody can pose as an
+    // Neutrix admins. They can read ONLY contact cards (email + phone) and feedback.
+    // The email must be verified (Google sign-in is), so nobody can pose as an
     // admin by signing up with an admin's email and a password.
     function isAdmin() {
       return request.auth != null
@@ -19,16 +20,15 @@ service cloud.firestore {
     match /users/{uid}/{document=**} {
       allow read, write: if isOwner(uid);
     }
-    // Admins: the account card (name, email, last sign-in) ...
-    match /users/{uid} {
-      allow read: if isAdmin();
-    }
-    // ... and ONLY the patient profile + caregiver details and the doctor's email. Never medical records.
-    match /users/{uid}/store/{key} {
-      allow read: if isAdmin() && key in ['neutrix_hospital_profile', 'neutrixDoctorEmail'];
-    }
-    match /users/{uid}/chunks/{key} {
-      allow read: if isAdmin() && key.matches('neutrix_hospital_profile~[0-9]+');
+    // ---------- Contact card: ONLY email + phone (the only thing admins can see about a person) ----------
+    match /contacts/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['email', 'phone', 'updatedAt'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.phone is string && request.resource.data.phone.size() <= 30
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isOwner(uid);
     }
 
     // ---------- Ratings and problem reports ----------

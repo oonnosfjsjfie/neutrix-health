@@ -167,6 +167,7 @@
             if (user && localStorage.getItem('neutrix_authenticated') === 'true') {
                 cloud.saveProfile(user);
                 showSignedIn(cloud.cachedProfile(), user);
+                if (cloud.syncContact) cloud.syncContact(user).catch(() => {});
             } else if (isWebsite) {
                 localStorage.removeItem('neutrix_authenticated');
                 showSignedOut();

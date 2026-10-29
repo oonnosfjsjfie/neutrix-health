@@ -101,3 +101,23 @@ def send_doctor_email(to_address: str, subject: str, body: str, patient_name: st
 
     print(f"[email] Sent doctor brief to {to_address}")
     return True, f"Email sent to {to_address}."
+
+
+TEAM_FOOTER = ("\n\n—\nSent by the Neutrix Health team. You are receiving this because you have a Neutrix account. "
+               "Reply to this email to answer us.")
+
+
+def send_team_email(to_address: str, subject: str, body: str, reply_to: str = ""):
+    """An email from the Neutrix team (Admin page) to one registered person. Returns (ok, message)."""
+    to_address = (to_address or "").strip()
+    if not EMAIL_RE.match(to_address):
+        return False, f"{to_address or '(empty)'} is not a valid email address."
+    if not (body or "").strip():
+        return False, "The message is empty."
+    subject = (subject or "").strip() or "A message from the Neutrix Health team"
+    reply_to = reply_to.strip() if reply_to and EMAIL_RE.match(reply_to.strip()) else ""
+    webhook = os.getenv("NEUTRIX_MAIL_WEBHOOK", "").strip()
+    if not webhook:
+        return False, "Email is not set up on the server (NEUTRIX_MAIL_WEBHOOK)."
+    ok, message = _send_via_apps_script(webhook, to_address, subject, body.strip() + TEAM_FOOTER, "Neutrix Health Team", reply_to)
+    return ok, message

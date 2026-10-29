@@ -9,7 +9,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, Form, File
 from fastapi.middleware.cors import CORSMiddleware
-from services.email_sender import send_doctor_email
+from services.email_sender import send_doctor_email, send_team_email
 from services import admin_tools
 from fastapi import Header
 from services.ai_engine import (
@@ -107,6 +107,39 @@ def admin_delete_user(req: DeleteUserRequest, authorization: str = Header("")):
     except Exception as e:
         print(f"[admin] delete failed: {e}")
         return {"ok": False, "message": f"Could not delete this user: {e}"}
+
+
+# ---------- Admin: email registered people (one email each, nobody sees the other addresses) ----------
+class AdminEmailRequest(BaseModel):
+    to: List[str]
+    subject: str = ""
+    body: str
+
+
+@app.post("/api/admin/send-email")
+def admin_send_email(req: AdminEmailRequest, authorization: str = Header("")):
+    token = authorization.split(" ", 1)[1] if authorization.lower().startswith("bearer ") else ""
+    try:
+        admin = admin_tools.verify_admin(token)
+    except admin_tools.AdminNotConfigured as e:
+        return {"ok": False, "message": str(e)}
+    except PermissionError as e:
+        return {"ok": False, "message": str(e)}
+    recipients = list(dict.fromkeys(a.strip().lower() for a in req.to if a and a.strip()))
+    if not recipients:
+        return {"ok": False, "message": "Choose at least one person."}
+    if len(recipients) > 50:
+        return {"ok": False, "message": "Send to 50 people or fewer at a time."}
+    if not req.body.strip():
+        return {"ok": False, "message": "Write a message first."}
+    results = []
+    for address in recipients:
+        ok, message = send_team_email(address, req.subject, req.body, reply_to=admin.get("email", ""))
+        results.append({"to": address, "ok": ok, "message": message})
+    sent = sum(1 for r in results if r["ok"])
+    print(f"[admin] {admin.get('email')} emailed {sent}/{len(results)} people")
+    return {"ok": sent > 0, "sent": sent, "failed": len(results) - sent, "results": results,
+            "message": f"Sent to {sent} of {len(results)}."}
 
 
 # ---------- Calendar file for medicine reminders (iPhone opens it from a real address) ----------
