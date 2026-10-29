@@ -6,7 +6,7 @@
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix Health | Getting Started & Product Hub</title>
-    <link rel="stylesheet" href="home.css?v=20261028c">
+    <link rel="stylesheet" href="home.css?v=20261029a">
     <!-- Accounts: shows Sign In or the profile picture in the top right -->
     <script src="firebase-config.js?v=20261029d"></script>
     <script src="neutrix-cloud.js?v=20261029d"></script>
@@ -116,14 +116,14 @@
                                 <circle cx="45" cy="40" r="16" fill="#ef4444" opacity="0.2"/>
                                 <circle cx="45" cy="40" r="8" fill="#ef4444" class="glow-element"/>
                                 <text x="75" y="38" font-size="12" font-weight="bold" fill="#ffffff">Safety Alert Check</text>
-                                <text x="75" y="52" font-size="9" fill="#888888">Rule Engine Monitoring Active</text>
+                                <text x="75" y="52" font-size="9" fill="#888888">Checked every time symptoms are saved</text>
                                 <rect x="20" y="75" width="260" height="26" rx="6" fill="#2a0808" stroke="#7f1d1d" stroke-width="1"/>
-                                <text x="32" y="92" font-size="10" font-weight="bold" fill="#fca5a5">⚠️ Chest Pain → Emergency Care (112)</text>
+                                <text x="32" y="92" font-size="10" font-weight="bold" fill="#fca5a5">⚠️ Chest Pain → Urgent Care Warning</text>
                             </svg>
                         </div>
                         <div class="card-tag">03</div>
                         <h3>Red-Flag Safety</h3>
-                        <p>Automatic symptom evaluation to catch dangerous warning signs early.</p>
+                        <p>Danger signs in the symptoms you log (like chest pain or trouble breathing) trigger an urgent-care warning.</p>
                     </div>
                 </div>
             </div>
@@ -167,7 +167,7 @@
                         </div>
                         <span class="tile-badge">SOLUTION</span>
                         <h4>AI Recovery Plan</h4>
-                        <p>Converts raw discharge text into a structured step-by-step recovery dashboard with clear daily tasks and automated reminders.</p>
+                        <p>Turns discharge papers (PDFs or phone photos) into a recovery dashboard: a plain summary, a daily medicine checklist, check-up dates and the exercises your doctor advised.</p>
                     </div>
                     <div class="feature-tile scroll-reveal">
                         <div class="tile-image-box">
@@ -181,7 +181,7 @@
                         </div>
                         <span class="tile-badge">OUTCOME</span>
                         <h4>Safe Home Care</h4>
-                        <p>Reduces readmission risks by alerting caregivers to dangerous symptoms and preparing clean briefs for doctor visits.</p>
+                        <p>Helps families spot dangerous symptoms early and gives the doctor one clear progress report with medicines, readings and exercise.</p>
                     </div>
                 </div>
             </div>
@@ -199,19 +199,19 @@
                     <div class="metric-card scroll-reveal">
                         <div class="metric-number"><span class="counter" data-target="100">0</span>%</div>
                         <h4>Non-Diagnostic Safety</h4>
-                        <p>Strictly grounded in uploaded clinical summaries without generating speculative medical advice.</p>
+                        <p>Neutrix explains only what is written in your own reports. It never diagnoses, prescribes or changes treatment.</p>
                     </div>
 
                     <div class="metric-card scroll-reveal">
                         <div class="metric-number"><span class="counter" data-target="2">0</span></div>
                         <h4>Languages Supported</h4>
-                        <p>Full support for plain English and Malayalam (മലയാളം) recovery instructions.</p>
+                        <p>Summaries, medicine plans, check-ups and live exercise tips in plain English and Malayalam (മലയാളം). The doctor report stays in English.</p>
                     </div>
 
                     <div class="metric-card scroll-reveal">
-                        <div class="metric-number"><span class="counter" data-target="8">0</span></div>
+                        <div class="metric-number"><span class="counter" data-target="9">0</span></div>
                         <h4>Recovery Tools</h4>
-                        <p>One upload powers your summary, reports portal, medicine schedule, check-ups, improvements, exercise coach, tracker and doctor brief.</p>
+                        <p>One upload powers your summary, reports portal, medicine schedule, check-ups, improvements, exercise coach, tracker, doctor brief and overall progress report.</p>
                     </div>
                 </div>
             </div>
@@ -244,7 +244,7 @@
                             <img class="feature-shot" src="assets/features/schedule.jpg?v=3" alt="Neutrix daily dose schedule with morning doses ticked off" loading="lazy">
                         </div>
                         <h4>DoseGuard Schedule</h4>
-                        <p>Turns prescriptions and pharmacy bills into a daily tick-off schedule with food timing that updates when medicines change.</p>
+                        <p>Turns the discharge prescription into a daily tick-off schedule with food timing, cross-checked with pharmacy bills, that updates when medicines change. Download the intake history as a PDF.</p>
                     </div>
 
                     <div class="px-feature-card scroll-reveal">
@@ -255,6 +255,18 @@
                         <h4>Red-Flag Safety Engine</h4>
                         <p>Checks the symptoms families log each day and flags danger signs like chest pain with a clear urgent-care warning.</p>
                     </div>
+                </div>
+
+                <!-- Everything else in the app -->
+                <div class="px-more-grid margin-top-lg">
+                    <div class="px-more-card scroll-reveal"><span class="px-more-ic">📷</span><h4>Reports by photo</h4><p>No PDF? Take photos of each page. The AI checks every photo is clear and asks for a retake if it isn't.</p></div>
+                    <div class="px-more-card scroll-reveal"><span class="px-more-ic">🏃</span><h4>AI Exercise Coach</h4><p>Shows only when your reports advise exercises. Your camera tracks your joints, counts reps and corrects your form. The video never leaves your device.</p></div>
+                    <div class="px-more-card scroll-reveal"><span class="px-more-ic">📅</span><h4>Check-ups</h4><p>Follow-up visits and tests found in your reports, with dates, so none are missed.</p></div>
+                    <div class="px-more-card scroll-reveal"><span class="px-more-ic">🌱</span><h4>My Improvements</h4><p>Add a newer report and see what changed since the earlier one, value by value.</p></div>
+                    <div class="px-more-card scroll-reveal"><span class="px-more-ic">🧑‍⚕️</span><h4>Doctor Brief</h4><p>Write a clear update about symptoms and readings and email it straight to your doctor.</p></div>
+                    <div class="px-more-card scroll-reveal"><span class="px-more-ic">📊</span><h4>Overall Progress Report</h4><p>One AI report for the doctor from everything you recorded: adherence, readings, symptoms, exercise and changes, as a PDF.</p></div>
+                    <div class="px-more-card scroll-reveal"><span class="px-more-ic">💬</span><h4>Ask Neutrix</h4><p>Chat about your own report and medicines in English or Malayalam, any time.</p></div>
+                    <div class="px-more-card scroll-reveal"><span class="px-more-ic">🔐</span><h4>Your account, any device</h4><p>Sign in with Google or email. Each medical issue keeps its own reports and plans, synced to your phone and computer.</p></div>
                 </div>
 
                 <!-- Sample Comparison Drawer with Skeleton Loader -->
@@ -297,7 +309,7 @@
                             <path d="M100 20 L160 50 V90 C160 130 100 150 100 150 C100 150 40 130 40 90 V50 Z" fill="#1a1a1a" stroke="#ffffff" stroke-width="4"/>
                             <path d="M100 50 V110 M70 80 H130" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
                         </svg>
-                        <p class="shield-caption">Grounded in User Data & Verified Guidelines</p>
+                        <p class="shield-caption">Grounded in your own reports</p>
                     </div>
                 </div>
 
@@ -321,7 +333,7 @@
                         </div>
                         <div class="accordion-wrapper">
                             <div class="accordion-content">
-                                <p>Every generated summary displays exact source citations from the uploaded hospital discharge summary or prescription.</p>
+                                <p>The AI is instructed to use only what is written in your uploaded reports and to quote values, doses and dates exactly. It never adds medicines or results. Exercises show the exact line from your report they came from.</p>
                             </div>
                         </div>
                     </div>
@@ -333,7 +345,7 @@
                         </div>
                         <div class="accordion-wrapper">
                             <div class="accordion-content">
-                                <p>High-risk symptoms like chest pain or difficulty breathing immediately trigger recommendations to seek emergency medical help.</p>
+                                <p>Danger signs like chest pain, difficulty breathing, fainting or severe bleeding in the Recovery Tracker show an urgent warning to contact a doctor or go to the nearest hospital. The progress report flags them for the doctor too.</p>
                             </div>
                         </div>
                     </div>
@@ -352,24 +364,24 @@
 
                     <div class="accordion-item">
                         <div class="accordion-header">
-                            <span>05. Doctor Consultation Brief Generator</span>
+                            <span>05. Doctor Brief &amp; Progress Report</span>
                             <span class="acc-icon">+</span>
                         </div>
                         <div class="accordion-wrapper">
                             <div class="accordion-content">
-                                <p>Summarizes recent recovery vitals, symptoms, and missed doses into a single concise note for your next doctor visit.</p>
+                                <p>Doctor Brief emails a clear update to your doctor. The Overall Progress Report turns your medicine ticks, readings, symptoms and exercise into one report for the next visit.</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="accordion-item">
                         <div class="accordion-header">
-                            <span>06. Complete Data Privacy</span>
+                            <span>06. Your Data &amp; Privacy</span>
                             <span class="acc-icon">+</span>
                         </div>
                         <div class="accordion-wrapper">
                             <div class="accordion-content">
-                                <p>Uploaded clinical records are kept private, local, and never shared or sold to third parties.</p>
+                                <p>Your data is saved to your own account. Only you can open your medical records, on any device you sign in with. Reports are read by Google Gemini to make the summaries. The Neutrix team can see account, profile and caregiver details and feedback (for support), but not medical records. Nothing is sold. Exercise camera video stays on your device.</p>
                             </div>
                         </div>
                     </div>
@@ -390,12 +402,12 @@
                 <div class="workflow-pipeline-box margin-top-lg">
                     <div class="pipeline-node">
                         <div class="node-icon">📄</div>
-                        <span>1. PDF Discharge</span>
+                        <span>1. PDF or Photo</span>
                     </div>
                     <div class="pipeline-connector"><div class="pulse-dot"></div></div>
                     <div class="pipeline-node">
                         <div class="node-icon">⚙️</div>
-                        <span>2. PyMuPDF Extraction</span>
+                        <span>2. Text Extraction</span>
                     </div>
                     <div class="pipeline-connector"><div class="pulse-dot"></div></div>
                     <div class="pipeline-node">
@@ -405,30 +417,30 @@
                     <div class="pipeline-connector"><div class="pulse-dot"></div></div>
                     <div class="pipeline-node">
                         <div class="node-icon">📱</div>
-                        <span>4. Patient Plan</span>
+                        <span>4. Recovery Tools</span>
                     </div>
                 </div>
 
                 <div class="tech-grid margin-top-lg">
                     <div class="tech-card scroll-reveal">
                         <small>FRONTEND & UI</small>
-                        <h4>Web Canvas</h4>
-                        <p>Interactive dashboard interface built for accessibility and clear patient profile views.</p>
+                        <h4>HTML, CSS &amp; JavaScript</h4>
+                        <p>Responsive web app for phone and computer, with MediaPipe body tracking running in the browser for the exercise coach.</p>
                     </div>
                     <div class="tech-card scroll-reveal">
-                        <small>BACKEND & OCR</small>
-                        <h4>Python 3.11 & PyMuPDF</h4>
-                        <p>Fast text extraction from multi-page PDF discharge summaries and scanned lab reports.</p>
+                        <small>BACKEND</small>
+                        <h4>Python, FastAPI &amp; PyMuPDF</h4>
+                        <p>Reads text from PDFs; photos and scanned pages are read by Gemini. Hosted on Render.</p>
                     </div>
                     <div class="tech-card scroll-reveal">
                         <small>AI ENGINE</small>
-                        <h4>Gemini / LLM API</h4>
-                        <p>Medical entity recognition and simplified summary generation grounded in user data.</p>
+                        <h4>Google Gemini</h4>
+                        <p>Summaries, medicine plans, check-ups, exercises, report comparisons, the chat and the progress report, grounded in your own reports.</p>
                     </div>
                     <div class="tech-card scroll-reveal">
-                        <small>DATABASE & CONTROL</small>
-                        <h4>SQLite & Git/GitHub</h4>
-                        <p>Lightweight local storage for patient recovery parameters and repository management.</p>
+                        <small>ACCOUNTS &amp; DATA</small>
+                        <h4>Firebase &amp; GitHub</h4>
+                        <p>Firebase sign-in and Firestore keep each person’s data in their own account; security rules keep medical records private. Code on GitHub.</p>
                     </div>
                 </div>
             </div>
@@ -485,19 +497,21 @@
                     <a href="issues.html" target="_blank" rel="noopener">Patient Dashboard</a>
                     <a href="#features">Discharge Explainer</a>
                     <a href="#features">DoseGuard Schedule</a>
+                    <a href="#features">Exercise Coach</a>
                     <a href="#features">Recovery Tracker</a>
                     <a href="#features">Red-Flag Engine</a>
+                    <a href="#features">Progress Report</a>
                 </div>
 
                 <div class="footer-col">
                     <span class="col-title">SOLUTIONS</span>
                     <span class="sub-col-title">BY USER</span>
-                    <a href="#">Patients</a>
-                    <a href="#">Family Caregivers</a>
-                    <a href="#">Elderly Care</a>
+                    <a href="#overview">Patients</a>
+                    <a href="#overview">Family Caregivers</a>
+                    <a href="#overview">Elderly Care</a>
                     <span class="sub-col-title margin-top-sm">BY LANGUAGE</span>
-                    <a href="#">English</a>
-                    <a href="#">Malayalam (മലയാളം)</a>
+                    <a href="#safety">English</a>
+                    <a href="#safety">Malayalam (മലയാളം)</a>
                 </div>
 
                 <div class="footer-col">
@@ -506,15 +520,14 @@
                     <a href="#safety">Responsible AI</a>
                     <a href="#safety">Safety Disclaimer</a>
                     <a href="#workflow">Architecture</a>
-                    <a href="#team">Team Neutrinos</a>
                 </div>
 
                 <div class="footer-col">
                     <span class="col-title">COMPANY</span>
-                    <a href="#">About Neutrix</a>
-                    <a href="#">Brand Guidelines</a>
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms & Conditions</a>
+                    <a href="#overview">About Neutrix</a>
+                    <a href="#team">Team Neutrinos</a>
+                    <a href="#safety">Privacy &amp; data</a>
+                    <a href="#" onclick="if (window.NxFeedback) { NxFeedback.openReport(); } return false;">Report a problem</a>
                 </div>
             </div>
 
