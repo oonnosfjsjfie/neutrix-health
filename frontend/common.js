@@ -209,8 +209,8 @@ const I18N = {
 
         // Chat
         chatTitle: "💬 Ask Neutrix",
-        chatHint: "Ask about your report or any medicine: what it's for, side effects, who shouldn't take it. Type or use the mic.",
-        chatGreeting: "Hi! Ask me anything about your report or your medicines.",
+        chatHint: "Your reports, medicines, readings, exercises, or how to use any part of Neutrix. Type or use the mic.",
+        chatGreeting: "Hi! Ask me about your reports, medicines, readings or exercises, or how to do something in Neutrix.",
         questionPlaceholder: "e.g. What is this medicine used for? Can children take it?",
         micTitle: "Speak your question",
         askBtn: "Ask",
@@ -442,8 +442,8 @@ const I18N = {
 
         // Chat
         chatTitle: "💬 ന്യൂട്രിക്സിനോട് ചോദിക്കൂ",
-        chatHint: "നിങ്ങളുടെ റിപ്പോർട്ടിനെക്കുറിച്ചോ ഏതെങ്കിലും മരുന്നിനെക്കുറിച്ചോ ചോദിക്കാം: അത് എന്തിനുള്ളതാണ്, പാർശ്വഫലങ്ങൾ, ആരൊക്കെ കഴിക്കരുത്. ടൈപ്പ് ചെയ്യുകയോ മൈക്ക് ഉപയോഗിക്കുകയോ ചെയ്യാം.",
-        chatGreeting: "നമസ്കാരം! നിങ്ങളുടെ റിപ്പോർട്ടിനെക്കുറിച്ചോ മരുന്നുകളെക്കുറിച്ചോ എന്തും ചോദിക്കാം.",
+        chatHint: "റിപ്പോർട്ടുകൾ, മരുന്നുകൾ, റീഡിംഗുകൾ, വ്യായാമം, അല്ലെങ്കിൽ ന്യൂട്രിക്സ് എങ്ങനെ ഉപയോഗിക്കാം. ടൈപ്പ് ചെയ്യുകയോ മൈക്ക് ഉപയോഗിക്കുകയോ ചെയ്യാം.",
+        chatGreeting: "നമസ്കാരം! റിപ്പോർട്ടുകൾ, മരുന്നുകൾ, റീഡിംഗുകൾ, വ്യായാമം, അല്ലെങ്കിൽ ന്യൂട്രിക്സിൽ എന്തെങ്കിലും എങ്ങനെ ചെയ്യാം എന്ന് ചോദിക്കാം.",
         questionPlaceholder: "ഉദാ: ഈ മരുന്ന് എന്തിനാണ് ഉപയോഗിക്കുന്നത്? കുട്ടികൾക്ക് കഴിക്കാമോ?",
         micTitle: "നിങ്ങളുടെ ചോദ്യം പറയുക",
         askBtn: "ചോദിക്കുക",
@@ -688,10 +688,53 @@ window.renderMarkdown = function (text) {
     if (window.marked && window.DOMPurify) {
         return DOMPurify.sanitize(marked.parse(text));
     }
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML.replace(/\n/g, '<br>');
+    return miniMarkdown(text);
 };
+
+// Small, safe Markdown for pages without the Markdown library (headings, bold, lists, links, rules).
+// Everything is escaped first, so no HTML from the text can run.
+function miniMarkdown(text) {
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const inline = s => esc(s)
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    const out = [];
+    let list = null;        // 'ul' or 'ol'
+    let para = [];
+    const flushPara = () => { if (para.length) { out.push('<p>' + para.map(inline).join('<br>') + '</p>'); para = []; } };
+    const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+    String(text).replace(/\r/g, '').split('\n').forEach(raw => {
+        const line = raw.trimEnd();
+        let m;
+        if (!line.trim()) { flushPara(); closeList(); return; }
+        if ((m = line.match(/^\s{0,3}(#{1,6})\s+(.*)$/))) {
+            flushPara(); closeList();
+            const level = Math.min(6, m[1].length + 1);   // keep headings small inside cards and the chat
+            out.push(`<h${level}>${inline(m[2])}</h${level}>`);
+            return;
+        }
+        if (/^\s{0,3}([-*_])(\s*\1){2,}\s*$/.test(line)) { flushPara(); closeList(); out.push('<hr>'); return; }
+        if ((m = line.match(/^\s*[-*•]\s+(.*)$/))) {
+            flushPara();
+            if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
+            out.push(`<li>${inline(m[1])}</li>`);
+            return;
+        }
+        if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) {
+            flushPara();
+            if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
+            out.push(`<li>${inline(m[1])}</li>`);
+            return;
+        }
+        closeList();
+        para.push(line);
+    });
+    flushPara(); closeList();
+    return out.join('');
+}
+window.miniMarkdown = miniMarkdown;
 
 // ---------- AI translation of generated content ----------
 window.translateText = async function (text, lang) {

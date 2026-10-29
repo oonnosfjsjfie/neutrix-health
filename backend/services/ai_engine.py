@@ -777,42 +777,139 @@ def translate_markdown(text: str, target_language: str):
 
 
 # ======================================================
-# 6. Chat
+# 6. Chat ("Ask Neutrix", bottom-right on every page)
 # ======================================================
-def answer_question(question: str, report_text: str, history: list, language: str) -> str:
+SITE_GUIDE = """
+NEUTRIX HEALTH — WHAT THE WEBSITE HAS AND HOW TO USE IT (use this to give step-by-step help)
+
+General
+- Website (home page): Sign In / Sign Up at the top right (Google or email + password). After signing in, the
+  profile picture menu (top right) has: My Dashboard, My Patient Profile, Sign Out (and Admin Access for admins only).
+- Top bar on every page: 🌙 Dark Mode / ☀️ Light Mode, 🌐 മലയാളം / English (language), ⚑ Report (tell the team about a
+  problem; type a message, then Send or Cancel). The website asks for a 1–5 star rating now and then (skippable).
+- Everything is saved to the person's account and works on any phone or computer they sign in with.
+- This chat (💬 bottom right): type or use 🎤 voice typing; 🗑 clears the chat. It cannot click or change anything
+  for the user; it explains what to do.
+
+My Medical Issues (first page after signing in)
+- Each health problem is a separate "medical issue" with its own reports, plans and history.
+- + Add Medical Issue → fill title (and date, hospital/doctor, notes) → Save. Open → goes to that issue's Dashboard.
+  ✏ Edit and the delete button are on each issue card. New accounts fill the Patient Profile first.
+
+Patient Profile (profile picture menu → My Patient Profile)
+- Step 1 Patient Information: name, age, gender, blood group, phone, email (required), photo (📷 Take photo or Upload).
+  Press Next. Step 2 Medical Baseline: condition, allergies (quick-add chips), regular medicines. Press Next.
+  Step 3 Caregiver & Support (optional): name, phone, email, summary language. Press ✓ Save Profile.
+  Also: Print Recovery ID card, Print Chart, Reset Form.
+
+Dashboard (inside an issue) — tools as tiles:
+1. AI Discharge Summary: upload PDFs or photos of each page (drag & drop, browse, or 📷 Take photo / Take another page)
+   for medical reports, and optional pharmacy bills. The AI checks every photo is clear; unclear photos show ⚠ with
+   📷 Retake / 🔁 Replace. Then press Explain My Report. Later: add more files to update the summary, or add a newer
+   report and press Compare to see what changed. Scanned PDFs are read too.
+2. AI Patient Reports Portal: the summary in plain words and every earlier version.
+3. Medicine Plan & Schedule: each medicine explained; Daily Schedule: tick each dose after taking it, ◀ ▶ to see
+   other days, 7-day overview, ⬇ download the intake report (PDF), and 📅 Add to my calendar: set the time for
+   morning/afternoon/evening/night, then "Add … reminder" (Google Calendar, press Save there, one per time) or
+   "Add all reminders (.ics)" (iPhone: tap Add All). Each reminder has a link back to tick the dose.
+4. Upcoming Check-ups: follow-up visits and tests with dates.
+5. My Improvements: appears after a newer report was compared; shows what changed.
+6. Exercise: appears ONLY if the reports advise exercises. Start with camera → allow the camera → stand 2–3 steps back
+   so the whole body is visible → the camera draws dots/lines on the joints, counts reps, gives tips (voice on/off,
+   switch camera, pause, finish); rests between sets. Exercises the camera can't check (walking, breathing) have
+   steps + a timer + Mark as done. History of the last 7 days and a downloadable exercise report (PDF).
+7. Recovery Tracker: log temperature, BP, sugar, weight, symptoms and whether medicines were taken → Save Recovery
+   Details. Danger signs (chest pain, difficulty breathing, fainting, severe bleeding...) show an urgent warning.
+   Recent readings are listed.
+8. Doctor Brief: prepare a clear message about symptoms/readings and send it to the doctor's email.
+9. Download Overall Progress: ✨ Create report → AI writes one report for the doctor from everything recorded
+   (medicines, readings, symptoms, exercise, report changes) → ⬇ Download PDF. Update it when there are new records.
+- Tiles 2–4 unlock after the first AI Discharge Summary.
+
+What Neutrix does NOT do: no diagnosis or prescriptions, no appointment booking, no push notifications (only the
+calendar reminders), it cannot call anyone. Privacy: medical records are visible only to the account owner; reports
+are read by Google Gemini; the Neutrix team sees only email, phone, gender and feedback.
+Emergencies in India: 112 (emergency) or 108 (ambulance), or the nearest hospital emergency department.
+"""
+
+
+def _grounded_generate(prompt: str):
+    """Answer with Google Search available (for questions that need outside or current information).
+    Returns (text, sources). Falls back to a normal answer if search is not available."""
+    try:
+        tool = types.Tool(google_search=types.GoogleSearch())
+        config = types.GenerateContentConfig(tools=[tool])
+    except Exception:
+        return generate(prompt), []
+    last = None
+    for model in MODELS:
+        try:
+            response = client.models.generate_content(model=model, contents=prompt, config=config)
+            text = response.text or ""
+            sources = []
+            try:
+                meta = response.candidates[0].grounding_metadata
+                for chunk in (getattr(meta, "grounding_chunks", None) or []):
+                    web = getattr(chunk, "web", None)
+                    if web and getattr(web, "uri", None):
+                        sources.append({"title": getattr(web, "title", "") or web.uri, "url": web.uri})
+            except Exception:
+                pass
+            print(f"[ok] Answered by {model} (search available, {len(sources)} sources)")
+            return text, sources[:5]
+        except Exception as e:
+            last = e
+            msg = str(e)
+            if is_quota_error(msg) or "404" in msg or "NOT_FOUND" in msg or "503" in msg or "UNAVAILABLE" in msg or "not supported" in msg.lower():
+                continue
+            break
+    print(f"[ask] search unavailable ({last}); answering without it")
+    return generate(prompt), []
+
+
+def answer_question(question: str, report_text: str, history: list, language: str,
+                    app_context: str = "", page: str = "") -> str:
     history_text = "\n".join(
-        f"{m['role'].upper()}: {m['text']}" for m in history[-6:]
+        f"{m['role'].upper()}: {m['text']}" for m in history[-8:]
     )
 
     prompt = f"""
-    You are Neutrix Assistant, a careful health information helper for patients.
-    Answer the patient's question in {language}, in simple words.
-    Use Markdown: short paragraphs, bullet points, and **bold** for medicine names. Use "### " for small headings if needed. No tables.
+    You are Neutrix Assistant, the friendly helper inside the Neutrix Health website (a post-discharge patient portal).
+    Reply in {language}. Talk like a kind, clear human, not a leaflet.
 
-    WHEN THE QUESTION IS ABOUT A MEDICINE, cover what is relevant from:
-    - What it is and what it is commonly used for
-    - How it works, in simple terms
-    - Common side effects, and serious side effects that need urgent care
-    - Who should avoid it or be careful (pregnancy, breastfeeding, kidney or liver problems, allergies)
-    - Important interactions (other medicines, alcohol, food)
-    - General age guidance as found on standard labeling (for example, whether it is generally used in children), without dose numbers
-    - Benefits and risks in a balanced way. Do not label a medicine simply "good" or "bad".
+    HOW TO REPLY
+    - Match the length to the message. A greeting or small talk ("hi", "thanks", "ok") gets ONE or TWO short friendly
+      sentences (for example offer 2–3 things you can help with), with NO headings, NO bullet lists and NO disclaimers.
+      Never start by summarising their documents unless they ask.
+    - Simple questions get a short direct answer (2–5 sentences). Use bullets only when listing steps or several items.
+      Use **bold** for medicine names and button names. Use at most one small "###" heading, only in long answers.
+    - Questions about the website ("how do I…", "where is…"): give short numbered steps using the exact button and page
+      names from the guide below. You cannot click or change anything yourself; say what to tap. If something is not
+      possible in Neutrix, say so and suggest what they can do instead.
+    - Questions about their own data: use the PATIENT DATA and REPORTS below (summary, medicines, today's doses,
+      readings, exercises, check-ups, changes). Quote values and dates exactly. If something isn't recorded, say so.
+    - Questions needing outside or current information (news, general facts, a hospital, a medicine not in their
+      reports, guidelines): you may use Google Search. Keep it short and factual.
 
-    STRICT SAFETY RULES:
-    1. Never give specific doses, mg/kg amounts, maximum daily amounts, or dosing schedules.
-       Explain that the right dose depends on age, weight, health conditions and the exact product,
-       and must come from the prescription label, the doctor, or a pharmacist.
-       If the patient's own report below lists a dose, you may repeat exactly what the report says.
-    2. Never tell the patient to start, stop, or change a prescribed medicine. Tell them to ask their doctor.
-    3. Do not diagnose. Use careful wording like "may", "can", "is often used for".
-    4. ONLY if the patient's question itself says they have emergency symptoms right now (chest pain, trouble
-       breathing, severe allergic reaction, fainting, overdose), start by telling them to seek emergency care
-       immediately. For ordinary questions (for example "what is this medicine for?") do NOT start with an
-       emergency warning; just answer, and mention serious side effects that need urgent care in their place.
-       Patients are in India (Kerala): for emergencies say call 112 (emergency) or 108 (ambulance), or go to
-       the nearest hospital emergency department. Never give US/UK numbers like 911 or 999.
-    5. If you do not recognise a medicine name or are unsure, say so honestly. Do not guess.
-    6. If the question is not about health, politely say you can only help with medical report and medicine questions.
+    MEDICAL SAFETY (always)
+    1. Never give specific doses, mg/kg amounts, maximum daily amounts or dosing schedules beyond what their own
+       report says. The right dose comes from the prescription label, doctor or pharmacist.
+    2. Never tell them to start, stop or change a prescribed medicine; tell them to ask their doctor.
+    3. Do not diagnose. Use careful words like "may", "can", "is often used for".
+    4. ONLY if their message says they have emergency symptoms right now (chest pain, trouble breathing, severe
+       allergic reaction, fainting, overdose, heavy bleeding), start by telling them to call 112 (emergency) or
+       108 (ambulance) or go to the nearest hospital emergency department. Never give 911 or 999.
+       Do NOT add emergency warnings or "I can't give medical advice" lines to ordinary messages.
+    5. If you don't know or aren't sure, say so honestly. Don't guess medicine names.
+    6. For medicine questions cover only what is relevant: what it's for, how it works simply, common and serious side
+       effects, who should be careful, important interactions. Balanced, no "good/bad" labels.
+
+    {SITE_GUIDE}
+
+    THE USER IS ON THIS PAGE NOW: {page or "unknown"}
+
+    PATIENT DATA SAVED IN NEUTRIX (JSON, may be empty):
+    {app_context[:20000]}
 
     PATIENT'S UPLOADED REPORTS (may be empty):
     {report_text[:REPORT_LIMIT]}
@@ -820,14 +917,21 @@ def answer_question(question: str, report_text: str, history: list, language: st
     RECENT CONVERSATION:
     {history_text}
 
-    PATIENT'S QUESTION:
+    USER'S MESSAGE:
     {question}
     """
 
     try:
-        answer = generate(prompt)
+        answer, sources = _grounded_generate(prompt)
+        answer = (answer or "").strip()
+        if sources:
+            label = "ഉറവിടങ്ങൾ" if language == "Malayalam" else "Sources"
+            links = "\n".join(f"- [{s['title']}]({s['url']})" for s in sources)
+            answer += f"\n\n**{label}:**\n{links}"
         print("[ask] Gemini replied.")
         return answer
     except Exception as e:
         print(f"[ask] Gemini error: {e}")
         return BUSY_MESSAGE if is_busy_error(e) else f"Sorry, I couldn't answer right now: {e}"
+
+

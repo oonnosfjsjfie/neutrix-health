@@ -85,6 +85,7 @@
         if (m.role === 'assistant') {
             div.classList.add('md-content');
             div.innerHTML = renderMarkdown(msgText(m));
+            div.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
         } else {
             div.textContent = msgText(m);
         }
@@ -125,6 +126,75 @@
         }
     }
 
+    // ---------- What the person has saved in Neutrix (sent with each question) ----------
+    const cut = (v, n) => { const t = String(v || ''); return t.length > n ? t.slice(0, n) + ' …' : t; };
+    const pickLang = c => (c && typeof c === 'object') ? (c.English || Object.values(c)[0] || '') : (c || '');
+    function appContext() {
+        const ctx = {};
+        try {
+            const profile = storeGet('neutrix_hospital_profile') || {};
+            if (profile.patientName) {
+                ctx.patient = { name: profile.patientName, age: profile.age, gender: profile.gender, blood_group: profile.bloodGroup,
+                    condition: profile.condition, allergies: profile.allergies,
+                    regular_medicines: (profile.medications || []).map(m => `${m.name} ${m.dose || ''} (${m.time || ''})`.trim()),
+                    caregiver: profile.caregiverName || '' };
+            }
+            const issues = storeGet('neutrixIssues') || [];
+            if (issues.length) ctx.all_medical_issues = issues.map(i => i.title);
+            const issue = window.neutrixActiveIssue;
+            if (issue) ctx.current_issue = { title: issue.title, since: issue.startDate || '', hospital_or_doctor: issue.hospital || '', notes: issue.notes || '' };
+            const report = loadReport();
+            ctx.has_uploaded_reports = !!report;
+            if (report) {
+                ctx.uploaded_files = (report.files || []).map(f => f.name).concat(loadFollowups().flatMap(f => (f.files || []).map(x => x.name)));
+                ctx.ai_summary = cut(pickLang(report.summaries) || report.summary, 4000);
+            }
+            const plan = storeGet('neutrixPlan');
+            if (plan) ctx.medicine_plan = cut(pickLang(plan.content || plan), 3000);
+            const schedule = storeGet('neutrixSchedule');
+            if (schedule && typeof dosesForDay === 'function') {
+                const today = dayKey(new Date());
+                const ticks = (schedule.ticks || {})[today] || {};
+                ctx.todays_doses = dosesForDay(schedule, today).map(d => ({ medicine: `${d.medicine} ${d.strength || ''}`.trim(), time: d.slot,
+                    how: d.instruction_en || '', taken: ticks[d.id] ? 'yes, at ' + new Date(ticks[d.id]).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : 'not yet' }));
+                let scheduled = 0, taken = 0;
+                for (let i = 1; i <= 7; i++) {
+                    const k = dayKeyShift(today, -i);
+                    if (k < schedule.startDate) break;
+                    const t = (schedule.ticks || {})[k] || {};
+                    dosesForDay(schedule, k).forEach(d => { scheduled++; if (t[d.id]) taken++; });
+                }
+                if (scheduled) ctx.last_7_days_doses = `${taken} of ${scheduled} taken`;
+            }
+            const checkups = storeGet('neutrixCheckups');
+            if (checkups) ctx.checkups = cut(pickLang(checkups.content || checkups), 2500);
+            const readings = storeGet('neutrixTracker') || [];
+            if (readings.length) ctx.recent_readings = readings.slice(-10).map(r => ({ at: (r.at || '').slice(0, 16), temp_F: r.temp, bp: r.bp, sugar: r.sugar, weight: r.weight, symptoms: r.symptoms }));
+            const ex = storeGet('neutrixExercises');
+            if (ex) {
+                ctx.exercises_in_reports = (ex.exercises || []).map(e => [e.name_en, e.reps && `${e.reps} reps`, e.sets && `${e.sets} sets`, e.minutes && `${e.minutes} min`, e.frequency_en].filter(Boolean).join(', '));
+                if ((ex.restrictions_en || []).length) ctx.activity_limits = ex.restrictions_en;
+            }
+            const exLog = storeGet('neutrixExerciseLog') || {};
+            const days = Object.keys(exLog).sort().slice(-7);
+            if (days.length) ctx.exercise_done = days.map(d => d + ': ' + Object.values(exLog[d]).map(e => `${e.name_en || 'exercise'} ${e.sessions}x${e.reps ? ' (' + e.reps + ' reps)' : ''}`).join(', '));
+            const comparisons = loadFollowups().filter(f => f.comparison);
+            if (comparisons.length) ctx.report_changes = comparisons.slice(-2).map(f => cut(pickLang(f.comparison), 1500));
+            const progress = storeGet('neutrixProgressReport');
+            if (progress && progress.createdAt) ctx.progress_report_created = progress.createdAt.slice(0, 10);
+            const briefs = storeGet('neutrixBriefLog') || [];
+            if (briefs.length) ctx.messages_sent_to_doctor = briefs.length;
+        } catch (e) {
+            console.warn('[chat] context', e);
+        }
+        return JSON.stringify(ctx).slice(0, 20000);
+    }
+    function pageName() {
+        const file = location.pathname.split('/').pop() || 'home.html';
+        const title = document.title || (document.querySelector('.nx-eyebrow-live') || {}).textContent || '';
+        return `${file} (${String(title).trim().slice(0, 80)})`;
+    }
+
     // ---------- Asking ----------
     async function askQuestion() {
         const question = questionInput.value.trim();
@@ -158,7 +228,9 @@
                     question: question,
                     report_text: reportContext(report),
                     language: lang,
-                    history: history
+                    history: history,
+                    app_context: appContext(),
+                    page: pageName()
                 }),
                 signal: controller.signal
             });

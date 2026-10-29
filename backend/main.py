@@ -163,13 +163,16 @@ class AskRequest(BaseModel):
     report_text: str = ""
     language: str = "English"
     history: List[ChatMessage] = []
+    app_context: str = ""
+    page: str = ""
 
 
 @app.post("/api/ask")
 def ask_question(req: AskRequest):
     print(f"[ask] Question: {req.question}")
     history = [m.model_dump() for m in req.history]
-    answer = answer_question(req.question, req.report_text, history, req.language)
+    answer = answer_question(req.question, req.report_text, history, req.language,
+                             app_context=req.app_context, page=req.page)
     return {"answer": answer}
 
 
