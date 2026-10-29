@@ -2,9 +2,21 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each Neutrix user can only read and write their own data
+
+    // Neutrix admins (read-only access to everyone's data, for the Admin page).
+    // The email must be verified (Google sign-in is), so nobody can pose as an admin
+    // by signing up with an admin's email and a password.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in ['altlol2102@gmail.com', 'ajay21022010@gmail.com'];
+    }
+
     match /users/{uid}/{document=**} {
+      // Each Neutrix user can read and write only their own data
       allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Admins can read (not change) every user's data
+      allow read: if isAdmin();
     }
   }
 }

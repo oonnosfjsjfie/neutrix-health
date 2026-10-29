@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Accounts (must load first) -->
+    <script src="firebase-config.js"></script>
+    <script src="neutrix-cloud.js"></script>
+    <script>
+        // Signed-in users only (the admin check itself happens below, and in the Firestore rules)
+        if (localStorage.getItem('neutrix_authenticated') !== 'true') location.replace('signin.html?next=admin.html');
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Neutrix | Admin</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        .ad-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .ad-stat { padding: 16px; border: 1px solid var(--border-color); border-radius: 16px; background: var(--card-bg); }
+        .ad-stat b { display: block; font-size: 28px; line-height: 1.1; }
+        .ad-stat span { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+        .ad-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .ad-bar input { flex: 1; min-width: 220px; }
+        .ad-table-wrap { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 16px; }
+        .ad-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+        .ad-table th { text-align: left; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); padding: 10px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; background: var(--pill-bg); }
+        .ad-table td { padding: 10px 12px; border-bottom: 1px dashed var(--border-color); vertical-align: top; }
+        .ad-table tr.user-row { cursor: pointer; }
+        .ad-table tr.user-row:hover td { background: rgba(168, 85, 247, 0.06); }
+        .ad-table tr.user-row.open td { background: rgba(168, 85, 247, 0.1); }
+        .ad-badge { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 10px; color: #fff; background: linear-gradient(90deg, #a855f7, #3b82f6); margin-left: 6px; }
+        .ad-muted { color: var(--text-muted); font-size: 12.5px; }
+        .ad-detail { margin-top: 22px; }
+        .ad-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+        .ad-detail-head h2 { margin: 0; }
+        .ad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+        .ad-box { border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 18px; background: var(--card-bg); }
+        .ad-box h3 { margin: 0 0 10px; font-size: 15px; }
+        .ad-kv { display: grid; grid-template-columns: 130px 1fr; gap: 4px 10px; font-size: 13.5px; }
+        .ad-kv span:nth-child(odd) { color: var(--text-muted); font-weight: 600; }
+        .ad-issue { margin-top: 18px; border: 1px solid var(--border-color); border-radius: 18px; padding: 18px; }
+        .ad-issue > h3 { margin: 0 0 4px; font-size: 17px; }
+        .ad-issue details { margin-top: 10px; border-top: 1px dashed var(--border-color); padding-top: 10px; }
+        .ad-issue summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+        .ad-md { font-size: 13.5px; margin-top: 8px; max-height: 420px; overflow: auto; }
+        .ad-mini { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+        .ad-mini th, .ad-mini td { border-bottom: 1px solid var(--border-color); padding: 6px 8px; text-align: left; vertical-align: top; }
+        .ad-mini th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+        .ad-pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; background: var(--pill-bg); margin: 2px 4px 2px 0; }
+        .ad-raw { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow: auto; background: var(--pill-bg); padding: 12px; border-radius: 12px; }
+        .ad-denied { text-align: center; padding: 50px 20px; }
+        .ad-denied .big { font-size: 48px; }
+        .ad-loading { display: flex; align-items: center; gap: 12px; padding: 20px; color: var(--text-secondary); }
+        .ad-spin { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--border-color); border-top-color: #a855f7; animation: adSpin 0.8s linear infinite; }
+        @keyframes adSpin { to { transform: rotate(360deg); } }
+        .ad-error { padding: 12px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 600; background: rgba(220, 38, 38, 0.08); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.3); margin-bottom: 14px; }
+        [data-theme="dark"] .ad-error { color: #fca5a5; }
+        .ad-note { font-size: 12.5px; color: var(--text-muted); margin-top: 14px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body data-page="admin" data-title-key="pageTitle">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+        <section class="ehr-card">
+            <div id="adLoading" class="ad-loading"><span class="ad-spin"></span><span>Checking your admin access…</span></div>
+
+            <div id="adDenied" class="ad-denied hidden">
+                <div class="big">🔒</div>
+                <h2>Admins only</h2>
+                <p class="hint" id="adDeniedText">This page is only for Neutrix admins.</p>
+                <a href="home.html"><button class="btn-primary" type="button">Back to the website</button></a>
+            </div>
+
+            <div id="adView" class="hidden">
+                <div id="adError" class="ad-error hidden"></div>
+                <div class="ad-stats" id="adStats"></div>
+
+                <div class="section-title">People using Neutrix</div>
+                <div class="ad-bar">
+                    <input id="adSearch" class="modern-input" placeholder="Search by name or email…">
+                    <button class="btn-secondary" type="button" id="adRefresh">🔄 Refresh</button>
+                    <button class="btn-secondary" type="button" id="adCsv">⬇ Download CSV</button>
+                </div>
+                <div class="ad-table-wrap">
+                    <table class="ad-table">
+                        <thead><tr><th>Name</th><th>Email</th><th>Last sign-in</th><th>Phone</th><th>Issues</th><th>Last activity</th></tr></thead>
+                        <tbody id="adRows"></tbody>
+                    </table>
+                </div>
+                <p class="ad-note">Click a person to see everything they entered. This page can only read data. Firebase lets only the admin accounts load it.</p>
+
+                <div id="adDetail" class="ad-detail hidden"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="common.js?v=20261029b"></script>
+    <script src="account-menu.js"></script>
+    <script>
+    (function () {
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const fmt = d => d ? d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '–';
+        const show = (id, on) => $(id).classList.toggle('hidden', !on);
+        let db = null;
+        let users = [];            // { uid, name, email, lastLogin, data (loaded), loading }
+        let openUid = null;
+
+        // ---------- Who is this? ----------
+        async function start() {
+            if (!NeutrixCloud.configured) return deny('Accounts are not set up on this copy of Neutrix.');
+            let user = null;
+            try { user = await NeutrixCloud.currentUser(); } catch (e) {}
+            if (!user) { location.replace('signin.html?next=admin.html'); return; }
+            if (NeutrixCloud.isAdminEmail(user.email) && !user.emailVerified) return deny(`${user.email} is not verified. Sign in with Google (or verify the email) to use Admin Access.`);
+            if (!NeutrixCloud.isAdmin(user)) return deny(`You are signed in as ${user.email || 'this account'}, which is not a Neutrix admin.`);
+            db = (await NeutrixCloud.init()).db;
+            show('adLoading', false);
+            show('adView', true);
+            loadUsers();
+        }
+        function deny(text) {
+            show('adLoading', false);
+            $('adDeniedText').textContent = text;
+            show('adDenied', true);
+        }
+
+        // ---------- Reading a user's saved data ----------
+        async function readStore(uid) {
+            const userRef = db.collection('users').doc(uid);
+            const snap = await userRef.collection('store').get();
+            const data = {};
+            let latest = 0;
+            for (const doc of snap.docs) {
+                const d = doc.data();
+                if (d.t && d.t.toMillis) latest = Math.max(latest, d.t.toMillis());
+                let value = d.v;
+                if (d.n) {
+                    value = '';
+                    for (let i = 0; i < d.n; i++) {
+                        const part = await userRef.collection('chunks').doc(`${doc.id}~${i}`).get();
+                        value += part.exists ? (part.data().v || '') : '';
+                    }
+                }
+                if (value === null || value === undefined) continue;
+                let parsed = value;
+                try { parsed = JSON.parse(value); } catch (e) {}
+                data[d.k || decodeURIComponent(doc.id)] = parsed;
+            }
+            return { data, latest };
+        }
+
+        // ---------- People list ----------
+        async function loadUsers() {
+            $('adError').classList.add('hidden');
+            $('adRows').innerHTML = `<tr><td colspan="6"><div class="ad-loading"><span class="ad-spin"></span>Loading people…</div></td></tr>`;
+            try {
+                const snap = await db.collection('users').get();
+                users = snap.docs.map(d => {
+                    const u = d.data();
+                    return { uid: d.id, name: u.name || '', email: u.email || '', lastLogin: u.lastLogin && u.lastLogin.toDate ? u.lastLogin.toDate() : null };
+                }).sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
+                renderRows();
+                renderStats();
+                // Load everyone's data in the background (a few at a time) for phone, issues and activity
+                let next = 0;
+                const worker = async () => {
+                    while (next < users.length) {
+                        const u = users[next++];
+                        try { Object.assign(u, await readStore(u.uid)); } catch (e) { u.error = e.message; }
+                        renderRows();
+                        renderStats();
+                        if (openUid === u.uid) renderDetail(u);
+                    }
+                };
+                await Promise.all([worker(), worker(), worker()]);
+            } catch (e) {
+                console.error(e);
+                $('adRows').innerHTML = '';
+                const box = $('adError');
+                box.textContent = /permission/i.test(e.message)
+                    ? '⚠️ Firebase refused to share the data. The new Firestore rules (with the admin list) are not published yet.'
+                    : '⚠️ Could not load people: ' + e.message;
+                box.classList.remove('hidden');
+            }
+        }
+
+        const profileOf = u => (u.data && u.data.neutrix_hospital_profile) || {};
+        const issuesOf = u => (u.data && Array.isArray(u.data.neutrixIssues) ? u.data.neutrixIssues : []);
+
+        function renderStats() {
+            const week = Date.now() - 7 * 86400000;
+            const loaded = users.filter(u => u.data);
+            const withReports = loaded.filter(u => Object.keys(u.data).some(k => k.startsWith('neutrixReport::'))).length;
+            const issues = loaded.reduce((n, u) => n + issuesOf(u).length, 0);
+            $('adStats').innerHTML = [
+                [users.length, 'People'],
+                [users.filter(u => u.lastLogin && u.lastLogin.getTime() > week).length, 'Signed in this week'],
+                [withReports, 'Uploaded reports'],
+                [issues, 'Medical issues']
+            ].map(([n, l]) => `<div class="ad-stat"><b>${n}</b><span>${l}</span></div>`).join('');
+        }
+
+        function renderRows() {
+            const q = $('adSearch').value.trim().toLowerCase();
+            const list = users.filter(u => !q || `${u.name} ${u.email} ${profileOf(u).patientName || ''}`.toLowerCase().includes(q));
+            $('adRows').innerHTML = list.map(u => {
+                const p = profileOf(u);
+                const admin = NeutrixCloud.isAdminEmail(u.email) ? '<span class="ad-badge">ADMIN</span>' : '';
+                const issues = u.data ? issuesOf(u).length : '…';
+                return `<tr class="user-row ${openUid === u.uid ? 'open' : ''}" data-uid="${esc(u.uid)}">
+                    <td><strong>${esc(p.patientName || u.name || '(no name)')}</strong>${admin}</td>
+                    <td>${esc(u.email)}</td>
+                    <td>${esc(fmt(u.lastLogin))}</td>
+                    <td>${esc(p.patientPhone || (u.data ? '–' : '…'))}</td>
+                    <td>${issues}</td>
+                    <td>${u.latest ? esc(fmt(new Date(u.latest))) : (u.data ? '–' : '…')}</td>
+                </tr>`;
+            }).join('') || `<tr><td colspan="6" class="ad-muted">Nobody found.</td></tr>`;
+            $('adRows').querySelectorAll('tr.user-row').forEach(tr => tr.addEventListener('click', () => openUser(tr.dataset.uid)));
+        }
+
+        async function openUser(uid) {
+            openUid = uid;
+            renderRows();
+            const u = users.find(x => x.uid === uid);
+            show('adDetail', true);
+            if (!u.data) {
+                $('adDetail').innerHTML = `<div class="ad-loading"><span class="ad-spin"></span>Loading ${esc(u.email)}…</div>`;
+                try { Object.assign(u, await readStore(uid)); } catch (e) { u.error = e.message; }
+            }
+            renderDetail(u);
+            $('adDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ---------- One person's data ----------
+        function scheduleStats(s) {
+            if (!s || !s.startDate || typeof dosesForDay !== 'function') return null;
+            let k = s.startDate, scheduled = 0, taken = 0, guard = 0;
+            const today = dayKey(new Date());
+            while (k <= today && guard++ < 400) {
+                const ticks = (s.ticks || {})[k] || {};
+                (dosesForDay(s, k) || []).forEach(d => { scheduled++; if (ticks[d.id]) taken++; });
+                k = dayKeyShift(k, 1);
+            }
+            return { scheduled, taken, pct: scheduled ? Math.round(taken / scheduled * 100) : 0, from: s.startDate };
+        }
+
+        function renderDetail(u) {
+            if (openUid !== u.uid) return;
+            if (u.error) { $('adDetail').innerHTML = `<div class="ad-error">⚠️ ${esc(u.error)}</div>`; return; }
+            const d = u.data || {};
+            const p = profileOf(u);
+            const row = (label, value) => value ? `<span>${esc(label)}</span><span>${esc(value)}</span>` : '';
+            const meds = (p.medications || []).map(m => `${m.name} ${m.dose || ''} (${m.time || ''})`).join(', ');
+
+            let html = `
+                <div class="ad-detail-head">
+                    <div><h2>${esc(p.patientName || u.name || u.email)}</h2><div class="ad-muted">${esc(u.email)} · data last changed ${esc(u.latest ? fmt(new Date(u.latest)) : '–')}</div></div>
+                    <button class="btn-secondary" type="button" id="adJson">⬇ Download all data (JSON)</button>
+                </div>
+                <div class="ad-grid">
+                    <div class="ad-box"><h3>🩺 Patient profile</h3>${Object.keys(p).length ? `<div class="ad-kv">
+                        ${row('Name', p.patientName)}${row('Age', p.age)}${row('Gender', p.gender)}${row('Blood group', p.bloodGroup !== 'Select' ? p.bloodGroup : '')}
+                        ${row('Phone', p.patientPhone)}${row('Email', p.patientEmail)}${row('Condition', p.condition)}${row('Allergies', p.allergies)}
+                        ${row('Regular medicines', meds)}${row('Summary language', p.language)}</div>` : '<p class="ad-muted">Not filled in.</p>'}</div>
+                    <div class="ad-box"><h3>🤝 Caregiver</h3>${p.caregiverName || p.caregiverEmail || (p.caregiverPhone && p.caregiverPhone !== 'Not provided') ? `<div class="ad-kv">
+                        ${row('Name', p.caregiverName)}${row('Phone', p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : '')}${row('Email', p.caregiverEmail)}</div>` : '<p class="ad-muted">Not added.</p>'}
+                        ${d.neutrixDoctorEmail ? `<h3 style="margin-top:14px">🧑‍⚕️ Doctor email</h3><p>${esc(d.neutrixDoctorEmail)}</p>` : ''}</div>
+                </div>`;
+
+            const issues = issuesOf(u);
+            if (!issues.length) html += `<p class="ad-muted" style="margin-top:16px">No medical issues added yet.</p>`;
+            issues.forEach(issue => {
+                const g = key => d[`${key}::${issue.id}`];
+                const report = g('neutrixReport');
+                const sums = (report && report.summaries) || {};
+                const summary = sums.English || Object.values(sums)[0] || (report && report.summary) || '';
+                const files = report ? (report.files || []).map(f => f.name) : [];
+                const followups = g('neutrixFollowups') || [];
+                followups.forEach(f => (f.files || []).forEach(x => files.push(x.name + ' (later)')));
+                const sched = scheduleStats(g('neutrixSchedule'));
+                const readings = g('neutrixTracker') || [];
+                const exLog = g('neutrixExerciseLog') || {};
+                const ex = g('neutrixExercises');
+                const sessions = Object.values(exLog).reduce((n, day) => n + Object.values(day).reduce((m, e) => m + (e.sessions || 0), 0), 0);
+                const progress = g('neutrixProgressReport');
+                const briefs = g('neutrixBriefLog') || [];
+
+                html += `<div class="ad-issue">
+                    <h3>${esc(issue.icon || '🩺')} ${esc(issue.title || 'Issue')}</h3>
+                    <div class="ad-muted">${esc([issue.startDate && 'Since ' + issue.startDate, issue.hospital, issue.notes].filter(Boolean).join(' · '))}</div>
+                    <div style="margin-top:8px">
+                        <span class="ad-pill">📋 ${report ? files.length + ' file(s)' : 'No reports'}</span>
+                        ${sched ? `<span class="ad-pill">💊 ${sched.taken}/${sched.scheduled} doses (${sched.pct}%)</span>` : ''}
+                        <span class="ad-pill">📈 ${readings.length} reading(s)</span>
+                        <span class="ad-pill">🏃 ${sessions} exercise session(s)</span>
+                        <span class="ad-pill">🧑‍⚕️ ${briefs.length} message(s) to doctor</span>
+                        ${progress ? `<span class="ad-pill">📊 Progress report</span>` : ''}
+                    </div>
+                    ${summary ? `<details><summary>AI discharge summary${files.length ? ' — ' + esc(files.join(', ')) : ''}</summary><div class="ad-md md-content">${renderMarkdown(summary)}</div></details>` : ''}
+                    ${readings.length ? `<details><summary>Home readings (${readings.length})</summary><table class="ad-mini"><thead><tr><th>When</th><th>Temp</th><th>BP</th><th>Sugar</th><th>Weight</th><th>Symptoms</th></tr></thead><tbody>
+                        ${readings.slice(-30).reverse().map(r => `<tr><td>${esc(fmt(new Date(r.at)))}</td><td>${esc(r.temp || '–')}</td><td>${esc(r.bp || '–')}</td><td>${esc(r.sugar || '–')}</td><td>${esc(r.weight || '–')}</td><td>${esc(r.symptoms || '–')}</td></tr>`).join('')}
+                        </tbody></table></details>` : ''}
+                    ${(ex && ex.exercises && ex.exercises.length) || sessions ? `<details><summary>Exercise</summary>
+                        ${ex && ex.exercises ? `<p class="ad-muted" style="margin-top:8px">Prescribed: ${esc(ex.exercises.map(e => e.name_en).join(', ') || 'none')}</p>` : ''}
+                        <table class="ad-mini"><thead><tr><th>Day</th><th>Exercise</th><th>Sessions</th><th>Reps</th></tr></thead><tbody>
+                        ${Object.keys(exLog).sort().reverse().flatMap(day => Object.entries(exLog[day]).map(([id, e]) => `<tr><td>${esc(day)}</td><td>${esc(e.name_en || id)}</td><td>${e.sessions || 0}</td><td>${e.reps || 0}</td></tr>`)).join('') || '<tr><td colspan="4">No sessions yet</td></tr>'}
+                        </tbody></table></details>` : ''}
+                    ${briefs.length ? `<details><summary>Messages sent to the doctor (${briefs.length})</summary>${briefs.slice().reverse().map(b => `<div style="margin-top:10px"><div class="ad-muted">${esc(fmt(new Date(b.at)))} → ${esc(b.to)}</div><div class="ad-raw">${esc(b.text)}</div></div>`).join('')}</details>` : ''}
+                    ${progress && progress.markdown ? `<details><summary>Latest progress report (${esc(fmt(new Date(progress.createdAt)))})</summary><div class="ad-md md-content">${renderMarkdown(progress.markdown)}</div></details>` : ''}
+                </div>`;
+            });
+
+            html += `<details class="ad-issue"><summary>All saved data (${Object.keys(d).length} items)</summary><div class="ad-raw">${esc(JSON.stringify(d, null, 2).slice(0, 200000))}</div></details>`;
+            $('adDetail').innerHTML = html;
+            $('adJson').addEventListener('click', () => {
+                const blob = new Blob([JSON.stringify({ uid: u.uid, email: u.email, name: u.name, data: d }, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `neutrix_${(u.email || u.uid).replace(/[^a-z0-9]+/gi, '_')}.json`;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+            });
+        }
+
+        // ---------- CSV of everyone ----------
+        $('adCsv').addEventListener('click', () => {
+            const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+            const lines = [['Name', 'Email', 'Last sign-in', 'Phone', 'Age', 'Gender', 'Condition', 'Allergies', 'Caregiver', 'Issues', 'Last activity'].map(cell).join(',')];
+            users.forEach(u => {
+                const p = profileOf(u);
+                lines.push([p.patientName || u.name, u.email, fmt(u.lastLogin), p.patientPhone, p.age, p.gender, p.condition, p.allergies,
+                            p.caregiverName, issuesOf(u).map(i => i.title).join('; '), u.latest ? fmt(new Date(u.latest)) : ''].map(cell).join(','));
+            });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' }));
+            a.download = `neutrix_users_${dayKey(new Date())}.csv`;
+            a.click();
+        });
+        $('adSearch').addEventListener('input', renderRows);
+        $('adRefresh').addEventListener('click', () => { users = []; openUid = null; show('adDetail', false); loadUsers(); });
+
+        start();
+    })();
+    </script>
+</body>
+</html>

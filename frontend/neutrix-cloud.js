@@ -308,8 +308,16 @@
         });
     }
 
+    // ---------- Admins (the Admin page) ----------
+    // Only shows the button. The real protection is in firestore.rules (same list there).
+    const ADMIN_EMAILS = ['altlol2102@gmail.com', 'ajay21022010@gmail.com'];
+    function isAdminEmail(email) { return ADMIN_EMAILS.includes(String(email || '').toLowerCase()); }
+    function isAdmin(user) { return !!user && user.emailVerified !== false && isAdminEmail(user.email); }
+
     window.NeutrixCloud = {
         configured,
+        isAdmin,
+        isAdminEmail,
         init,
         currentUser,
         flush,

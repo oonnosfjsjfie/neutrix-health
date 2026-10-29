@@ -16,8 +16,8 @@
     const herePage = (location.pathname.split('/').pop() || 'home.html') + location.search;
 
     const TEXT = {
-        English: { signIn: 'Sign In', dashboard: '🗂 My Dashboard', profile: '🩺 My Patient Profile', signOut: '🚪 Sign Out', signingOut: 'Signing out…', account: 'Your account', signedIn: 'Signed in' },
-        Malayalam: { signIn: 'സൈൻ ഇൻ', dashboard: '🗂 എന്റെ ഡാഷ്ബോർഡ്', profile: '🩺 എന്റെ രോഗി പ്രൊഫൈൽ', signOut: '🚪 സൈൻ ഔട്ട്', signingOut: 'സൈൻ ഔട്ട് ചെയ്യുന്നു…', account: 'നിങ്ങളുടെ അക്കൗണ്ട്', signedIn: 'സൈൻ ഇൻ ചെയ്തു' }
+        English: { signIn: 'Sign In', dashboard: '🗂 My Dashboard', profile: '🩺 My Patient Profile', admin: '🛡 Admin Access', signOut: '🚪 Sign Out', signingOut: 'Signing out…', account: 'Your account', signedIn: 'Signed in' },
+        Malayalam: { signIn: 'സൈൻ ഇൻ', dashboard: '🗂 എന്റെ ഡാഷ്ബോർഡ്', profile: '🩺 എന്റെ രോഗി പ്രൊഫൈൽ', admin: '🛡 അഡ്മിൻ ആക്സസ്', signOut: '🚪 സൈൻ ഔട്ട്', signingOut: 'സൈൻ ഔട്ട് ചെയ്യുന്നു…', account: 'നിങ്ങളുടെ അക്കൗണ്ട്', signedIn: 'സൈൻ ഇൻ ചെയ്തു' }
     };
     function tx(key) {
         const lang = window.neutrixLang || (localStorage.getItem('neutrixLang') === 'Malayalam' ? 'Malayalam' : 'English');
@@ -63,6 +63,8 @@
         }
         .nx-acct-item:hover { background: rgba(127, 127, 127, 0.12); }
         .nx-acct-item.danger { color: #dc2626; }
+        .nx-acct-item.admin { color: #7c3aed; }
+        [data-theme="dark"] .nx-acct-item.admin { color: #c4b5fd; }
         [data-theme="dark"] .nx-acct-item.danger { color: #f87171; }
         .nx-acct-item:disabled { opacity: 0.7; cursor: wait; }
         @media (max-width: 640px) { .nx-acct-menu { right: -8px; } }
@@ -94,6 +96,7 @@
                     </div>
                     <a class="nx-acct-item" data-a="dash" href="issues.html"></a>
                     <a class="nx-acct-item" data-a="prof"></a>
+                    <a class="nx-acct-item admin" data-a="admin" href="admin.html" hidden></a>
                     <button type="button" class="nx-acct-item danger" data-a="out"></button>
                 </div>
             </div>`;
@@ -114,6 +117,8 @@
         el.signin.textContent = tx('signIn');
         el.dash.textContent = tx('dashboard');
         el.prof.textContent = tx('profile');
+        el.admin.textContent = tx('admin');
+        el.admin.hidden = !(profile && profile.admin);
         if (!el.out.disabled) el.out.textContent = tx('signOut');
         el.avatar.title = (profile && (profile.name || profile.email)) || tx('account');
         el.name.textContent = (profile && profile.name) || tx('signedIn');
@@ -127,8 +132,11 @@
         texts();
     }
 
-    function showSignedIn(p) {
-        profile = p || {};
+    function showSignedIn(p, user) {
+        profile = Object.assign({}, p || {});
+        profile.admin = cloud && cloud.isAdmin
+            ? (user ? cloud.isAdmin(user) : cloud.isAdminEmail(profile.email))
+            : false;
         const label = profile.name || profile.email || '';
         el.email.textContent = profile.email || '';
         el.initial.textContent = label.trim().charAt(0) || '🙂';
@@ -158,7 +166,7 @@
         cloud.currentUser().then(user => {
             if (user && localStorage.getItem('neutrix_authenticated') === 'true') {
                 cloud.saveProfile(user);
-                showSignedIn(cloud.cachedProfile());
+                showSignedIn(cloud.cachedProfile(), user);
             } else if (isWebsite) {
                 localStorage.removeItem('neutrix_authenticated');
                 showSignedOut();
