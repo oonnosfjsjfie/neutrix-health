@@ -213,7 +213,7 @@
                         ${used.map(s => `<button type="button" class="cal-btn" data-google="${s}">${esc(fill(l.addGoogle, { slot: l.slot[s] }))}</button>`).join('')}
                     </div>
                     <div class="cal-col">
-                        <h4> ${esc(l.apple)}</h4>
+                        <h4>📱 ${esc(l.apple)}</h4>
                         <p>${esc(l.appleHint)}</p>
                         <button type="button" class="cal-btn main" data-ics="1">${esc(l.addApple)}</button>
                     </div>
