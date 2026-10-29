@@ -84,7 +84,28 @@
     function fillBubble(div, m) {
         if (m.role === 'assistant') {
             div.classList.add('md-content');
-            div.innerHTML = renderMarkdown(msgText(m));
+            // Charts the AI drew (```chart {...}```) become pictures; the rest is Markdown
+            const parts = window.NxCharts ? NxCharts.extract(msgText(m)) : { text: msgText(m), charts: [] };
+            // Pictures from their reports (```picture 2```) become a small card that opens the viewer
+            const pics = window.NxVisuals ? NxVisuals.all() : [];
+            const shown = [];
+            const text = parts.text.replace(/```picture\s*(\d+)\s*```/g, (all, n) => {
+                const idx = Number(n) - 1;
+                if (!pics[idx]) return '';
+                shown.push(idx);
+                return `\n\nNXPIC${shown.length - 1}\n\n`;
+            });
+            let html = renderMarkdown(text);
+            parts.charts.forEach((svg, i) => { html = html.replace(new RegExp(`(<p>)?NXCHART${i}(</p>)?`), svg); });
+            shown.forEach((idx, i) => {
+                const v = pics[idx];
+                const title = (neutrixLang === 'Malayalam' ? (v.title_ml || v.title_en) : (v.title_en || v.title_ml)) || v.kind || '';
+                const safe = String(title).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+                const card = `<button type="button" class="chat-pic" data-pic="${idx}"><img src="${v.image}" alt="${safe}"><span>🖼 ${safe}</span></button>`;
+                html = html.replace(new RegExp(`(<p>)?NXPIC${i}(</p>)?`), card);
+            });
+            div.innerHTML = html;
+            div.querySelectorAll('.chat-pic').forEach(b => b.addEventListener('click', () => NxVisuals.open(pics, Number(b.dataset.pic))));
             div.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
         } else {
             div.textContent = msgText(m);
@@ -184,6 +205,12 @@
             if (progress && progress.createdAt) ctx.progress_report_created = progress.createdAt.slice(0, 10);
             const briefs = storeGet('neutrixBriefLog') || [];
             if (briefs.length) ctx.messages_sent_to_doctor = briefs.length;
+            const pics = window.NxVisuals ? NxVisuals.all() : [];
+            if (pics.length) ctx.report_pictures = pics.map((v, i) => ({
+                number: i + 1, title: v.title_en, kind: v.kind, file: v.file, page: v.page || undefined,
+                explanation: cut(v.explanation_en || '', 500),
+                labels: (v.labels || []).map(l => l.text_en).filter(Boolean)
+            }));
         } catch (e) {
             console.warn('[chat] context', e);
         }

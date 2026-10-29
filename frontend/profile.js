@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('neutrix_hospital_profile', JSON.stringify(data));
         window.neutrixProfileSaved = true;
         localStorage.setItem('neutrix_patient_name', data.patientName);
-        messageArea.innerHTML = `<div class="alert-success">✓ Profile saved!</div>`;
+        messageArea.innerHTML = `<div class="alert-success">✓ Profile saved! Taking you back to the website…</div>`;
         updateChartPreview(data);
     }
 
@@ -716,7 +716,7 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     // 3. IMMEDIATE REDIRECTION LINK BRIDGE TO YOUR DASHBOARD HUB
     // Go back where they came from (?back=...), only if the profile really saved
     setTimeout(() => {
-        if (window.neutrixProfileSaved) window.location.href = profileBackPage();
+        if (window.neutrixProfileSaved) window.location.href = 'home.html';   // after saving: back to the website
     }, 1500);
 });
 

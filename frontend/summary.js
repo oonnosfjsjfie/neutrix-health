@@ -30,6 +30,19 @@ function savedFiles(record, listKey, namesKey) {
     return (record[namesKey] || '').split(',').map(n => n.trim()).filter(Boolean).map(name => ({ name }));
 }
 
+// ---------- Pictures in the reports (🖼 Show visual representation) ----------
+function startVisuals(files, hint) {
+    return window.NxVisuals ? NxVisuals.collect(files, hint).catch(() => []) : Promise.resolve([]);
+}
+// Wait (at most 60 s more) for the pictures, then save them under this group
+async function saveVisuals(job, group, startFresh) {
+    if (!window.NxVisuals) return;
+    showStatus('info', 'rawMsg', { msg: NxVisuals.savingText() });
+    const items = await Promise.race([job, new Promise(r => setTimeout(() => r(null), 60000))]);
+    if (startFresh) NxVisuals.clear();
+    if (items && items.length) NxVisuals.add(group, items);
+}
+
 function backToDashboard() {
     showStatus('success', 'backToDashboard');
     setTimeout(() => { window.location.href = 'index.html'; }, 800);
@@ -95,6 +108,7 @@ document.getElementById('processBtn').addEventListener('click', async () => {
     reports.forEach(file => formData.append("files", file));
     bills.forEach(file => formData.append("bills", file));
     formData.append("language", language);
+    const visualsJob = startVisuals(reports, '');
 
     showStatus('info', 'loading');
     resultOutput.classList.add('hidden');
@@ -151,6 +165,7 @@ document.getElementById('processBtn').addEventListener('click', async () => {
                 localStorage.removeItem('neutrixCheckups');
                 localStorage.removeItem('neutrixFollowups');
             } catch (e) {}
+            await saveVisuals(visualsJob, 'first', true);
             backToDashboard();
         } else {
             showStatus('warning', 'storageFail');
@@ -210,6 +225,8 @@ document.getElementById('updateBtn').addEventListener('click', async () => {
     formData.append("previous_text", savedRecord.reportText || "");
     formData.append("previous_bill_text", savedRecord.billText || "");
     formData.append("language", language);
+    const visualsJob = startVisuals(moreReports, savedRecord.reportText || '');
+    const updateGroup = 'u' + (savedRecord.updates || []).length;
 
     showStatus('info', 'updateLoading');
     updateBtn.disabled = true;
@@ -271,6 +288,7 @@ document.getElementById('updateBtn').addEventListener('click', async () => {
             localStorage.removeItem('neutrixPlan');
             localStorage.removeItem('neutrixCheckups');
         } catch (e) {}
+        await saveVisuals(visualsJob, updateGroup, false);
         backToDashboard();
 
     } catch (err) {
@@ -302,6 +320,8 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
     newFiles.forEach(file => formData.append("files", file));
     formData.append("previous_text", fullReportText(savedRecord));
     formData.append("language", language);
+    const visualsJob = startVisuals(newFiles, (savedRecord.reportText || '').slice(0, 3000));
+    const followupId = 'f' + Date.now().toString(36);
 
     showStatus('info', 'compareLoading');
     compareBtn.disabled = true;
@@ -326,7 +346,7 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
 
         const followups = loadFollowups();
         followups.push({
-            id: 'f' + Date.now().toString(36),
+            id: followupId,
             createdAt: new Date().toISOString(),
             files: fileInfo(newFiles),
             text: data.new_text || '',
@@ -337,6 +357,7 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
             showStatus('warning', 'storageFail');
             return;
         }
+        await saveVisuals(visualsJob, followupId, false);
         backToDashboard();
 
     } catch (err) {
@@ -350,6 +371,11 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
         compareBtn.disabled = false;
     }
 });
+
+// 🖼 Show visual representation: only when the reports had pictures
+if (savedRecord && window.NxVisuals) {
+    NxVisuals.attachButton(document.querySelector('#savedSection .saved-actions'), () => NxVisuals.all());
+}
 
 document.getElementById('viewSummaryBtn').addEventListener('click', () => {
     window.location.href = 'report.html';

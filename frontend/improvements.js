@@ -129,7 +129,13 @@ function renderViewer(history) {
     const content = document.getElementById('viewContent');
     content.scrollTop = 0;
     showContent(content, entry);
+    if (visualsButton) visualsButton.refresh();
 }
+
+// 🖼 Show visual representation: pictures from the report that is open (hidden if it had none)
+const visualsButton = window.NxVisuals
+    ? NxVisuals.attachButton(document.getElementById('visualsSlot'), () => selectedId ? NxVisuals.forGroups([selectedId]) : [])
+    : null;
 
 function renderHistory(history) {
     const list = document.getElementById('historyList');

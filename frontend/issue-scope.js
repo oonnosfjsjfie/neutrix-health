@@ -27,7 +27,8 @@
         'neutrixExerciseLog',
         'neutrixTracker',
         'neutrixBriefLog',
-        'neutrixProgressReport'
+        'neutrixProgressReport',
+        'neutrixVisuals'
     ];
     const ACTIVE_KEY = 'neutrixActiveIssue';
 

@@ -5,10 +5,10 @@
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts + online saving (must load before issue-scope.js) -->
-    <script src="firebase-config.js?v=20261029g"></script>
-    <script src="neutrix-cloud.js?v=20261029g"></script>
+    <script src="firebase-config.js?v=20261029h"></script>
+    <script src="neutrix-cloud.js?v=20261029h"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261029g"></script>
+    <script src="issue-scope.js?v=20261029h"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | AI Medical Assistant</title>
     <link rel="stylesheet" href="theme.css">
@@ -197,10 +197,10 @@
 
     </main>
 
-    <script src="common.js?v=20261029g"></script>
-    <script src="account-menu.js?v=20261029g"></script>
-    <script src="feedback.js?v=20261029g"></script>
-    <script src="camera-capture.js?v=20261029g"></script>
+    <script src="common.js?v=20261029h"></script>
+    <script src="account-menu.js?v=20261029h"></script>
+    <script src="feedback.js?v=20261029h"></script>
+    <script src="camera-capture.js?v=20261029h"></script>
     <script>
         // ----- Multi-file uploaders (reports + bills) -----
         window.neutrixUploads = { pdf: [], bill: [], new: [], more: [], morebill: [] };
@@ -259,12 +259,15 @@
                 fetch(`${API_BASE}/api/check-photo`, { method: 'POST', body: fd })
                     .then(r => r.json())
                     .then(d => photoChecks.set(file, d.ok
-                        ? { state: d.status, problems: d.problems || [], percent: d.readable_percent, doc: d.doc_type }
+                        ? { state: d.status, problems: d.problems || [], percent: d.readable_percent, doc: d.doc_type, visuals: d.visuals || [] }
                         : { state: 'error', message: d.message }))
                     .catch(() => photoChecks.set(file, { state: 'error' }))
                     .finally(() => { checksRunning--; rerenderAll(); pumpChecks(); });
             }
         }
+
+        // Used by visuals.js: the pictures the photo check found in this photo
+        window.neutrixPhotoInfo = file => photoChecks.get(file) || null;
 
         // Used by summary.js before sending: null = ready, 'checking' or 'bad'
         window.neutrixPhotoProblem = function (prefixes) {
@@ -456,7 +459,9 @@
         setupUploader('more');
         setupUploader('morebill');
     </script>
-    <script src="summary.js"></script>
-    <script src="chat.js?v=20261029b"></script>
+    <script src="visuals.js?v=20261029a"></script>
+    <script src="summary.js?v=20261029a"></script>
+    <script src="nx-charts.js?v=20261029b"></script>
+    <script src="chat.js?v=20261029d"></script>
 </body>
 </html>

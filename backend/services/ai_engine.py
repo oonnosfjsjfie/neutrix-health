@@ -157,7 +157,19 @@ def check_photo(data: bytes, name: str) -> dict:
      "readable_percent": 0-100,
      "problems": [zero or more of "blurry", "too_dark", "glare", "cut_off", "too_far", "tilted", "not_a_document", "handwriting_unclear"],
      "doc_type": "short name of the document, e.g. Discharge summary / Lab report / Pharmacy bill / Not a medical document",
-     "text": "ALL the text on the page, copied exactly (tables as rows with ' | '), or empty if unreadable"}
+     "text": "ALL the text on the page, copied exactly (tables as rows with ' | '), or empty if unreadable",
+     "visuals": [ ...pictures INSIDE the page, see below... ]}
+
+    "visuals": medical pictures printed on the page (X-ray, CT/MRI/ultrasound image, ECG strip, echo image,
+    wound/skin photo, chart or graph of results). NOT logos, stamps, signatures, QR codes, barcodes or plain tables.
+    If the whole photo IS such a picture (e.g. a photo of an X-ray film), use box [0,0,1000,1000].
+    Each item: {"box": [ymin, xmin, ymax, xmax] (0-1000, on this photo), "kind": "ECG strip",
+      "title_en": "...", "title_ml": "...",
+      "explanation_en": "2-4 simple sentences: what the picture shows and what the page's text says about it",
+      "explanation_ml": "the same in Malayalam",
+      "labels": [{"text_en": "short label", "text_ml": "...", "box": [ymin, xmin, ymax, xmax] (0-1000, on this photo)}]}
+    Labels: only parts that are clearly marked or named on the picture or in the page text (max 6); else [].
+    Never diagnose beyond what is written. Empty list if there are no such pictures.
 
     How to decide:
     - "clear": almost all text (about 90% or more) can be read with confidence, including medicine names,
@@ -184,9 +196,10 @@ def check_photo(data: bytes, name: str) -> dict:
     text = str(result.get("text") or "").strip()
     if status == "clear" and text:
         _remember_photo_text(data, text)
-    print(f"[photo-check] {name}: {status} {percent}% {problems}")
+    visuals = clean_visuals(result.get("visuals"))
+    print(f"[photo-check] {name}: {status} {percent}% {problems} visuals={len(visuals)}")
     return {"status": status, "problems": problems, "doc_type": str(result.get("doc_type") or "")[:60],
-            "readable_percent": percent, "ok": True}
+            "readable_percent": percent, "visuals": visuals, "ok": True}
 
 
 def read_image_text(data: bytes, mime: str) -> str:
@@ -220,6 +233,207 @@ def read_scanned_pdf(data: bytes) -> str:
             if text:
                 parts.append(text)
     return "\n\n".join(parts)
+
+
+# ---------- Pictures inside reports (X-ray, scans, ECG...) for "Show visual representation" ----------
+MAX_VISUALS = 8
+
+
+def _box(value):
+    """[ymin, xmin, ymax, xmax] in 0-1000, or None."""
+    try:
+        y0, x0, y1, x1 = [max(0.0, min(1000.0, float(v))) for v in list(value)[:4]]
+    except Exception:
+        return None
+    if y1 - y0 < 5 or x1 - x0 < 5:
+        return None
+    return [round(y0), round(x0), round(y1), round(x1)]
+
+
+def clean_visuals(items):
+    out = []
+    for v in (items or [])[:MAX_VISUALS]:
+        if not isinstance(v, dict):
+            continue
+        labels = []
+        for lab in (v.get("labels") or [])[:6]:
+            if isinstance(lab, dict) and (lab.get("text_en") or lab.get("text_ml")):
+                labels.append({"text_en": str(lab.get("text_en") or lab.get("text_ml"))[:80],
+                               "text_ml": str(lab.get("text_ml") or lab.get("text_en"))[:80],
+                               "box": _box(lab.get("box"))})
+        out.append({
+            "box": _box(v.get("box")) or [0, 0, 1000, 1000],
+            "kind": str(v.get("kind") or "")[:40],
+            "title_en": str(v.get("title_en") or v.get("kind") or "Picture from your report")[:100],
+            "title_ml": str(v.get("title_ml") or v.get("title_en") or "")[:100],
+            "explanation_en": str(v.get("explanation_en") or "")[:900],
+            "explanation_ml": str(v.get("explanation_ml") or v.get("explanation_en") or "")[:1200],
+            "labels": labels,
+        })
+    return out
+
+
+def relative_labels(labels, crop):
+    """Label boxes given on the whole page -> boxes on the cropped picture."""
+    y0, x0, y1, x1 = crop
+    h, w = max(1, y1 - y0), max(1, x1 - x0)
+    out = []
+    for lab in labels:
+        b = lab.get("box")
+        nb = None
+        if b:
+            nb = _box([(b[0] - y0) * 1000 / h, (b[1] - x0) * 1000 / w, (b[2] - y0) * 1000 / h, (b[3] - x0) * 1000 / w])
+        out.append({**lab, "box": nb})
+    return out
+
+
+def _jpeg_data_url(pix) -> str:
+    import base64
+    try:
+        data = pix.tobytes("jpg", jpg_quality=80)
+        mime = "image/jpeg"
+    except Exception:
+        data = pix.tobytes("png")
+        mime = "image/png"
+    return f"data:{mime};base64," + base64.b64encode(data).decode("ascii")
+
+
+def _render_clip(page, rect, max_side=900):
+    zoom = min(3.0, max_side / max(rect.width, rect.height, 1))
+    return page.get_pixmap(clip=rect, matrix=pymupdf.Matrix(zoom, zoom), alpha=False)
+
+
+def _collect_page_pictures(name, pno, page, embedded, scanned):
+    page_area = page.rect.width * page.rect.height or 1
+    has_text = len(page.get_text().strip()) > 40
+    seen = set()
+    for img in page.get_images(full=True):
+        xref, width, height = img[0], img[2], img[3]
+        if xref in seen or width < 150 or height < 150:
+            continue
+        seen.add(xref)
+        try:
+            rects = page.get_image_rects(xref)
+        except Exception:
+            rects = []
+        for rect in rects:
+            if rect.width < 90 or rect.height < 90:
+                continue
+            if rect.width * rect.height / page_area > 0.8 and not has_text:
+                if not any(x[0] == name and x[1] == pno for x in scanned):
+                    scanned.append((name, pno, page))      # a scanned page: find the pictures on it
+            else:
+                embedded.append((name, pno, rect, page))
+
+
+def extract_visuals(docs: list, report_hint: str = "") -> list:
+    """Finds medical pictures in PDF reports (photos are handled by the photo check). Returns a list of
+    {file, page, image (data URL), kind, title_en/_ml, explanation_en/_ml, labels}."""
+    embedded = []      # (file, page_no, pymupdf.Rect, page)
+    scanned = []       # (file, page_no, page)
+    opened = []
+    for name, data in docs:
+        if image_mime(name, data):
+            continue
+        try:
+            doc = pymupdf.open(stream=data, filetype="pdf")
+        except Exception:
+            continue
+        opened.append(doc)
+        for pno, page in enumerate(doc):
+            if pno >= 15:
+                break
+            try:
+                _collect_page_pictures(name, pno, page, embedded, scanned)
+            except Exception as e:
+                print(f"[visuals] skipped page {pno + 1} of {name}: {e}")
+            if len(embedded) >= MAX_VISUALS:
+                break
+
+    results = []
+    hint = report_hint[:6000]
+
+    # Embedded pictures: explain them all in one AI call
+    if embedded:
+        parts, metas = [], []
+        for name, pno, rect, page in embedded[:MAX_VISUALS]:
+            try:
+                pix = _render_clip(page, rect)
+                png = pix.tobytes("png")
+                url = _jpeg_data_url(pix)
+            except Exception as e:
+                print(f"[visuals] could not cut out a picture: {e}")
+                continue
+            parts.append(types.Part.from_bytes(data=png, mime_type="image/png"))
+            metas.append((name, pno, url))
+        prompt = f"""
+        These {len(parts)} pictures were taken out of a patient's medical report, in order (picture 1, 2, ...).
+        For each picture return ONLY JSON: {{"visuals": [{{"index": 1, "is_medical_visual": true, "kind": "Chest X-ray",
+          "title_en": "...", "title_ml": "...", "explanation_en": "2-4 simple sentences: what it shows and what the
+          report text says about it", "explanation_ml": "the same in Malayalam",
+          "labels": [{{"text_en": "...", "text_ml": "...", "box": [ymin, xmin, ymax, xmax]}}]}}]}}
+        is_medical_visual is false for logos, stamps, signatures, QR codes, decorations and photos of people's faces.
+        Boxes are 0-1000 on that picture. Labels only for parts clearly marked/named on the picture or in the report
+        (max 6), else []. Never diagnose beyond what the report says.
+        REPORT TEXT (for context):
+        {hint}
+        """
+        try:
+            if not parts:
+                raise ValueError("no pictures could be cut out")
+            data = parse_json(generate(parts + [prompt], json_mode=True))
+            for v in (data.get("visuals") or []):
+                try:
+                    idx = int(v.get("index", 0)) - 1
+                except (TypeError, ValueError):
+                    continue
+                if not (0 <= idx < len(metas)) or v.get("is_medical_visual") is False:
+                    continue
+                cleaned = clean_visuals([{**v, "box": [0, 0, 1000, 1000]}])
+                if cleaned:
+                    name, pno, url = metas[idx]
+                    results.append({**cleaned[0], "file": name, "page": pno + 1, "image": url})
+        except Exception as e:
+            print(f"[visuals] explain failed: {e}")
+            if is_busy_error(e):
+                raise
+
+    # Scanned pages: the AI finds the picture areas, which are cut out
+    for name, pno, page in scanned[:4]:
+        if len(results) >= MAX_VISUALS:
+            break
+        try:
+            full = page.get_pixmap(matrix=pymupdf.Matrix(1.6, 1.6), alpha=False)
+            prompt = f"""
+            This is a scanned page of a patient's medical report. Find medical pictures printed on it (X-ray, scan,
+            ECG strip, echo image, wound photo, chart of results). NOT logos, stamps, signatures, QR codes or tables.
+            Return ONLY JSON: {{"visuals": [{{"box": [ymin, xmin, ymax, xmax], "kind": "...", "title_en": "...",
+              "title_ml": "...", "explanation_en": "2-4 simple sentences", "explanation_ml": "...",
+              "labels": [{{"text_en": "...", "text_ml": "...", "box": [ymin, xmin, ymax, xmax]}}]}}]}}
+            Boxes are 0-1000 on this page. Labels only for clearly marked/named parts (max 6). Empty list if none.
+            REPORT TEXT (for context):
+            {hint}
+            """
+            data = parse_json(generate([types.Part.from_bytes(data=full.tobytes("png"), mime_type="image/png"), prompt], json_mode=True))
+            for v in clean_visuals(data.get("visuals")):
+                y0, x0, y1, x1 = v["box"]
+                r = page.rect
+                rect = pymupdf.Rect(r.x0 + r.width * x0 / 1000, r.y0 + r.height * y0 / 1000,
+                                    r.x0 + r.width * x1 / 1000, r.y0 + r.height * y1 / 1000)
+                if rect.width < 40 or rect.height < 40:
+                    continue
+                url = _jpeg_data_url(_render_clip(page, rect))
+                results.append({**v, "labels": relative_labels(v["labels"], v["box"]), "box": [0, 0, 1000, 1000],
+                                "file": name, "page": pno + 1, "image": url})
+        except Exception as e:
+            print(f"[visuals] scanned page failed: {e}")
+            if is_busy_error(e):
+                raise
+
+    for doc in opened:
+        doc.close()
+    print(f"[visuals] {len(results)} picture(s) found")
+    return results[:MAX_VISUALS]
 
 
 def combine_documents(docs: list, label: str):
@@ -834,17 +1048,33 @@ Emergencies in India: 112 (emergency) or 108 (ambulance), or the nearest hospita
 
 
 LAST_CHAT_INFO = {}
+_SEARCH_OFF_UNTIL = [0.0]     # after a quota error, don't try search again for a while
+
+NO_SEARCH_NOTE = """
+    IMPORTANT: Google Search is NOT available for this answer and you have no internet access right now.
+    For live or current information (weather, news, today's prices, opening hours, outbreaks, latest guidelines)
+    do NOT guess or invent anything: say you can't check live information right now and suggest where to look
+    (for example the official website or the hospital). General, well-known facts are fine.
+"""
+
+
+def _plain_answer(prompt: str, reason: str):
+    LAST_CHAT_INFO.update(model="no-search", searched=False, queries=[], sources=0, reason=reason[:200])
+    return generate(prompt + NO_SEARCH_NOTE), []
 
 
 def _grounded_generate(prompt: str):
     """Answer with Google Search available (for questions that need outside or current information).
-    Returns (text, sources). Falls back to a normal answer if search is not available."""
+    Returns (text, sources). Falls back to a normal answer (told it has no internet) if search is not available."""
+    if time.time() < _SEARCH_OFF_UNTIL[0]:
+        return _plain_answer(prompt, "search paused after a quota error")
     try:
         tool = types.Tool(google_search=types.GoogleSearch())
         config = types.GenerateContentConfig(tools=[tool])
-    except Exception:
-        return generate(prompt), []
+    except Exception as e:
+        return _plain_answer(prompt, f"search tool not available: {e}")
     last = None
+    quota_hits = 0
     for model in MODELS:
         try:
             response = client.models.generate_content(model=model, contents=prompt, config=config)
@@ -867,12 +1097,18 @@ def _grounded_generate(prompt: str):
         except Exception as e:
             last = e
             msg = str(e)
-            if is_quota_error(msg) or "404" in msg or "NOT_FOUND" in msg or "503" in msg or "UNAVAILABLE" in msg or "not supported" in msg.lower():
+            if is_quota_error(msg):
+                quota_hits += 1
+                if quota_hits >= 2:      # search quota is per project: stop trying other models
+                    break
+                continue
+            if "404" in msg or "NOT_FOUND" in msg or "503" in msg or "UNAVAILABLE" in msg or "not supported" in msg.lower():
                 continue
             break
     print(f"[ask] search unavailable ({last}); answering without it")
-    LAST_CHAT_INFO.update(model="fallback", searched=False, queries=[], sources=0, error=str(last)[:200])
-    return generate(prompt), []
+    if last is not None and is_quota_error(str(last)):
+        _SEARCH_OFF_UNTIL[0] = time.time() + 15 * 60
+    return _plain_answer(prompt, str(last))
 
 
 def answer_question(question: str, report_text: str, history: list, language: str,
@@ -898,6 +1134,25 @@ def answer_question(question: str, report_text: str, history: list, language: st
       readings, exercises, check-ups, changes). Quote values and dates exactly. If something isn't recorded, say so.
     - Questions needing outside or current information (news, general facts, a hospital, a medicine not in their
       reports, guidelines): you may use Google Search. Keep it short and factual.
+
+    CHARTS (visual representation)
+    - If the user asks for a chart, graph, trend or other visual of THEIR data (BP, sugar, temperature, weight,
+      doses taken, exercise sessions...), add ONE block exactly like this (valid JSON, numbers only from PATIENT DATA):
+      ```chart
+      {{"type": "line", "title": "Blood pressure", "unit": "mmHg", "labels": ["27 Oct", "28 Oct"],
+        "series": [{{"name": "Systolic", "values": [150, 142]}}, {{"name": "Diastolic", "values": [95, 90]}}]}}
+      ```
+      "type" is "line" (trends over time), "bar" (comparing amounts) or "pie" (parts of a whole, one series).
+      Split BP like "150/95" into Systolic and Diastolic. Use null for a missing value. Then add 1–3 short sentences
+      about what the chart shows (no diagnosis). Never invent numbers; if there is not enough data, say what is
+      missing and how to record it (for example in the Recovery Tracker) instead of drawing a chart.
+    - PATIENT DATA "report_pictures" lists the pictures found inside their reports (X-rays, scans, ECG strips...).
+      If they ask to see one, or ask about a scan/X-ray that is in that list, show it with a block exactly like
+      ```picture 1```
+      (the number from the list; one block per picture, at most 3), then explain it in simple words using its
+      explanation and labels (name the labelled parts). Never invent findings. If report_pictures is missing,
+      say no pictures were found in their reports; they can also use the 🖼 Show visual representation button on
+      the AI Discharge Summary or My Improvements page (it appears only when a report has pictures).
 
     MEDICAL SAFETY (always)
     1. Never give specific doses, mg/kg amounts, maximum daily amounts or dosing schedules beyond what their own

@@ -21,6 +21,7 @@ from services.ai_engine import (
     generate_exercises,
     generate_progress_report,
     check_photo,
+    extract_visuals,
     friendly_error,
     translate_markdown,
     compare_reports,
@@ -73,6 +74,17 @@ def summarize_documents(
         "summary": result["summary"],
         "ok": result["ok"],
     }
+
+
+# ---------- Pictures inside PDF reports (X-rays, scans, ECG) ----------
+@app.post("/api/visuals")
+def report_visuals(files: List[UploadFile] = File(...), report_text: str = Form("")):
+    docs = [(f.filename, f.file.read()) for f in files]
+    try:
+        return {"visuals": extract_visuals(docs, report_text), "ok": True}
+    except Exception as e:
+        print(f"[visuals] error: {e}")
+        return {"visuals": [], "ok": False, "message": friendly_error(e)}
 
 
 # ---------- Check a photo of a report before it is used ----------
