@@ -353,3 +353,20 @@
 
     startPageSync();
 })();
+
+// Age from date of birth, worked out today, so it goes up by itself every birthday.
+// neutrixAge(profile): the live age from profile.dob, or the age typed in older profiles.
+window.neutrixAgeFromDob = function (dob, today) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dob || ''));
+    if (!m) return null;
+    const now = today || new Date();
+    let age = now.getFullYear() - Number(m[1]);
+    const beforeBirthday = (now.getMonth() + 1) < Number(m[2]) || ((now.getMonth() + 1) === Number(m[2]) && now.getDate() < Number(m[3]));
+    if (beforeBirthday) age--;
+    return age >= 0 && age <= 130 ? age : null;
+};
+window.neutrixAge = function (profile) {
+    if (!profile) return '';
+    const live = neutrixAgeFromDob(profile.dob);
+    return live !== null ? String(live) : (profile.age ? String(profile.age) : '');
+};

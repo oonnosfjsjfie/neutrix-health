@@ -36,7 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
             sec3: "3. Designated Caregiver & Communication",
             uploadBtn: "📷 Upload Profile Photo",
             lblName: "Full Legal Name",
-            lblAge: "Age (Years)",
+            lblAge: "Date of Birth",
+            ageLive: "Age: {n} years (updates every birthday)",
+            ageNone: "Age is worked out from the date of birth.",
             lblGender: "Gender",
             lblBlood: "Blood Group",
             lblCond: "Primary Pre-Existing Medical Condition",
@@ -79,7 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
             sec3: "3. പരിചാരകന്റെ വിവരങ്ങൾ",
             uploadBtn: "📷 ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യുക",
             lblName: "പൂർണ്ണ നാമം",
-            lblAge: "വയസ്സ്",
+            lblAge: "ജനനത്തീയതി",
+            ageLive: "വയസ്സ്: {n} (ഓരോ ജന്മദിനത്തിലും തനിയെ മാറും)",
+            ageNone: "ജനനത്തീയതിയിൽ നിന്ന് വയസ്സ് കണക്കാക്കും.",
             lblGender: "ലിംഗം",
             lblBlood: "രക്തഗ്രൂപ്പ്",
             lblCond: "നിലവിലുള്ള ആരോഗ്യ പ്രശ്നങ്ങൾ",
@@ -141,10 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Step 1 "Next": name, phone and email are needed, then go to the Medical Baseline step.
         // What is filled in so far is kept on this device as a draft.
         document.getElementById('btn-next-1').addEventListener('click', () => {
-            const fields = ['patientName', 'age', 'patientPhone', 'patientEmail'].map(id => document.getElementById(id));
+            const fields = ['patientName', 'dob', 'patientPhone', 'patientEmail'].map(id => document.getElementById(id));
             const bad = fields.filter(f => !validateInput(f));
             if (bad.length) {
-                const names = { patientName: 'full name', age: 'a valid age', patientPhone: 'a valid phone number', patientEmail: 'a valid email ID' };
+                const names = { patientName: 'full name', dob: 'a valid date of birth', patientPhone: 'a valid phone number', patientEmail: 'a valid email ID' };
                 messageArea.innerHTML = `<div class="alert-warning">⚠️ Please enter ${bad.map(f => names[f.id]).join(', ')}.</div>`;
                 bad[0].focus();
                 return;
@@ -233,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (field.hasAttribute('required') && !val) {
             isValid = false;
-        } else if (field.id === 'age' && (isNaN(val) || val < 1 || val > 120)) {
+        } else if (field.id === 'dob' && val && (val > todayISO() || neutrixAgeFromDob(val) === null || neutrixAgeFromDob(val) > 120)) {
             isValid = false;
         } else if ((field.id === 'caregiverPhone' || field.id === 'patientPhone') && val && val !== 'Not provided' && !/^[+0-9\s()-]{7,18}$/.test(val)) {
             isValid = false;
@@ -348,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // Step 1 details are needed; the caregiver step is optional (checked only if filled in)
-        const step1 = ['patientName', 'age', 'patientPhone', 'patientEmail'].map(id => document.getElementById(id));
+        const step1 = ['patientName', 'dob', 'patientPhone', 'patientEmail'].map(id => document.getElementById(id));
         const step3 = ['caregiverPhone', 'caregiverEmail'].map(id => document.getElementById(id));
         if (step1.some(f => !validateInput(f))) {
             switchTab('tab-demographics');
@@ -417,7 +421,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return {
             patientName: document.getElementById('patientName').value.trim(),
-            age: document.getElementById('age').value,
+            dob: document.getElementById('dob').value,
+            age: neutrixAgeFromDob(document.getElementById('dob').value) ?? '',
             gender: document.getElementById('gender').value,
             bloodGroup: document.getElementById('bloodGroup').value,
             patientPhone: document.getElementById('patientPhone').value.trim(),
@@ -435,7 +440,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    function todayISO() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // Live age under the date of birth (and in the hidden #age field that older code reads)
+    function updateAge() {
+        const dob = document.getElementById('dob');
+        dob.max = todayISO();
+        const age = neutrixAgeFromDob(dob.value);
+        document.getElementById('age').value = age === null ? '' : age;
+        const dict = translations[currentLang] || translations.English;
+        document.getElementById('ageLive').textContent = age === null ? dict.ageNone : dict.ageLive.replace('{n}', age);
+    }
+
     function syncFormState() {
+        updateAge();
         updateProgressBar();
         updateChartPreview(collectFormData());
     }
@@ -560,6 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('txt-upload-btn').textContent = dict.uploadBtn;
         document.getElementById('lbl-patient-name').textContent = dict.lblName;
         document.getElementById('lbl-age').textContent = dict.lblAge;
+        if (document.getElementById('dob')) updateAge();
         document.getElementById('lbl-gender').textContent = dict.lblGender;
         document.getElementById('lbl-blood').textContent = dict.lblBlood;
         document.getElementById('lbl-conditions').textContent = dict.lblCond;
@@ -592,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = JSON.parse(saved);
                 document.getElementById('patientName').value = data.patientName || '';
-                document.getElementById('age').value = data.age || 25;
+                document.getElementById('dob').value = data.dob || '';
                 document.getElementById('gender').value = data.gender || 'Female';
                 document.getElementById('bloodGroup').value = data.bloodGroup || 'Select';
                 document.getElementById('conditions').value = data.condition || 'None';

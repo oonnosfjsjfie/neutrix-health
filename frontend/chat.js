@@ -155,7 +155,7 @@
         try {
             const profile = storeGet('neutrix_hospital_profile') || {};
             if (profile.patientName) {
-                ctx.patient = { name: profile.patientName, age: profile.age, gender: profile.gender, blood_group: profile.bloodGroup,
+                ctx.patient = { name: profile.patientName, age: window.neutrixAge ? neutrixAge(profile) : profile.age, date_of_birth: profile.dob || undefined, gender: profile.gender, blood_group: profile.bloodGroup,
                     condition: profile.condition, allergies: profile.allergies,
                     regular_medicines: (profile.medications || []).map(m => `${m.name} ${m.dose || ''} (${m.time || ''})`.trim()),
                     caregiver: profile.caregiverName || '' };
