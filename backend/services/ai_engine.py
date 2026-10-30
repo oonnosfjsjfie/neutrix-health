@@ -534,6 +534,7 @@ def process_documents_to_summary(documents: list, bills: list, language: str,
     - Use Markdown. Use "## " for each section heading, and write the section headings in {language} too.
     - Use bullet points for lists and **bold** for key terms like medicine names.
     - Keep paragraphs short. Do not use tables.
+    - Start directly with the first "## " heading. Do not greet, introduce yourself or describe what you are about to do.
 
     Use these sections, in this order:
     - WHAT HAPPENED (Simplified explanation using strict hedging language)
