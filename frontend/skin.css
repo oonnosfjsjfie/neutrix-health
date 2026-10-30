@@ -491,3 +491,35 @@ body {
 .ck-list .ck-item .ck-date-box { background: #121212; color: #ffffff; }
 .ck-list .ck-item.passed .ck-date-box { background: #b45309; color: #ffffff; }
 .ck-list .ck-item { border-left-color: var(--text-primary); }
+
+/* ===== Phones and tablets: nothing wider than the screen ===== */
+@media (max-width: 1024px) {
+    .ehr-workspace, .nx-site .ehr-workspace { grid-template-columns: minmax(0, 1fr); }
+    .ehr-card, .ehr-card > * { min-width: 0; }
+    .ehr-card img, .ehr-card video, .ehr-card canvas { max-width: 100%; }
+    .ehr-card table { max-width: 100%; }
+}
+@media (max-width: 640px) {
+    .ehr-workspace, .nx-site .ehr-workspace { margin: 0 12px 48px; padding: 0; gap: 18px; }
+    .ehr-card { padding: 20px 16px; }
+    .md-content, .output-text { overflow-wrap: anywhere; }
+}
+@media (max-width: 380px) {
+    .ehr-card { padding: 16px 12px; }
+    .nx-hero-title, .nx-hero .dash-title { font-size: 30px; }
+}
+@media (max-width: 400px) {
+    .ehr-navbar .system-controls { gap: 6px; flex-wrap: nowrap; }
+    .ehr-navbar .ctrl-btn { font-size: 12px; padding: 6px 7px; white-space: nowrap; }
+}
+/* Phones: 16px text boxes so iPhone doesn't zoom in when you tap them */
+@media (max-width: 640px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px !important; }
+}
+textarea, input, select, button { font-family: inherit; }
+/* Phone turned sideways (short screen): give the chat more room */
+@media (max-height: 520px) {
+    .chat-panel { top: 8px; bottom: 8px; height: auto; max-height: none; right: 84px; }
+    .chat-panel-sub { display: none; }
+    .chat-panel-header { padding: 8px 12px; }
+}

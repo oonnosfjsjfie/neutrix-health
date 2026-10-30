@@ -13,7 +13,7 @@
     <title>Neutrix | Exercise</title>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css">
+    <link rel="stylesheet" href="skin.css?v=20261030g">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .rainbow { background: linear-gradient(90deg, #ff007a, #a855f7, #3b82f6, #00f2fe); }
@@ -33,7 +33,7 @@
         [data-theme="dark"] .ex-restrict strong { color: #fbbf24; }
         .ex-restrict ul { margin: 0; padding-left: 18px; }
 
-        .ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 16px; }
         .ex-card {
             position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px;
             padding: 20px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--card-bg);
@@ -69,7 +69,7 @@
         .coach-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
         .coach-title { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 30px; margin: 4px 0 2px; letter-spacing: -0.5px; }
         .coach-target { color: var(--text-secondary); font-size: 14px; }
-        .coach-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
+        .coach-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(min(280px, 100%), 1fr); gap: 18px; align-items: start; }
         @media (max-width: 900px) { .coach-grid { grid-template-columns: 1fr; } }
 
         .stage {
@@ -361,11 +361,11 @@
     </main>
 
     <script src="common.js?v=20261030c"></script>
-    <script src="account-menu.js?v=20261030c"></script>
+    <script src="account-menu.js?v=20261030e"></script>
     <script src="feedback.js?v=20261030c"></script>
     <script src="exercise-pose.js"></script>
     <script src="exercise.js"></script>
-    <script src="visuals.js?v=20261029a"></script>
+    <script src="visuals.js?v=20261030e"></script>
     <script src="nx-charts.js?v=20261029b"></script>
     <script src="chat.js?v=20261030c"></script>
 </body>

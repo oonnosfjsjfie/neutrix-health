@@ -16,11 +16,11 @@
     <title>Neutrix | Admin</title>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css">
+    <link rel="stylesheet" href="skin.css?v=20261030g">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <style>
-        .ad-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .ad-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr)); gap: 12px; margin-bottom: 20px; }
         .ad-stat { padding: 16px; border: 1px solid var(--border-color); border-radius: 16px; background: var(--card-bg); }
         .ad-stat b { display: block; font-size: 28px; line-height: 1.1; }
         .ad-stat span { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
@@ -38,7 +38,7 @@
         .ad-detail { margin-top: 22px; }
         .ad-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
         .ad-detail-head h2 { margin: 0; }
-        .ad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+        .ad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 14px; }
         .ad-box { border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 18px; background: var(--card-bg); }
         .ad-box h3 { margin: 0 0 10px; font-size: 15px; }
         .ad-kv { display: grid; grid-template-columns: 130px 1fr; gap: 4px 10px; font-size: 13.5px; }
@@ -217,7 +217,7 @@
     </main>
 
     <script src="common.js?v=20261030c"></script>
-    <script src="account-menu.js?v=20261030c"></script>
+    <script src="account-menu.js?v=20261030e"></script>
     <script>
     (function () {
         const $ = id => document.getElementById(id);

@@ -67,7 +67,7 @@
         [data-theme="dark"] .nx-acct-item.admin { color: #c4b5fd; }
         [data-theme="dark"] .nx-acct-item.danger { color: #f87171; }
         .nx-acct-item:disabled { opacity: 0.7; cursor: wait; }
-        @media (max-width: 640px) { .nx-acct-menu { right: -8px; } }
+        @media (max-width: 640px) { .nx-acct-menu.nx-phone { position: fixed; left: 12px; right: 12px; min-width: 0; max-height: calc(100vh - 90px); overflow-y: auto; } }
     `;
     document.head.appendChild(style);
 
@@ -183,6 +183,10 @@
     el.avatar.addEventListener('click', e => {
         e.stopPropagation();
         el.menu.hidden = !el.menu.hidden;
+        // Phones: show the menu across the screen, just under the picture, so it never goes off the edge
+        const phone = window.innerWidth <= 640;
+        el.menu.classList.toggle('nx-phone', phone);
+        el.menu.style.top = phone ? Math.round(el.avatar.getBoundingClientRect().bottom + 8) + 'px' : '';
         el.avatar.setAttribute('aria-expanded', String(!el.menu.hidden));
     });
     document.addEventListener('click', e => { if (!el.menu.hidden && !el.profile.contains(e.target)) closeMenu(); });

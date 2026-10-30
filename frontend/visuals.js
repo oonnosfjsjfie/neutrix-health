@@ -190,7 +190,7 @@
         .vis-from { font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; }
         .vis-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr); gap: 18px; align-items: start; }
         @media (max-width: 760px) { .vis-body { grid-template-columns: 1fr; } }
-        .vis-stage { position: relative; border-radius: 14px; overflow: hidden; background: #0b0f17; line-height: 0; }
+        .vis-stage { position: relative; border-radius: 14px; overflow: hidden; background: #0b0f17; line-height: 0; user-select: none; -webkit-user-select: none; }
         .vis-stage img { width: 100%; height: auto; display: block; }
         .vis-mark { position: absolute; border: 2px solid #f59e0b; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.5); }
         .vis-mark span { position: absolute; top: -12px; left: -12px; width: 22px; height: 22px; border-radius: 50%; background: #f59e0b; color: #111;

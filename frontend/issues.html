@@ -20,7 +20,7 @@
     </script>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css">
+    <link rel="stylesheet" href="skin.css?v=20261030g">
     <style>
         /* ---------- Page layout: issues full width, "How it works" strip underneath ---------- */
         .nx-site main.ehr-workspace.issues-page { grid-template-columns: 1fr; max-width: 1200px; }
@@ -35,7 +35,7 @@
         .issues-hint { font-size: 13px; color: var(--text-muted); margin: 6px 0 0; }
         .add-issue-btn { white-space: nowrap; padding: 13px 24px; }
 
-        .issue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+        .issue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 18px; }
 
         /* Issue card */
         .issue-card {
@@ -279,7 +279,7 @@
     </div>
 
     <script src="common.js?v=20261030c"></script>
-    <script src="account-menu.js?v=20261030c"></script>
+    <script src="account-menu.js?v=20261030e"></script>
     <script src="feedback.js?v=20261030c"></script>
     <script src="issues.js"></script>
 </body>

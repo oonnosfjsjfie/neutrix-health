@@ -13,7 +13,7 @@
     <title>Neutrix | Overall Progress Report</title>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css">
+    <link rel="stylesheet" href="skin.css?v=20261030g">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -21,7 +21,7 @@
         .pr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
         .pr-head h2 { margin: 0 0 4px; }
         .pr-head .subtitle { margin: 0; }
-        .pr-sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin: 6px 0 20px; }
+        .pr-sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(170px, 100%), 1fr)); gap: 10px; margin: 6px 0 20px; }
         .pr-src { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border-color); background: var(--card-bg); }
         .pr-src .ic { font-size: 22px; }
         .pr-src b { display: block; font-size: 13.5px; }
@@ -114,7 +114,7 @@
     </main>
 
     <script src="common.js?v=20261030c"></script>
-    <script src="account-menu.js?v=20261030c"></script>
+    <script src="account-menu.js?v=20261030e"></script>
     <script src="feedback.js?v=20261030c"></script>
     <script>
     (function () {
@@ -410,7 +410,7 @@
         window.NxProgress = { gather };
     })();
     </script>
-    <script src="visuals.js?v=20261029a"></script>
+    <script src="visuals.js?v=20261030e"></script>
     <script src="nx-charts.js?v=20261029b"></script>
     <script src="chat.js?v=20261030c"></script>
 </body>

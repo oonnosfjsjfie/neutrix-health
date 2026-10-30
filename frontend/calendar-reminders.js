@@ -251,6 +251,7 @@
             padding: 14px 16px; border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.06); }
         .cal-cta p { margin: 0; font-size: 13px; color: var(--text-secondary); flex: 1; min-width: 220px; }
         .cal-open { white-space: nowrap; }
+        @media (max-width: 420px) { .cal-open { white-space: normal; width: 100%; } .cal-cta p { min-width: 0; } }
         .cal-modal { position: fixed; inset: 0; z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.55); }
         .cal-box { position: relative; width: min(720px, 100%); max-height: calc(100vh - 32px); overflow: auto; border-radius: 20px; padding: 22px;
             background: var(--card-bg); color: var(--text-primary); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35); }
