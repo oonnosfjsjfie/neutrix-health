@@ -9,3 +9,11 @@ __pycache__/
 *serviceAccount*.json
 *service-account*.json
 *firebase-adminsdk*.json
+
+# Android build output and signing keys (never commit)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.jks
+*.keystore

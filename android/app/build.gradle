@@ -1,0 +1,58 @@
+plugins {
+    id "com.android.application"
+}
+
+// The app opens the live website, so website changes reach the app without an app update.
+// Only change these when the app itself changes (new icon, new name...).
+def siteHost = "neutrix-health.onrender.com"
+def startPath = "/issues.html?source=app"
+
+android {
+    namespace "com.neutrinos.neutrixhealth"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.neutrinos.neutrixhealth"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        manifestPlaceholders = [
+            hostName       : siteHost,
+            defaultUrl     : "https://" + siteHost + startPath,
+            launcherName   : "Neutrix Health",
+            assetStatements: '[{ "relation": ["delegate_permission/common.handle_all_urls"], "target": {"namespace": "web", "site": "https://' + siteHost + '"}}]'
+        ]
+        resValue "string", "appName", "Neutrix Health"
+    }
+
+    // The release key comes from GitHub secrets (never stored in the code).
+    signingConfigs {
+        release {
+            def ks = System.getenv("NEUTRIX_KEYSTORE_FILE")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("NEUTRIX_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("NEUTRIX_KEY_ALIAS") ?: "neutrix"
+                keyPassword System.getenv("NEUTRIX_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig System.getenv("NEUTRIX_KEYSTORE_FILE") ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.5.0"
+}

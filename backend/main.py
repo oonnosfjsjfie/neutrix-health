@@ -35,7 +35,7 @@ app = FastAPI(title="Neutrix Core Engine APIs")
 async def no_stale_pages(request, call_next):
     response = await call_next(request)
     path = request.url.path
-    if path == "/" or path.endswith((".html", ".js", ".css")):
+    if path == "/" or path.endswith((".html", ".js", ".css", ".webmanifest", ".json")):
         response.headers["Cache-Control"] = "no-cache"
     return response
 
@@ -311,6 +311,31 @@ def firebase_config():
         return Response("window.NEUTRIX_FIREBASE_CONFIG = {};", media_type="application/javascript")
     body = "window.NEUTRIX_FIREBASE_CONFIG = " + json.dumps(pairs) + ";"
     return Response(body, media_type="application/javascript", headers={"Cache-Control": "no-cache"})
+
+
+# ---------- Android app (Trusted Web Activity) ----------
+# The app shows this website full screen. Android checks this file to confirm the app and the
+# website belong together (otherwise it shows an address bar). The fingerprint is public.
+APP_LINK_FILE = Path(__file__).resolve().parent.parent / "android" / "app-link.json"
+
+@app.get("/.well-known/assetlinks.json", include_in_schema=False)
+def android_asset_links():
+    try:
+        info = json.loads(APP_LINK_FILE.read_text())
+    except Exception:
+        info = {}
+    package = os.getenv("ANDROID_PACKAGE", info.get("package_name", "com.neutrinos.neutrixhealth"))
+    prints = [p.strip() for p in os.getenv("ANDROID_CERT_SHA256", "").split(",") if p.strip()] or info.get("sha256_cert_fingerprints", [])
+    body = [{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {"namespace": "android_app", "package_name": package, "sha256_cert_fingerprints": prints}
+    }]
+    return Response(json.dumps(body), media_type="application/json")
+
+
+@app.get("/manifest.webmanifest", include_in_schema=False)
+def web_manifest():
+    return FileResponse(FRONTEND_DIR / "manifest.webmanifest", media_type="application/manifest+json")
 
 
 if FRONTEND_DIR.is_dir():
