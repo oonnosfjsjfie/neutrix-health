@@ -20,7 +20,7 @@ prescribe, or replace a doctor.
 | Doctor Brief | Write an update and email it to the doctor. |
 | Overall Progress Report | One AI report for the doctor from everything recorded (adherence, readings, symptoms, exercise, report changes), as a PDF. |
 | Ask Neutrix | Chat that knows the website and your data; draws charts of your readings and shows the pictures from your reports. |
-| 🖼 Show visual representation | On AI Discharge Summary and My Improvements, only when a report has pictures (X-ray, scan, ECG): the picture with numbered labels and a simple AI explanation. |
+| 🖼 Show visual representation | On the AI Patient Reports Portal and My Improvements, only when a report has pictures (X-ray, scan, ECG): the picture with numbered labels and a simple AI explanation. |
 | Patient Profile | Next → Next → Save: patient info (name, phone, email), medical baseline, optional caregiver. Take or upload a photo. |
 | Feedback | ⚑ Report button on every page (except Admin) and a skippable rating pop-up on the website every 8 days. |
 | Admin Access | For admin accounts only (see below). |

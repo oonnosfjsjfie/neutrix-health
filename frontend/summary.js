@@ -372,11 +372,6 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
     }
 });
 
-// 🖼 Show visual representation: only when the reports had pictures
-if (savedRecord && window.NxVisuals) {
-    NxVisuals.attachButton(document.querySelector('#savedSection .saved-actions'), () => NxVisuals.all());
-}
-
 document.getElementById('viewSummaryBtn').addEventListener('click', () => {
     window.location.href = 'report.html';
 });

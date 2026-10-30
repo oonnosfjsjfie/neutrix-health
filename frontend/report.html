@@ -77,6 +77,8 @@
                 <div class="output-block ai summary-box">
                     <div id="reportSummary" class="output-text md-content scroll-box"></div>
                 </div>
+                <!-- 🖼 Show visual representation: only appears when the reports had pictures -->
+                <div id="visualsSlot" style="margin-top: 14px;"></div>
 
             </div>
         </section>
@@ -132,8 +134,9 @@
     <script src="common.js?v=20261030a"></script>
     <script src="account-menu.js?v=20261030a"></script>
     <script src="feedback.js?v=20261030a"></script>
-    <script src="report.js"></script>
+    <script src="report.js?v=20261030b"></script>
     <script src="visuals.js?v=20261029a"></script>
+    <script>if (window.NxVisuals) NxVisuals.attachButton(document.getElementById('visualsSlot'), () => NxVisuals.all());</script>
     <script src="nx-charts.js?v=20261029b"></script>
     <script src="chat.js?v=20261030a"></script>
 </body>

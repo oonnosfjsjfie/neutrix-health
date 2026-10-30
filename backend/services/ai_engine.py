@@ -1021,7 +1021,8 @@ Dashboard (inside an issue) — tools as tiles:
    for medical reports, and optional pharmacy bills. The AI checks every photo is clear; unclear photos show ⚠ with
    📷 Retake / 🔁 Replace. Then press Explain My Report. Later: add more files to update the summary, or add a newer
    report and press Compare to see what changed. Scanned PDFs are read too.
-2. AI Patient Reports Portal: the summary in plain words and every earlier version.
+2. AI Patient Reports Portal: the summary in plain words and every earlier version. 🖼 Show visual representation
+   (only when a report has pictures like an X-ray, scan or ECG): the picture with numbered labels and an AI explanation.
 3. Medicine Plan & Schedule: each medicine explained; Daily Schedule: tick each dose after taking it, ◀ ▶ to see
    other days, 7-day overview, ⬇ download the intake report (PDF), and 📅 Add to my calendar: set the time for
    morning/afternoon/evening/night, then "Add … reminder" (Google Calendar, press Save there, one per time) or
@@ -1152,7 +1153,7 @@ def answer_question(question: str, report_text: str, history: list, language: st
       (the number from the list; one block per picture, at most 3), then explain it in simple words using its
       explanation and labels (name the labelled parts). Never invent findings. If report_pictures is missing,
       say no pictures were found in their reports; they can also use the 🖼 Show visual representation button on
-      the AI Discharge Summary or My Improvements page (it appears only when a report has pictures).
+      the AI Patient Reports Portal or My Improvements page (it appears only when a report has pictures).
 
     MEDICAL SAFETY (always)
     1. Never give specific doses, mg/kg amounts, maximum daily amounts or dosing schedules beyond what their own
