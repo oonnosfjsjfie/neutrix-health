@@ -1,5 +1,5 @@
 # =====================================================
-# Sends the Doctor Brief email from the team Gmail account.
+# Sends the Ask Doctor email from the team Gmail account.
 #
 # Two ways (secrets live ONLY in backend/.env or Render's Environment Variables):
 # 1. Google Apps Script web app (works on Render's free plan, which blocks SMTP):
@@ -47,7 +47,7 @@ def _send_via_apps_script(webhook: str, to_address: str, subject: str, body: str
         print(f"[email] Apps Script error: {e}")
         return False, f"Could not reach the email service: {e}"
     if data.get("ok"):
-        print(f"[email] Sent doctor brief to {to_address} (Apps Script)")
+        print(f"[email] Sent Ask Doctor to {to_address} (Apps Script)")
         return True, f"Email sent to {to_address}."
     return False, f"The email service refused it: {data.get('message', 'unknown error')}"
 
@@ -99,7 +99,7 @@ def send_doctor_email(to_address: str, subject: str, body: str, patient_name: st
         print(f"[email] error: {e}")
         return False, f"Could not send the email: {e}"
 
-    print(f"[email] Sent doctor brief to {to_address}")
+    print(f"[email] Sent Ask Doctor to {to_address}")
     return True, f"Email sent to {to_address}."
 
 

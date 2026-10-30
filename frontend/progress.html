@@ -5,10 +5,10 @@
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts + online saving (must load before issue-scope.js) -->
-    <script src="firebase-config.js?v=20261030a"></script>
-    <script src="neutrix-cloud.js?v=20261030a"></script>
+    <script src="firebase-config.js?v=20261030c"></script>
+    <script src="neutrix-cloud.js?v=20261030c"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261030a"></script>
+    <script src="issue-scope.js?v=20261030c"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Overall Progress Report</title>
     <link rel="stylesheet" href="theme.css">
@@ -113,9 +113,9 @@
         </aside>
     </main>
 
-    <script src="common.js?v=20261030a"></script>
-    <script src="account-menu.js?v=20261030a"></script>
-    <script src="feedback.js?v=20261030a"></script>
+    <script src="common.js?v=20261030c"></script>
+    <script src="account-menu.js?v=20261030c"></script>
+    <script src="feedback.js?v=20261030c"></script>
     <script>
     (function () {
         const P = {
@@ -131,7 +131,7 @@
                 failed: 'The report could not be created: {msg}', serverDown: 'Could not reach the Neutrix server. Check your internet and try again.',
                 howTitle: 'HOW TO USE IT',
                 how1: 'Create the report before a follow-up visit, or when you want to update your doctor.',
-                how2: 'Download the PDF and show it, print it, or attach it in the Doctor Brief email.',
+                how2: 'Download the PDF and show it, print it, or attach it in the Ask Doctor email.',
                 how3: 'The AI only uses what you recorded. It does not diagnose or change treatment.',
                 src: { report: 'Discharge summary', meds: 'Medicine ticks', readings: 'Home readings', exercise: 'Exercise sessions',
                        improve: 'Report changes', checkups: 'Check-ups', briefs: 'Doctor messages' },
@@ -150,7 +150,7 @@
                 failed: 'റിപ്പോർട്ട് തയ്യാറാക്കാൻ കഴിഞ്ഞില്ല: {msg}', serverDown: 'ന്യൂട്രിക്സ് സെർവറിൽ എത്താൻ കഴിഞ്ഞില്ല. ഇന്റർനെറ്റ് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.',
                 howTitle: 'എങ്ങനെ ഉപയോഗിക്കാം',
                 how1: 'തുടർ സന്ദർശനത്തിന് മുമ്പോ ഡോക്ടറെ അറിയിക്കേണ്ടപ്പോഴോ റിപ്പോർട്ട് തയ്യാറാക്കുക.',
-                how2: 'PDF ഡൗൺലോഡ് ചെയ്ത് കാണിക്കുക, പ്രിന്റ് ചെയ്യുക, അല്ലെങ്കിൽ ഡോക്ടർ ബ്രീഫ് ഇമെയിലിൽ ചേർക്കുക.',
+                how2: 'PDF ഡൗൺലോഡ് ചെയ്ത് കാണിക്കുക, പ്രിന്റ് ചെയ്യുക, അല്ലെങ്കിൽ ഡോക്ടറോട് ചോദിക്കുക ഇമെയിലിൽ ചേർക്കുക.',
                 how3: 'നിങ്ങൾ രേഖപ്പെടുത്തിയത് മാത്രമേ AI ഉപയോഗിക്കൂ. ഇത് രോഗനിർണയം നടത്തുകയോ ചികിത്സ മാറ്റുകയോ ചെയ്യുന്നില്ല.',
                 src: { report: 'ഡിസ്ചാർജ് സംഗ്രഹം', meds: 'മരുന്ന് ടിക്കുകൾ', readings: 'വീട്ടിലെ റീഡിംഗുകൾ', exercise: 'വ്യായാമ സെഷനുകൾ',
                        improve: 'റിപ്പോർട്ട് മാറ്റങ്ങൾ', checkups: 'പരിശോധനകൾ', briefs: 'ഡോക്ടർക്കുള്ള സന്ദേശങ്ങൾ' },
@@ -175,6 +175,7 @@
                 patient: {
                     name: profile.patientName || localStorage.getItem('neutrix_patient_name') || '',
                     age: (window.neutrixAge ? neutrixAge(profile) : profile.age) || '', gender: profile.gender || '', blood_group: profile.bloodGroup || '',
+                    phone: profile.patientPhone || '', email: profile.patientEmail || '',
                     known_condition: profile.condition || '', allergies: profile.allergies || '',
                     regular_medicines: (profile.medications || []).map(m => `${m.name} ${m.dose || ''} (${m.time || ''})`.trim())
                 },
@@ -254,7 +255,7 @@
             const ckText = ck && ck.content ? (ck.content.English || Object.values(ck.content)[0]) : (typeof ck === 'string' ? ck : '');
             if (ckText) { facts.checkups = cut(ckText, 3500); counts.checkups = 1; }
 
-            // Messages already emailed to the doctor (Doctor Brief)
+            // Messages already emailed to the doctor (Ask Doctor)
             const briefs = storeGet('neutrixBriefLog') || [];
             if (briefs.length) { facts.messages_to_doctor = briefs.slice(-10).map(b => ({ at: b.at, text: cut(b.text, 600) })); counts.briefs = briefs.length; }
 
@@ -372,6 +373,8 @@
                 <div class="meta">
                     <div><b>Patient:</b> ${esc(p.name || '-')}</div>
                     <div><b>Age / Gender:</b> ${esc([p.age, p.gender].filter(Boolean).join(' / ') || '-')}</div>
+                    <div><b>Phone:</b> ${esc(p.phone || '-')}</div>
+                    <div><b>Email:</b> ${esc(p.email || '-')}</div>
                     <div><b>Issue:</b> ${esc(f.issue.title || '-')}</div>
                     <div><b>Hospital / doctor:</b> ${esc(f.issue.hospital_or_doctor || '-')}</div>
                     <div><b>Allergies:</b> ${esc(p.allergies || '-')}</div>
@@ -409,6 +412,6 @@
     </script>
     <script src="visuals.js?v=20261029a"></script>
     <script src="nx-charts.js?v=20261029b"></script>
-    <script src="chat.js?v=20261030a"></script>
+    <script src="chat.js?v=20261030c"></script>
 </body>
 </html>

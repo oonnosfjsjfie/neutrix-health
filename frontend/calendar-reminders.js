@@ -152,7 +152,7 @@
         return lines.map(fold).join('\r\n') + '\r\n';
     }
     const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
-    function openIcs(text) {
+    function openIcs(text, fileName) {
         if (isIOS()) {
             // iPhone opens calendar files best from a real web address: send it to the server, which hands it straight back
             const form = document.createElement('form');
@@ -171,7 +171,7 @@
         }
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([text], { type: 'text/calendar;charset=utf-8' }));
-        a.download = 'Neutrix_medicine_reminders.ics';
+        a.download = fileName || 'Neutrix_medicine_reminders.ics';
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -294,5 +294,5 @@
         box.querySelector('button').addEventListener('click', openWindow);
     }
     addButton();
-    window.NxCalendar = { openWindow, buildIcs, googleUrl, plan };
+    window.NxCalendar = { openWindow, buildIcs, googleUrl, plan, icsEscape, fold, openIcs };
 })();

@@ -37,6 +37,7 @@ function renderCheckups(el, markdown) {
     }
 
     el.innerHTML = '';
+    window.neutrixCheckupItems = [];
 
     const introText = intro.join('\n').trim();
     if (introText) {
@@ -77,6 +78,13 @@ function renderCheckups(el, markdown) {
             ? statusLine.replace(/^\s*[-*]\s*/, '').replace(/\*\*[^*]*\*\*\s*:?\s*/, '').replace(/\*\*/g, '').trim()
             : '';
         const passed = /pass|കഴിഞ്ഞ/i.test(status);
+
+        // Kept for "Add to my calendar"
+        if (m) window.neutrixCheckupItems.push({
+            date: `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`,
+            title: titlePart || datePart, when: datePart, passed,
+            details: item.body.join('\n').replace(/\*\*/g, '').replace(/^\s*[-*]\s*/gm, '• ').trim()
+        });
 
         const card = document.createElement('div');
         card.className = 'ck-item' + (passed ? ' passed' : '');
@@ -133,6 +141,7 @@ function renderCheckups(el, markdown) {
         list.appendChild(card);
     });
     el.appendChild(list);
+    document.dispatchEvent(new Event('neutrix:checkups'));
 
     // "Go to the hospital sooner if..." goes in the right-hand column when there is room for it
     const afterText = after.join('\n').trim();

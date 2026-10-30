@@ -17,7 +17,7 @@ prescribe, or replace a doctor.
 | My Improvements | Compare a newer report with the earlier ones. |
 | Exercise (AI coach) | Appears only when the reports advise exercises. MediaPipe pose tracking in the browser (dots and lines on the joints), rep counting, form tips, voice, history and PDF. Video never leaves the device. |
 | Recovery Tracker | Daily readings and symptoms, red-flag warning for danger signs, reading history. |
-| Doctor Brief | Write an update and email it to the doctor. |
+| Ask Doctor | Write an update and email it to the doctor. |
 | Overall Progress Report | One AI report for the doctor from everything recorded (adherence, readings, symptoms, exercise, report changes), as a PDF. |
 | Ask Neutrix | Chat that knows the website and your data; draws charts of your readings and shows the pictures from your reports. |
 | 🖼 Show visual representation | On the AI Patient Reports Portal and My Improvements, only when a report has pictures (X-ray, scan, ECG): the picture with numbered labels and a simple AI explanation. |
@@ -42,7 +42,7 @@ prescribe, or replace a doctor.
 |---|---|
 | `GEMINI_API_KEY` | All AI features |
 | `FIREBASE_CONFIG` | Accounts (the web config snippet; also gives the server the project id) |
-| `NEUTRIX_MAIL_WEBHOOK`, `NEUTRIX_MAIL_TOKEN` | Sending email (Doctor Brief, Admin emails) via Google Apps Script (`email-script/Code.gs`) |
+| `NEUTRIX_MAIL_WEBHOOK`, `NEUTRIX_MAIL_TOKEN` | Sending email (Ask Doctor, Admin emails) via Google Apps Script (`email-script/Code.gs`) |
 | `FIREBASE_SERVICE_ACCOUNT` | Only for **Delete user** in the Admin page (Firebase → Project settings → Service accounts → Generate new private key; paste the JSON). Keep it secret. |
 
 ## Accounts and data (Firebase)

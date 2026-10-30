@@ -1,7 +1,7 @@
 // =====================================================
-// Neutrix Health – Doctor Brief email sender (Google Apps Script)
+// Neutrix Health – Ask Doctor email sender (Google Apps Script)
 //
-// Runs inside the TEAM Gmail account and sends the Doctor Brief emails,
+// Runs inside the TEAM Gmail account and sends the Ask Doctor emails,
 // because Render's free plan blocks normal Gmail (SMTP) connections.
 //
 // Setup (in the team Gmail account):

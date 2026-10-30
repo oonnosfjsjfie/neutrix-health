@@ -1027,7 +1027,8 @@ Dashboard (inside an issue) — tools as tiles:
    other days, 7-day overview, ⬇ download the intake report (PDF), and 📅 Add to my calendar: set the time for
    morning/afternoon/evening/night, then "Add … reminder" (Google Calendar, press Save there, one per time) or
    "Add all reminders (.ics)" (iPhone: tap Add All). Each reminder has a link back to tick the dose.
-4. Upcoming Check-ups: follow-up visits and tests with dates.
+4. Upcoming Check-ups: follow-up visits and tests with dates. 📅 Add check-ups to my calendar: Google Calendar (one
+   button per check-up, press Save there) or iPhone/other calendars (.ics, tap Add All); reminder the day before.
 5. My Improvements: appears after a newer report was compared; shows what changed.
 6. Exercise: appears ONLY if the reports advise exercises. Start with camera → allow the camera → stand 2–3 steps back
    so the whole body is visible → the camera draws dots/lines on the joints, counts reps, gives tips (voice on/off,
@@ -1035,9 +1036,11 @@ Dashboard (inside an issue) — tools as tiles:
    steps + a timer + Mark as done. History of the last 7 days and a downloadable exercise report (PDF).
 7. Recovery Tracker: log temperature, BP, sugar, weight, symptoms and whether medicines were taken → Save Recovery
    Details. Danger signs (chest pain, difficulty breathing, fainting, severe bleeding...) show an urgent warning.
-   Recent readings are listed.
-8. Doctor Brief: prepare a clear message about symptoms/readings and send it to the doctor's email.
-9. Download Overall Progress: ✨ Create report → AI writes one report for the doctor from everything recorded
+   Your recovery history: tap a day of the last 7 days to see its readings; 📥 Download Recovery Report (PDF)
+   with every reading and symptom.
+8. Ask Doctor (called Doctor Brief before): prepare a clear message about symptoms/readings and send it to the doctor's email.
+9. Download Overall Progress: ✨ Create report → AI writes one report for the doctor (with the patient's name, age,
+   phone and email) from everything recorded
    (medicines, readings, symptoms, exercise, report changes) → ⬇ Download PDF. Update it when there are new records.
 - Tiles 2–4 unlock after the first AI Discharge Summary.
 

@@ -5,10 +5,11 @@
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts + online saving (must load before issue-scope.js) -->
-    <script src="firebase-config.js?v=20261030a"></script>
-    <script src="neutrix-cloud.js?v=20261030a"></script>
+    <script src="firebase-config.js?v=20261030c"></script>
+    <script src="neutrix-cloud.js?v=20261030c"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261030a"></script>
+    <script src="issue-scope.js?v=20261030c"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Recovery Tracker</title>
     <link rel="stylesheet" href="theme.css">
@@ -81,13 +82,17 @@
                 <button onclick="topFunction()" id="checkWarningBtn" type="submit" class="btn-primary action-btn" data-bt="btn">Save Recovery Details</button>
             </form>
 
-            <!-- Saved readings (kept per issue, used in the doctor progress report) -->
+            <!-- History of earlier days + report (like Medicines and Exercise) -->
             <div class="tr-history hidden" id="trHistory">
-                <div class="section-title" data-tr="histTitle">Recent readings</div>
-                <div class="tr-table-wrap"><table class="tr-table">
-                    <thead><tr><th data-tr="when">When</th><th data-tr="temp">Temp °F</th><th>BP</th><th data-tr="sugar">Sugar</th><th data-tr="weight">Weight</th><th data-tr="symptoms">Symptoms</th><th data-tr="meds">Medicines</th></tr></thead>
-                    <tbody id="trRows"></tbody>
-                </table></div>
+                <div class="section-title" data-tr="histTitle"></div>
+                <p class="hint" data-tr="histHint"></p>
+                <div id="trWeek" class="week-strip"></div>
+                <div id="trDayLog" class="tr-day-log"></div>
+                <div class="tr-download">
+                    <p class="hint" data-tr="dlHint"></p>
+                    <button id="trDlBtn" class="btn-primary" type="button" data-tr="dlBtn"></button>
+                    <p id="trDlStatus" class="hint" style="margin-top: 8px;"></p>
+                </div>
             </div>
         </section>
 
@@ -119,10 +124,10 @@
 
     </main>
 
-    <script src="common.js?v=20261030a"></script>
-    <script src="account-menu.js?v=20261030a"></script>
-    <script src="feedback.js?v=20261030a"></script>
-    <script src="tracker&briefing.js"></script>
+    <script src="common.js?v=20261030c"></script>
+    <script src="account-menu.js?v=20261030c"></script>
+    <script src="feedback.js?v=20261030c"></script>
+    <script src="tracker&briefing.js?v=20261030c"></script>
     <script>
         // Bobby's English / Malayalam text, switched by the main language button
         const BT = {
@@ -177,23 +182,168 @@
         applyBobbyText();
     </script>
     <script>
-        // ---------- Save each reading so there is a history (and the doctor report can use it) ----------
+        // ---------- Save each reading, show the history by day, and download it as a PDF ----------
         (function () {
             const TR = {
-                English: { histTitle: 'Recent readings', when: 'When', temp: 'Temp °F', sugar: 'Sugar', weight: 'Weight', symptoms: 'Symptoms', meds: 'Medicines' },
-                Malayalam: { histTitle: 'അടുത്തിടെയുള്ള റീഡിംഗുകൾ', when: 'എപ്പോൾ', temp: 'താപനില °F', sugar: 'ഷുഗർ', weight: 'ഭാരം', symptoms: 'ലക്ഷണങ്ങൾ', meds: 'മരുന്നുകൾ' }
+                English: {
+                    histTitle: 'Your recovery history', histHint: 'Tap a day to see the readings saved that day.',
+                    histToday: 'Today', histEmpty: 'Nothing saved on this day.', entries: '{n} saved',
+                    temp: 'Temp', sugar: 'Sugar', weight: 'Weight', symptoms: 'Symptoms', meds: 'Medicines',
+                    dlHint: 'Download all your saved readings and symptoms to show your doctor.',
+                    dlBtn: '📥 Download Recovery Report (PDF)', dlNothing: 'Save a reading first, then download the report.',
+                    dlPreparing: 'Preparing your PDF…', dlReady: '✓ Downloaded.', dlFailed: 'Could not make the PDF. Please try again.',
+                    pdfTitle: 'Recovery Tracker Report', pdfSub: 'Daily readings and symptoms recorded at home', pdfPatient: 'Patient',
+                    pdfIssue: 'Medical issue', pdfPeriod: 'Period', pdfGenerated: 'Generated', pdfOverview: 'Overview', pdfDays: 'Days recorded',
+                    pdfEntries: 'Readings saved', pdfLatestBp: 'Latest BP', pdfSymptomDays: 'Days with symptoms', pdfLog: 'All readings',
+                    pdfWhen: 'Date & time', pdfNote: 'Recorded by the patient or caregiver at home with Neutrix. Not a diagnosis; please confirm with the patient.'
+                },
+                Malayalam: {
+                    histTitle: 'നിങ്ങളുടെ റിക്കവറി ചരിത്രം', histHint: 'ആ ദിവസം സേവ് ചെയ്ത റീഡിംഗുകൾ കാണാൻ ഒരു ദിവസം ടാപ്പ് ചെയ്യുക.',
+                    histToday: 'ഇന്ന്', histEmpty: 'ഈ ദിവസം ഒന്നും സേവ് ചെയ്തിട്ടില്ല.', entries: '{n} എണ്ണം',
+                    temp: 'താപനില', sugar: 'ഷുഗർ', weight: 'ഭാരം', symptoms: 'ലക്ഷണങ്ങൾ', meds: 'മരുന്നുകൾ',
+                    dlHint: 'ഡോക്ടറെ കാണിക്കാൻ സേവ് ചെയ്ത എല്ലാ റീഡിംഗുകളും ലക്ഷണങ്ങളും ഡൗൺലോഡ് ചെയ്യുക.',
+                    dlBtn: '📥 റിക്കവറി റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക (PDF)', dlNothing: 'ആദ്യം ഒരു റീഡിംഗ് സേവ് ചെയ്യുക.',
+                    dlPreparing: 'PDF തയ്യാറാക്കുന്നു…', dlReady: '✓ ഡൗൺലോഡ് ചെയ്തു.', dlFailed: 'PDF ഉണ്ടാക്കാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.'
+                }
+            };
+            const tr = (k, v) => {
+                const s = (TR[neutrixLang] || TR.English)[k] || TR.English[k] || k;
+                return Object.keys(v || {}).reduce((a, n) => a.replaceAll(`{${n}}`, v[n]), s);
             };
             const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            const keyOf = r => dayKey(new Date(r.at));
+            const keyDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+            const timeOf = r => new Date(r.at).toLocaleTimeString(localeFor(), { hour: 'numeric', minute: '2-digit' });
+            const hasSymptom = r => r.symptoms && !/^(none|no|nil|-|–)$/i.test(String(r.symptoms).trim());
+            let histDay = dayKey(new Date());
+
             function render() {
-                const d = TR[neutrixLang] || TR.English;
-                document.querySelectorAll('[data-tr]').forEach(el => { el.textContent = d[el.dataset.tr]; });
+                document.querySelectorAll('[data-tr]').forEach(el => { el.textContent = tr(el.dataset.tr); });
                 const list = storeGet('neutrixTracker') || [];
                 document.getElementById('trHistory').classList.toggle('hidden', !list.length);
-                document.getElementById('trRows').innerHTML = list.slice(-10).reverse().map(r => `<tr>
-                    <td>${esc(new Date(r.at).toLocaleString(localeFor(), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))}</td>
-                    <td>${esc(r.temp || '–')}</td><td>${esc(r.bp || '–')}</td><td>${esc(r.sugar || '–')}</td><td>${esc(r.weight || '–')}</td>
-                    <td>${esc(r.symptoms || '–')}</td><td>${esc(r.meds || '–')}</td></tr>`).join('');
+                if (!list.length) return;
+                const byDay = {};
+                list.forEach(r => (byDay[keyOf(r)] = byDay[keyOf(r)] || []).push(r));
+                const strip = document.getElementById('trWeek');
+                strip.innerHTML = '';
+                for (let i = 6; i >= 0; i--) {
+                    const k = dayKeyShift(dayKey(new Date()), -i);
+                    const n = (byDay[k] || []).length;
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'week-day' + (k === histDay ? ' selected' : '');
+                    b.innerHTML = `<span>${esc(keyDate(k).toLocaleDateString(localeFor(), { weekday: 'short' }))}</span><span class="week-dot${n ? ' full' : ''}">${n || '–'}</span>`;
+                    b.addEventListener('click', () => { histDay = k; render(); });
+                    strip.appendChild(b);
+                }
+                const day = byDay[histDay] || [];
+                const title = histDay === dayKey(new Date()) ? tr('histToday') : keyDate(histDay).toLocaleDateString(localeFor(), { weekday: 'long', day: 'numeric', month: 'long' });
+                document.getElementById('trDayLog').innerHTML = `<div class="tr-log-title">${esc(title)}</div>` + (!day.length
+                    ? `<p class="hint">${esc(tr('histEmpty'))}</p>`
+                    : day.slice().reverse().map(r => `<div class="tr-log-row">
+                        <div class="tr-log-time">${esc(timeOf(r))}</div>
+                        <div class="tr-log-vals">
+                            <span><b>${esc(tr('temp'))}</b> ${esc(r.temp || '–')} °F</span><span><b>BP</b> ${esc(r.bp || '–')}</span>
+                            <span><b>${esc(tr('sugar'))}</b> ${esc(r.sugar || '–')}</span><span><b>${esc(tr('weight'))}</b> ${esc(r.weight || '–')} kg</span>
+                            <span><b>${esc(tr('meds'))}</b> ${esc(r.meds || '–')}</span>
+                            <div class="tr-log-sym${hasSymptom(r) ? ' warn' : ''}"><b>${esc(tr('symptoms'))}:</b> ${esc(r.symptoms || '–')}</div>
+                        </div></div>`).join(''));
             }
+
+            function buildPdfHtml() {
+                const list = (storeGet('neutrixTracker') || []).slice().sort((a, b) => a.at.localeCompare(b.at));
+                const profile = storeGet('neutrix_hospital_profile') || {};
+                const issue = (window.neutrixActiveIssue || {}).title || '';
+                const days = [...new Set(list.map(keyOf))];
+                const fmtD = k => keyDate(k).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                const latestBp = [...list].reverse().find(r => r.bp);
+                const symDays = new Set(list.filter(hasSymptom).map(keyOf)).size;
+                let lastDay = '';
+                const rows = list.slice().reverse().map(r => {
+                    const k = keyOf(r), first = k !== lastDay; lastDay = k;
+                    return `<tr class="${first ? 'day-start' : ''}"><td>${esc(new Date(r.at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }))}</td>
+                        <td>${esc(r.temp || '–')}</td><td>${esc(r.bp || '–')}</td><td>${esc(r.sugar || '–')}</td><td>${esc(r.weight || '–')}</td>
+                        <td>${esc(r.meds || '–')}</td><td class="${hasSymptom(r) ? 'warn' : ''}">${esc(r.symptoms || '–')}</td></tr>`;
+                }).join('');
+                return `<style>
+                    .nx-pdf { font-family: Arial, sans-serif; color: #111; font-size: 12px; padding: 4px; }
+                    .nx-pdf .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #111; padding-bottom: 10px; margin-bottom: 12px; }
+                    .nx-pdf .brand-name { font-weight: 800; letter-spacing: 2px; font-size: 15px; }
+                    .nx-pdf .brand-sub { font-size: 10px; color: #666; }
+                    .nx-pdf h1 { font-size: 18px; margin: 0; text-align: right; }
+                    .nx-pdf .sub { font-size: 11px; color: #666; text-align: right; }
+                    .nx-pdf .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 11.5px; margin-bottom: 8px; }
+                    .nx-pdf .meta b { color: #555; }
+                    .nx-pdf h2 { font-size: 14px; margin: 16px 0 8px; border-bottom: 1px solid #e5e3df; padding-bottom: 4px; }
+                    .nx-pdf .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+                    .nx-pdf .stat { border: 1px solid #e5e3df; border-radius: 8px; padding: 10px; text-align: center; }
+                    .nx-pdf .stat .num { font-size: 20px; font-weight: 800; color: #7c3aed; }
+                    .nx-pdf .stat .lbl { font-size: 11px; color: #666; }
+                    .nx-pdf table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                    .nx-pdf th { background: #111; color: #fff; text-align: left; padding: 6px 7px; font-size: 10.5px; }
+                    .nx-pdf td { border-bottom: 1px solid #e5e3df; padding: 5px 7px; vertical-align: top; }
+                    .nx-pdf tr { page-break-inside: avoid; }
+                    .nx-pdf tr.day-start td { border-top: 2px solid #d4d0c8; }
+                    .nx-pdf td.warn { color: #b45309; font-weight: 700; }
+                    .nx-pdf .foot { margin-top: 16px; font-size: 10.5px; color: #666; border-top: 1px dashed #d4d0c8; padding-top: 8px; }
+                </style>
+                <div class="nx-pdf">
+                    <div class="head">
+                        <div><div class="brand-name">NEUTRIX HEALTH</div><div class="brand-sub">Post-Discharge Patient Portal</div></div>
+                        <div><h1>${esc(TR.English.pdfTitle)}</h1><div class="sub">${esc(TR.English.pdfSub)}</div></div>
+                    </div>
+                    <div class="meta">
+                        <div><b>${TR.English.pdfPatient}:</b> ${esc(profile.patientName || localStorage.getItem('neutrix_patient_name') || '–')}</div>
+                        <div><b>${TR.English.pdfIssue}:</b> ${esc(issue || '–')}</div>
+                        <div><b>${TR.English.pdfPeriod}:</b> ${days.length ? esc(fmtD(days[0]) + ' – ' + fmtD(days[days.length - 1])) : '–'}</div>
+                        <div><b>${TR.English.pdfGenerated}:</b> ${esc(new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }))}</div>
+                    </div>
+                    <h2>${TR.English.pdfOverview}</h2>
+                    <div class="stats">
+                        <div class="stat"><div class="num">${days.length}</div><div class="lbl">${TR.English.pdfDays}</div></div>
+                        <div class="stat"><div class="num">${list.length}</div><div class="lbl">${TR.English.pdfEntries}</div></div>
+                        <div class="stat"><div class="num">${esc(latestBp ? latestBp.bp : '–')}</div><div class="lbl">${TR.English.pdfLatestBp}</div></div>
+                        <div class="stat"><div class="num">${symDays}</div><div class="lbl">${TR.English.pdfSymptomDays}</div></div>
+                    </div>
+                    <h2>${TR.English.pdfLog}</h2>
+                    <table><thead><tr><th>${TR.English.pdfWhen}</th><th>Temp °F</th><th>BP</th><th>Sugar mg/dL</th><th>Weight kg</th><th>Medicines</th><th>Symptoms</th></tr></thead>
+                        <tbody>${rows}</tbody></table>
+                    <div class="foot">${TR.English.pdfNote}</div>
+                </div>`;
+            }
+
+            async function download() {
+                const status = document.getElementById('trDlStatus');
+                if (!(storeGet('neutrixTracker') || []).length) { status.textContent = tr('dlNothing'); return; }
+                if (!window.html2pdf) { status.textContent = tr('dlFailed'); return; }
+                const btn = document.getElementById('trDlBtn');
+                btn.disabled = true;
+                status.textContent = tr('dlPreparing');
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = buildPdfHtml();
+                const saved = window.scrollY;
+                window.scrollTo(0, 0);
+                try {
+                    await html2pdf().set({
+                        margin: [10, 10, 12, 10],
+                        filename: `Neutrix_Recovery_Report_${dayKey(new Date())}.pdf`,
+                        image: { type: 'jpeg', quality: 0.95 },
+                        html2canvas: { scale: 2, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
+                    }).from(wrapper).save();
+                    status.textContent = tr('dlReady');
+                } catch (e) {
+                    console.error(e);
+                    status.textContent = tr('dlFailed');
+                } finally {
+                    window.scrollTo(0, saved);
+                    btn.disabled = false;
+                }
+            }
+            document.getElementById('trDlBtn').addEventListener('click', download);
+            window.NxTrackerReport = { buildPdfHtml };
+
             document.getElementById('recoveryForm').addEventListener('submit', () => {
                 const v = id => (document.getElementById(id).value || '').trim();
                 const list = storeGet('neutrixTracker') || [];
@@ -202,7 +352,8 @@
                     symptoms: v('trackerSymptoms') || 'None',
                     meds: (document.querySelector('input[name="medsRadio"]:checked') || {}).value || ''
                 });
-                storeSet('neutrixTracker', list.slice(-200));
+                storeSet('neutrixTracker', list.slice(-500));
+                histDay = dayKey(new Date());
                 render();
             });
             document.addEventListener('neutrix:langchange', render);
@@ -211,13 +362,22 @@
     </script>
     <style>
         .tr-history { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border-color); }
-        .tr-table-wrap { overflow-x: auto; }
-        .tr-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .tr-table th { text-align: left; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); padding: 8px 10px; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
-        .tr-table td { padding: 9px 10px; border-bottom: 1px dashed var(--border-color); vertical-align: top; }
+        .tr-history .week-strip { max-width: 560px; }
+        .tr-day-log { margin-top: 14px; border: 1px solid var(--border-color); border-radius: 16px; padding: 14px 16px; }
+        .tr-log-title { font-weight: 700; margin-bottom: 8px; }
+        .tr-log-row { display: flex; gap: 14px; padding: 10px 0; border-top: 1px dashed var(--border-color); }
+        .tr-log-row:first-of-type { border-top: none; }
+        .tr-log-time { font-weight: 700; font-size: 13px; min-width: 70px; }
+        .tr-log-vals { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13.5px; }
+        .tr-log-vals b { color: var(--text-muted); font-weight: 600; margin-right: 2px; }
+        .tr-log-sym { flex-basis: 100%; }
+        .tr-log-sym.warn { color: #b45309; }
+        [data-theme="dark"] .tr-log-sym.warn { color: #fbbf24; }
+        .tr-download { margin-top: 18px; padding: 16px; border-radius: 16px; background: var(--pill-bg, rgba(0,0,0,0.04)); }
+        .tr-download .hint { margin: 0 0 10px; }
     </style>
     <script src="visuals.js?v=20261029a"></script>
     <script src="nx-charts.js?v=20261029b"></script>
-    <script src="chat.js?v=20261030a"></script>
+    <script src="chat.js?v=20261030c"></script>
 </body>
 </html>

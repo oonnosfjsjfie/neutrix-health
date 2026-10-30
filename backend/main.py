@@ -258,7 +258,7 @@ def compare(
     }
 
 
-# ---------- Doctor Brief: send the message to the doctor's email ----------
+# ---------- Ask Doctor: send the message to the doctor's email ----------
 class EmailRequest(BaseModel):
     to: str
     subject: str = ""
