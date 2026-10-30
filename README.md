@@ -25,6 +25,17 @@ prescribe, or replace a doctor.
 | Feedback | ⚑ Report button on every page (except Admin) and a skippable rating pop-up on the website every 8 days. |
 | Admin Access | For admin accounts only (see below). |
 
+## Android app
+- Download: https://github.com/oonnosfjsjfie/neutrix-health/releases/latest/download/NeutrixHealth.apk (also the 📱 button on the website).
+- It is a Trusted Web Activity: the app opens the live website full screen using Chrome on the phone, so every website
+  change shows up in the app straight away. A new APK is only needed if the app itself changes (name, icon, start page).
+- Code in `android/`. GitHub Actions (`.github/workflows/android.yml`) builds the APK whenever `android/` changes, or by hand
+  (Actions → Build Android app → Run workflow), and publishes it under Releases → `android-latest`.
+- Signing: repo secrets `NEUTRIX_KEYSTORE_BASE64` and `NEUTRIX_KEYSTORE_PASSWORD`. Keep the key file safe; it is needed for
+  every future update (and for Google Play). Without the secrets the build uses a temporary key and shows an address bar.
+- `/.well-known/assetlinks.json` (served by the backend from `android/app-link.json`) tells Android the app and the website belong together.
+- The website is also installable from Chrome (⋮ → Add to Home screen) thanks to `manifest.webmanifest` and `sw.js`.
+
 ## Run it on your computer
 1. Create `backend/.env` (copy `backend/.env.example`) and fill in your own values.
 2. `pip install -r backend/requirements.txt`
