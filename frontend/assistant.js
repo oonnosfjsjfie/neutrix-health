@@ -29,7 +29,7 @@
         English: {
             btn: 'Assistant', open: 'Open Neutrix Assistant', title: 'Neutrix Assistant', close: 'Close assistant',
             hello: "Hi! I'm your Neutrix Assistant. Talk to me or type. I can explain things simply, or do things on this website for you, like “open my medicine schedule”.",
-            placeholder: 'Type or tap the mic…', send: 'Send', mic: 'Talk', stopMic: 'Stop listening',
+            placeholder: 'Type or tap the mic…', send: 'Send', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. I will keep listening until you tap the mic again.', micOff: 'Mic off.',
             listening: 'Listening…', thinking: 'Thinking…', speaking: 'Speaking…', working: 'Working on the page…', ready: 'Ready',
             detail: 'Detailed', voice: 'Voice', yes: 'Yes, do it', no: 'No', stop: 'Stop',
             stopped: 'Okay, I stopped.', cancelled: "Okay, I won't do that.", noMic: "Your browser can't use the microphone here. Please type instead.",
@@ -40,7 +40,7 @@
         Malayalam: {
             btn: 'അസിസ്റ്റന്റ്', open: 'Neutrix അസിസ്റ്റന്റ് തുറക്കുക', title: 'Neutrix അസിസ്റ്റന്റ്', close: 'അടയ്ക്കുക',
             hello: 'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ Neutrix അസിസ്റ്റന്റ് ആണ്. സംസാരിക്കുകയോ ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം. ലളിതമായി വിശദീകരിക്കാം, അല്ലെങ്കിൽ ഈ വെബ്സൈറ്റിൽ കാര്യങ്ങൾ ചെയ്തു തരാം.',
-            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', mic: 'സംസാരിക്കുക', stopMic: 'നിർത്തുക',
+            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ.', micOff: 'മൈക്ക് ഓഫ്.',
             listening: 'കേൾക്കുന്നു…', thinking: 'ആലോചിക്കുന്നു…', speaking: 'സംസാരിക്കുന്നു…', working: 'പേജിൽ ചെയ്യുന്നു…', ready: 'തയ്യാർ',
             detail: 'വിശദമായി', voice: 'ശബ്ദം', yes: 'അതെ, ചെയ്യൂ', no: 'വേണ്ട', stop: 'നിർത്തുക',
             stopped: 'ശരി, നിർത്തി.', cancelled: 'ശരി, അത് ചെയ്യുന്നില്ല.', noMic: 'ഇവിടെ മൈക്ക് ഉപയോഗിക്കാൻ കഴിയില്ല. ടൈപ്പ് ചെയ്യുക.',
@@ -57,8 +57,8 @@
     // ---------- saved state (this tab: conversation + unfinished task; this device: settings) ----------
     const SKEY = 'nxAssistant', PKEY = 'nxAssistantPrefs';
     const load = (store, key, def) => { try { return Object.assign(def, JSON.parse(store.getItem(key) || '{}')); } catch (e) { return def; } };
-    const state = load(sessionStorage, SKEY, { open: false, history: [], pending: null, cursor: null, handsFree: false });
-    const prefs = load(localStorage, PKEY, { voice: true, detail: false, big: false });
+    const state = load(sessionStorage, SKEY, { open: false, history: [], pending: null, cursor: null });
+    const prefs = load(localStorage, PKEY, { voice: true, detail: false, big: false, mic: false });
     const save = () => { try { sessionStorage.setItem(SKEY, JSON.stringify(state)); } catch (e) {} };
     const savePrefs = () => { try { localStorage.setItem(PKEY, JSON.stringify(prefs)); } catch (e) {} };
 
@@ -71,32 +71,36 @@
     .nxa-btn:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
     .nxa-btn svg { width: 17px; height: 17px; }
     .nxa-btn.on { box-shadow: 0 0 0 3px rgba(99, 102, 241, .35), 0 4px 14px rgba(79, 70, 229, .45); }
+    .nxa-btn.mic::after { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 2px #fff; margin-left: 2px; animation: nxaBlink 1.4s infinite; }
+    .nxa-btn.nxa-ab.mic::after { position: absolute; top: 3px; right: 3px; margin: 0; }
+    .nxa-btn.nxa-ab { position: relative; }
+    @keyframes nxaBlink { 50% { opacity: .35; } }
     .nxa-btn.floating { position: fixed; top: calc(12px + env(safe-area-inset-top)); right: 14px; z-index: 5200; }
     @media (max-width: 720px) { .nxa-btn:not(.floating):not(.nxa-ab) .nxa-lbl { display: none; } .nxa-btn:not(.floating) { padding: 8px 10px; } }
     .nx-appbar button.nxa-btn { background: linear-gradient(135deg, #6d28d9, #2563eb 55%, #0891b2); color: #fff; }
     .nxa-btn.nxa-ab { padding: 0; width: 40px; height: 40px; justify-content: center; border-radius: 50%; margin-right: 4px; }
     .nxa-btn.nxa-ab .nxa-lbl { display: none; }
 
-    #nxa-dock { position: fixed; z-index: 5100; right: 18px; bottom: 18px; width: min(420px, calc(100vw - 36px)); max-height: min(72vh, 640px);
-        display: flex; flex-direction: column; border-radius: 22px; overflow: hidden; color: var(--text-primary, #111);
+    #nxa-dock { position: fixed; z-index: 5100; right: 16px; bottom: 16px; width: min(350px, calc(100vw - 32px)); max-height: min(54vh, 460px);
+        display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; color: var(--text-primary, #111);
         background: var(--card-bg, #fff); border: 1px solid var(--border-color, rgba(0,0,0,.12));
         box-shadow: 0 18px 50px rgba(15, 23, 42, .28); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         transform: translateY(16px); opacity: 0; pointer-events: none; transition: transform .22s ease, opacity .22s ease; }
     #nxa-dock.show { transform: none; opacity: 1; pointer-events: auto; }
     [data-theme="dark"] #nxa-dock { background: #121418; color: #f1f5f9; border-color: #2a2f38; }
     @media (max-width: 720px) {
-        #nxa-dock { left: 0; right: 0; bottom: 0; width: 100%; max-height: 52vh; border-radius: 22px 22px 0 0; padding-bottom: env(safe-area-inset-bottom); }
-        html.nxa-open body { padding-bottom: 52vh !important; }
+        #nxa-dock { left: 0; right: 0; bottom: 0; width: 100%; max-height: 40vh; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+        html.nxa-open body { padding-bottom: 40vh !important; }
     }
-    html.nx-app-ui #nxa-dock { bottom: calc(64px + env(safe-area-inset-bottom)); max-height: 46vh; padding-bottom: 0; }
-    html.nx-app-ui.nxa-open body { padding-bottom: 50vh !important; }
+    html.nx-app-ui #nxa-dock { bottom: calc(64px + env(safe-area-inset-bottom)); max-height: 38vh; padding-bottom: 0; }
+    html.nx-app-ui.nxa-open body { padding-bottom: 40vh !important; }
     html.nxa-open .chat-fab, html.nxa-open .chat-panel { display: none !important; }
 
-    .nxa-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 10px 14px; border-bottom: 1px solid var(--border-color, rgba(0,0,0,.08)); }
+    .nxa-head { display: flex; align-items: center; gap: 8px; padding: 7px 8px 6px 12px; border-bottom: 1px solid var(--border-color, rgba(0,0,0,.08)); }
     [data-theme="dark"] .nxa-head { border-color: #2a2f38; }
-    .nxa-orb { width: 34px; height: 34px; border-radius: 50%; flex: none; position: relative;
+    .nxa-orb { width: 26px; height: 26px; border-radius: 50%; flex: none; position: relative;
         background: radial-gradient(circle at 35% 30%, #a5b4fc, #6d28d9 45%, #0e7490); box-shadow: 0 0 0 0 rgba(99,102,241,.5); }
-    .nxa-orb::after { content: ''; position: absolute; inset: 9px; border-radius: 50%; background: rgba(255,255,255,.85); transition: transform .2s; }
+    .nxa-orb::after { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: rgba(255,255,255,.85); transition: transform .2s; }
     #nxa-dock[data-mode="listening"] .nxa-orb { background: radial-gradient(circle at 35% 30%, #fecaca, #dc2626 50%, #7f1d1d); animation: nxaPulse 1.1s infinite; }
     #nxa-dock[data-mode="thinking"] .nxa-orb, #nxa-dock[data-mode="working"] .nxa-orb { animation: nxaSpin 1s linear infinite; }
     #nxa-dock[data-mode="thinking"] .nxa-orb::after, #nxa-dock[data-mode="working"] .nxa-orb::after { transform: scale(.5) translateX(9px); }
@@ -105,16 +109,16 @@
     @keyframes nxaSpin { to { transform: rotate(360deg); } }
     @keyframes nxaTalk { from { transform: scale(.55); } to { transform: scale(1); } }
     .nxa-titles { flex: 1; min-width: 0; }
-    .nxa-title { font-weight: 800; font-size: 16px; }
-    .nxa-status { font-size: 13px; color: var(--text-muted, #64748b); }
-    .nxa-icon { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: grid; place-items: center;
+    .nxa-title { font-weight: 800; font-size: 14.5px; line-height: 1.2; }
+    .nxa-status { font-size: 12px; line-height: 1.2; color: var(--text-muted, #64748b); }
+    .nxa-icon { width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer; display: grid; place-items: center;
         background: transparent; color: inherit; flex: none; }
     .nxa-icon:hover { background: rgba(127,127,127,.12); }
     .nxa-icon:focus-visible, .nxa-chip:focus-visible, .nxa-tog:focus-visible, .nxa-go:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
-    .nxa-icon svg { width: 20px; height: 20px; }
+    .nxa-icon svg { width: 18px; height: 18px; }
 
-    .nxa-log { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; min-height: 90px; scroll-behavior: smooth; }
-    .nxa-msg { max-width: 92%; padding: 10px 13px; border-radius: 16px; font-size: 15.5px; line-height: 1.5; overflow-wrap: anywhere; }
+    .nxa-log { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 7px; min-height: 60px; scroll-behavior: smooth; }
+    .nxa-msg { max-width: 92%; padding: 7px 11px; border-radius: 14px; font-size: 14.5px; line-height: 1.45; overflow-wrap: anywhere; }
     .nxa-msg.ai { background: rgba(99, 102, 241, .09); border-bottom-left-radius: 5px; align-self: flex-start; }
     [data-theme="dark"] .nxa-msg.ai { background: rgba(129, 140, 248, .14); }
     .nxa-msg.me { background: #111827; color: #fff; border-bottom-right-radius: 5px; align-self: flex-end; }
@@ -125,25 +129,25 @@
     .nxa-ask { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
     .nxa-go { border: none; border-radius: 22px; padding: 9px 16px; font: 700 14.5px/1 inherit; cursor: pointer; background: #16a34a; color: #fff; }
     .nxa-go.no { background: rgba(127,127,127,.18); color: inherit; }
-    .nxa-chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 14px 8px; }
+    .nxa-chips { display: flex; gap: 5px; flex-wrap: wrap; padding: 0 10px 6px; }
     .nxa-chip { border: 1px solid var(--border-color, rgba(0,0,0,.14)); background: transparent; color: inherit; border-radius: 18px;
-        padding: 7px 12px; font: 600 13px/1.2 inherit; cursor: pointer; }
+        padding: 5px 10px; font: 600 12px/1.2 inherit; cursor: pointer; }
     .nxa-chip:hover { background: rgba(99,102,241,.08); }
-    .nxa-bar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border-color, rgba(0,0,0,.08)); }
+    .nxa-bar { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-top: 1px solid var(--border-color, rgba(0,0,0,.08)); }
     [data-theme="dark"] .nxa-bar { border-color: #2a2f38; }
     .nxa-input { flex: 1; min-width: 0; border: 1.5px solid var(--border-color, rgba(0,0,0,.15)); background: transparent; color: inherit;
-        border-radius: 24px; padding: 11px 14px; font: 15.5px/1.3 inherit; outline: none; }
+        border-radius: 22px; padding: 8px 12px; font: 14.5px/1.3 inherit; outline: none; }
     .nxa-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.2); }
-    .nxa-mic { width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; display: grid; place-items: center; color: #fff;
+    .nxa-mic { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: grid; place-items: center; color: #fff;
         background: linear-gradient(135deg, #6d28d9, #2563eb); flex: none; }
     .nxa-mic.live { background: #dc2626; animation: nxaPulse 1.1s infinite; }
-    .nxa-mic svg { width: 22px; height: 22px; }
-    .nxa-opts { display: flex; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
+    .nxa-mic svg { width: 19px; height: 19px; }
+    .nxa-opts { display: flex; gap: 5px; padding: 0 8px 6px; flex-wrap: wrap; }
     .nxa-tog { border: 1px solid var(--border-color, rgba(0,0,0,.14)); background: transparent; color: var(--text-muted, #64748b);
-        border-radius: 16px; padding: 6px 11px; font: 600 12.5px/1.2 inherit; cursor: pointer; }
+        border-radius: 14px; padding: 4px 9px; font: 600 11.5px/1.2 inherit; cursor: pointer; }
     .nxa-tog[aria-pressed="true"] { background: #4f46e5; color: #fff; border-color: #4f46e5; }
     .nxa-stop { margin-left: auto; }
-    #nxa-dock.big .nxa-msg { font-size: 19px; } #nxa-dock.big .nxa-input { font-size: 18px; }
+    #nxa-dock.big .nxa-msg { font-size: 18px; } #nxa-dock.big .nxa-input { font-size: 17px; }
     .nxa-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
     #nxa-cursor { position: fixed; left: 0; top: 0; z-index: 2147483600; width: 30px; height: 30px; pointer-events: none; opacity: 0;
@@ -221,7 +225,6 @@
             const v = input.value.trim();
             if (!v) { toggleMic(); return; }
             input.value = '';
-            state.handsFree = false;
             userSays(v);
         });
         input.addEventListener('input', paintMic);
@@ -289,8 +292,11 @@
     function paintMic() {
         const typing = input && input.value.trim();
         micBtn.innerHTML = typing ? ICON.send : ICON.mic;
-        micBtn.classList.toggle('live', listening);
-        micBtn.setAttribute('aria-label', typing ? t('send') : (listening ? t('stopMic') : t('mic')));
+        micBtn.classList.toggle('live', !!prefs.mic && !typing);
+        micBtn.setAttribute('aria-pressed', String(!!prefs.mic));
+        micBtn.setAttribute('aria-label', typing ? t('send') : (prefs.mic ? t('stopMic') : t('mic')));
+        micBtn.title = micBtn.getAttribute('aria-label');
+        if (btn) btn.classList.toggle('mic', !!prefs.mic);
     }
     function setMode(mode) {
         dock.dataset.mode = mode;
@@ -353,65 +359,124 @@
     }
 
     // ---------- speaking (text to speech) ----------
-    let speaking = false;
-    function cleanForSpeech(s) { return String(s || '').replace(/[*#_`>]/g, '').replace(/\[(.*?)\]\(.*?\)/g, '$1').slice(0, 1500); }
-    async function speak(text) {
-        if (!prefs.voice || !text) return;
-        stopSpeaking();
-        speaking = true;
-        setMode('speaking');
-        try {
-            if (isApp && P.TextToSpeech) {
-                await P.TextToSpeech.speak({ text: cleanForSpeech(text), lang: speechLang(), rate: 1.0, category: 'playback' });
-            } else if ('speechSynthesis' in window) {
-                await new Promise(resolve => {
-                    const u = new SpeechSynthesisUtterance(cleanForSpeech(text));
-                    u.lang = speechLang();
-                    const v = speechSynthesis.getVoices().find(x => x.lang && x.lang.toLowerCase().startsWith(speechLang().slice(0, 2)));
-                    if (v) u.voice = v;
-                    u.rate = 1;
-                    u.onend = u.onerror = resolve;
-                    speechSynthesis.speak(u);
-                    setTimeout(resolve, 60000);
-                });
-            }
-        } catch (e) { /* no voice on this device */ }
-        speaking = false;
-        if (dock.dataset.mode === 'speaking') setMode('ready');
+    // One voice for everything on the site (assistant, exercise coach...): picked once, remembered on this
+    // device, and used every time. The phone app uses the phone's own text-to-speech voice.
+    const VOICE_KEY = 'nxVoiceName';
+    const PREFERRED = [/Google UK English Female/i, /Neerja|Heera|Swara/i, /Google US English/i, /Samantha|Karen|Moira/i, /Zira|Aria|Jenny/i, /Female/i];
+    function pickVoice(code) {
+        const all = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+        if (!all.length) return null;
+        const two = code.slice(0, 2).toLowerCase();
+        const fits = v => v.lang && v.lang.toLowerCase().startsWith(two);
+        let saved = null;
+        try { saved = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}'); } catch (e) { saved = {}; }
+        const keep = saved[two] && all.find(v => v.name === saved[two]);
+        if (keep) return keep;
+        const pool = all.filter(fits);
+        if (!pool.length) return null;
+        const exact = pool.filter(v => v.lang.toLowerCase() === code.toLowerCase());
+        let v = null;
+        for (const re of PREFERRED) { v = (exact.find(x => re.test(x.name)) || pool.find(x => re.test(x.name))); if (v) break; }
+        v = v || exact[0] || pool[0];
+        saved[two] = v.name;
+        try { localStorage.setItem(VOICE_KEY, JSON.stringify(saved)); } catch (e) {}
+        return v;
     }
-    function stopSpeaking() {
-        speaking = false;
+    if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
+    function voiceSpeak(text, code) {
+        code = code || speechLang();
+        text = cleanForSpeech(text);
+        if (!text) return Promise.resolve();
+        if (isApp && P.TextToSpeech) {
+            return P.TextToSpeech.speak({ text, lang: code, rate: 1.0, pitch: 1.0, category: 'playback' }).catch(() => {});
+        }
+        if (!('speechSynthesis' in window)) return Promise.resolve();
+        return new Promise(resolve => {
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = code;
+            const v = pickVoice(code);
+            if (v) u.voice = v;
+            u.rate = 1; u.pitch = 1;
+            u.onend = u.onerror = resolve;
+            speechSynthesis.speak(u);
+            setTimeout(resolve, 60000);
+        });
+    }
+    function voiceStop() {
         try { if (isApp && P.TextToSpeech) P.TextToSpeech.stop(); } catch (e) {}
         try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
     }
+    // Other parts of the site speak through this too, so it is always the same voice
+    window.NxVoice = { speak: voiceSpeak, stop: voiceStop, pick: pickVoice };
+
+    let speaking = false;
+    function cleanForSpeech(s) { return String(s || '').replace(/[*#_`>✓⚠️]/g, '').replace(/\[(.*?)\]\(.*?\)/g, '$1').trim().slice(0, 1500); }
+    async function speak(text) {
+        if (!prefs.voice || !text) return;
+        stopSpeaking();
+        pauseForSpeech();
+        speaking = true;
+        setMode('speaking');
+        try { await voiceSpeak(text); } catch (e) { /* no voice on this device */ }
+        speaking = false;
+        if (dock.dataset.mode === 'speaking') setMode('ready');
+        afterReply();
+    }
+    function stopSpeaking() {
+        speaking = false;
+        voiceStop();
+    }
 
     // ---------- listening (speech to text) ----------
-    let listening = false, recog = null, quietCount = 0;
-    async function toggleMic() {
-        if (listening) { stopListening(); state.handsFree = false; save(); return; }
-        state.handsFree = true;
-        save();
-        listen();
+    // The mic is a switch: one tap turns it on and it stays on (also on other pages) until the user taps it
+    // again. While on, it keeps listening; it only pauses while the assistant itself is talking.
+    let listening = false, recog = null, discard = false, failCount = 0, restartTimer = null;
+    function toggleMic() {
+        prefs.mic = !prefs.mic;
+        savePrefs();
+        if (prefs.mic) { failCount = 0; listen(); }
+        else { discard = true; stopListening(); input.value = ''; }
+        paint();
+        live.textContent = prefs.mic ? t('micOn') : t('micOff');
+    }
+    function maybeListen(delay) {
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(() => { if (prefs.mic && !speaking && !listening && !leaving) listen(); }, delay || 300);
+    }
+    function micBlocked(msg) {
+        prefs.mic = false; savePrefs();
+        add('note', msg); paint();
     }
     async function listen() {
-        if (listening) return;
-        stopSpeaking();
+        if (listening || !prefs.mic || speaking) return;
+        discard = false;
+        const started = Date.now();
+        const done = text => {
+            listening = false; recog = null; paintMic();
+            if (dock.dataset.mode === 'listening') setMode(busy ? 'working' : 'ready');
+            if (discard) { discard = false; input.value = ''; maybeListen(400); return; }
+            text = (text || '').trim();
+            input.value = '';
+            if (text) { failCount = 0; userSays(text); }
+            else if (Date.now() - started < 1500) failCount++;     // ended at once: wait longer before trying again
+            else failCount = 0;
+            maybeListen(failCount ? Math.min(8000, 400 * 2 ** failCount) : 250);
+        };
         if (isApp && P.SpeechRecognition) {
             try {
                 const perm = await P.SpeechRecognition.requestPermissions();
-                if (perm && perm.speechRecognition && perm.speechRecognition !== 'granted') { add('note', t('micDenied')); state.handsFree = false; return; }
-                listening = true; paintMic(); setMode('listening');
+                if (perm && perm.speechRecognition && perm.speechRecognition !== 'granted') { micBlocked(t('micDenied')); return; }
+                if (!prefs.mic || speaking) return;
+                listening = true; paintMic(); if (!busy) setMode('listening');
                 const r = await P.SpeechRecognition.start({ language: speechLang(), maxResults: 1, partialResults: false, popup: false });
-                listening = false; paintMic(); setMode('ready');
-                heard((r && r.matches && r.matches[0]) || '');
+                done((r && r.matches && r.matches[0]) || '');
             } catch (e) {
-                listening = false; paintMic(); setMode('ready');
-                heard('');
+                done('');
             }
             return;
         }
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) { add('note', t('noMic')); state.handsFree = false; input.focus(); return; }
+        if (!SR) { micBlocked(t('noMic')); input.focus(); return; }
         recog = new SR();
         recog.lang = speechLang();
         recog.interimResults = true;
@@ -423,44 +488,25 @@
                 if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
                 else interim += e.results[i][0].transcript;
             }
-            input.value = (finalText + interim).trim();
+            if (!discard) input.value = (finalText + interim).trim();
         };
         recog.onerror = e => {
-            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { add('note', t('micDenied')); state.handsFree = false; save(); }
+            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { discard = true; micBlocked(t('micDenied')); }
         };
-        recog.onend = () => {
-            listening = false; recog = null; paintMic();
-            if (dock.dataset.mode === 'listening') setMode('ready');
-            const said = (finalText || input.value).trim();
-            input.value = '';
-            heard(said);
-        };
-        try { recog.start(); listening = true; paintMic(); setMode('listening'); }
-        catch (e) { listening = false; paintMic(); }
+        recog.onend = () => done(finalText || input.value);
+        try { recog.start(); listening = true; paintMic(); if (!busy) setMode('listening'); }
+        catch (e) { listening = false; recog = null; paintMic(); maybeListen(1000); }
     }
     function stopListening() {
-        try { if (recog) recog.stop(); } catch (e) {}
+        clearTimeout(restartTimer);
+        try { if (recog) recog.abort(); } catch (e) {}
         try { if (isApp && P.SpeechRecognition) P.SpeechRecognition.stop(); } catch (e) {}
-        listening = false; paintMic();
+        if (!recog) { listening = false; paintMic(); }
         if (dock.dataset.mode === 'listening') setMode('ready');
     }
-    function heard(text) {
-        if (!text) {
-            quietCount++;
-            if (quietCount >= 2) { state.handsFree = false; save(); quietCount = 0; }
-            else if (state.handsFree && state.open) setTimeout(listen, 300);
-            return;
-        }
-        quietCount = 0;
-        userSays(text);
-    }
-    // After the assistant finishes talking, listen again (hands-free conversation)
-    async function afterReply() {
-        if (!(state.handsFree && state.open)) return;
-        for (let i = 0; i < 300 && speaking; i++) await sleep(200);
-        await sleep(250);
-        if (state.handsFree && state.open && !busy && !askBox && !speaking && !leaving) listen();
-    }
+    // Pause the mic while the assistant talks (so it doesn't hear itself), then carry on listening
+    function pauseForSpeech() { if (listening) { discard = true; stopListening(); } }
+    function afterReply() { if (prefs.mic && !speaking) maybeListen(300); }
 
     // ---------- what is on the page (sent to the AI) ----------
     let elMap = new Map();
@@ -531,7 +577,7 @@
     function hideCursor() { cursor && cursor.classList.remove('show'); }
     async function moveTo(el) {
         let r = el.getBoundingClientRect();
-        if (r.top < 70 || r.bottom > innerHeight - (state.open && innerWidth <= 720 ? innerHeight * 0.52 : 20)) {
+        if (r.top < 70 || r.bottom > innerHeight - (state.open && innerWidth <= 720 ? innerHeight * 0.42 : 20)) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             await sleep(500);
             r = el.getBoundingClientRect();
@@ -714,7 +760,6 @@
         renderLog();
         setMode('ready');
         askBox.querySelector('.nxa-go').focus();
-        if (state.handsFree) listen();
     }
     function userSays(text) {
         if (!state.open) open(false);
@@ -733,14 +778,14 @@
     function stopAll(silent) {
         stopFlag = true;
         stopSpeaking();
-        stopListening();
+        if (listening) { discard = true; stopListening(); }
         state.pending = null;
-        if (!silent) state.handsFree = false;
         save();
         askBox = null;
         if (log) renderLog();
         setMode('ready');
         hideCursor();
+        if (prefs.mic) maybeListen(600);
     }
 
     // ---------- start ----------
@@ -751,6 +796,8 @@
             document.documentElement.classList.add('nxa-open');
             paint();
         }
+        // The mic stays on across pages until the user turns it off
+        if (prefs.mic) maybeListen(1200);
         // Continue a task that opened this page
         if (state.open && state.pending) {
             const p = state.pending;

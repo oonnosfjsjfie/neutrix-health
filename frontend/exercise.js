@@ -713,7 +713,7 @@
         show('liveBadge', false);
         show('stageTools', false);
         $('pauseBtn').disabled = true;
-        if (window.speechSynthesis) speechSynthesis.cancel();
+        if (window.NxVoice) NxVoice.stop(); else if (window.speechSynthesis) speechSynthesis.cancel();
     }
 
     function loop() {
@@ -806,11 +806,13 @@
     let lastSpoken = '';
     let lastSpokenAt = 0;
     function say(text, force) {
-        if (!voiceOn || !window.speechSynthesis || !text) return;
+        if (!voiceOn || !text || !(window.NxVoice || window.speechSynthesis)) return;
         const now = Date.now();
         if (!force && (text === lastSpoken && now - lastSpokenAt < 6000 || now - lastSpokenAt < 2500)) return;
         lastSpoken = text;
         lastSpokenAt = now;
+        // Same voice as the Neutrix Assistant everywhere on the site (assistant.js)
+        if (window.NxVoice) { NxVoice.stop(); NxVoice.speak(text, ml() ? 'ml-IN' : 'en-IN'); return; }
         speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text.replace(/[✓⚠️]/g, '').trim());
         u.lang = ml() ? 'ml-IN' : 'en-IN';
@@ -906,7 +908,7 @@
         voiceOn = !voiceOn;
         try { localStorage.setItem('nxExerciseVoice', voiceOn ? 'on' : 'off'); } catch (e) {}
         $('voiceBtn').textContent = voiceOn ? x('voiceOn') : x('voiceOff');
-        if (!voiceOn && window.speechSynthesis) speechSynthesis.cancel();
+        if (!voiceOn) { if (window.NxVoice) NxVoice.stop(); else if (window.speechSynthesis) speechSynthesis.cancel(); }
     });
     $('flipBtn').addEventListener('click', async () => {
         facing = facing === 'user' ? 'environment' : 'user';
