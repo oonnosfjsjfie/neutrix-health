@@ -29,7 +29,7 @@
         English: {
             btn: 'Assistant', open: 'Open Neutrix Assistant', title: 'Neutrix Assistant', close: 'Close assistant',
             hello: "Hi! I'm your Neutrix Assistant. Talk to me or type. I can explain things simply, or do things on this website for you, like “open my medicine schedule”.",
-            placeholder: 'Type or tap the mic…', send: 'Send', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. I will keep listening until you tap the mic again.', micOff: 'Mic off.',
+            placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. I will keep listening until you tap the mic again.', micOff: 'Mic off.',
             listening: 'Listening…', thinking: 'Thinking…', speaking: 'Speaking…', working: 'Working on the page…', ready: 'Ready',
             detail: 'Detailed', voice: 'Voice', yes: 'Yes, do it', no: 'No', stop: 'Stop',
             stopped: 'Okay, I stopped.', cancelled: "Okay, I won't do that.", noMic: "Your browser can't use the microphone here. Please type instead.",
@@ -40,7 +40,7 @@
         Malayalam: {
             btn: 'അസിസ്റ്റന്റ്', open: 'Neutrix അസിസ്റ്റന്റ് തുറക്കുക', title: 'Neutrix അസിസ്റ്റന്റ്', close: 'അടയ്ക്കുക',
             hello: 'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ Neutrix അസിസ്റ്റന്റ് ആണ്. സംസാരിക്കുകയോ ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം. ലളിതമായി വിശദീകരിക്കാം, അല്ലെങ്കിൽ ഈ വെബ്സൈറ്റിൽ കാര്യങ്ങൾ ചെയ്തു തരാം.',
-            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ.', micOff: 'മൈക്ക് ഓഫ്.',
+            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', expand: 'സംഭാഷണം കാണിക്കുക', collapse: 'സംഭാഷണം മറയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ.', micOff: 'മൈക്ക് ഓഫ്.',
             listening: 'കേൾക്കുന്നു…', thinking: 'ആലോചിക്കുന്നു…', speaking: 'സംസാരിക്കുന്നു…', working: 'പേജിൽ ചെയ്യുന്നു…', ready: 'തയ്യാർ',
             detail: 'വിശദമായി', voice: 'ശബ്ദം', yes: 'അതെ, ചെയ്യൂ', no: 'വേണ്ട', stop: 'നിർത്തുക',
             stopped: 'ശരി, നിർത്തി.', cancelled: 'ശരി, അത് ചെയ്യുന്നില്ല.', noMic: 'ഇവിടെ മൈക്ക് ഉപയോഗിക്കാൻ കഴിയില്ല. ടൈപ്പ് ചെയ്യുക.',
@@ -90,12 +90,30 @@
     [data-theme="dark"] #nxa-dock { background: #121418; color: #f1f5f9; border-color: #2a2f38; }
     @media (max-width: 720px) {
         #nxa-dock { left: 0; right: 0; bottom: 0; width: 100%; max-height: 40vh; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom); }
-        html.nxa-open body { padding-bottom: 40vh !important; }
+        html.nxa-open body { padding-bottom: 76px !important; }
+        html.nxa-open.nxa-exp body { padding-bottom: 40vh !important; }
     }
     html.nx-app-ui #nxa-dock { bottom: calc(64px + env(safe-area-inset-bottom)); max-height: 38vh; padding-bottom: 0; }
-    html.nx-app-ui.nxa-open body { padding-bottom: 40vh !important; }
+    html.nx-app-ui.nxa-open body { padding-bottom: 76px !important; }
+    html.nx-app-ui.nxa-open.nxa-exp body { padding-bottom: 40vh !important; }
     html.nxa-open .chat-fab, html.nxa-open .chat-panel { display: none !important; }
 
+    /* Small by default: only the type / mic bar, with a handle on top to open the conversation */
+    #nxa-dock { overflow: visible; }
+    #nxa-dock.collapsed .nxa-head, #nxa-dock.collapsed .nxa-log, #nxa-dock.collapsed .nxa-chips, #nxa-dock.collapsed .nxa-opts { display: none; }
+    #nxa-dock.collapsed .nxa-bar { border-top: none; }
+    .nxa-handle { position: absolute; left: 50%; top: -15px; transform: translateX(-50%); z-index: 2; height: 22px; min-width: 64px; padding: 0 12px;
+        display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 12px; cursor: pointer;
+        border: 1px solid var(--border-color, rgba(0,0,0,.14)); background: var(--card-bg, #fff); color: inherit; box-shadow: 0 -3px 10px rgba(15,23,42,.12);
+        font: 700 11px/1 system-ui, sans-serif; }
+    [data-theme="dark"] .nxa-handle { background: #121418; border-color: #2a2f38; }
+    .nxa-handle svg { width: 16px; height: 16px; transition: transform .2s; }
+    #nxa-dock:not(.collapsed) .nxa-handle svg { transform: rotate(180deg); }
+    .nxa-handle:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+    .nxa-handle .dot { width: 7px; height: 7px; border-radius: 50%; background: #6366f1; display: none; }
+    .nxa-handle.new .dot { display: inline-block; }
+    .nxa-head > *, .nxa-log { border-radius: 0; }
+    .nxa-head { border-radius: 18px 18px 0 0; }
     .nxa-head { display: flex; align-items: center; gap: 8px; padding: 7px 8px 6px 12px; border-bottom: 1px solid var(--border-color, rgba(0,0,0,.08)); }
     [data-theme="dark"] .nxa-head { border-color: #2a2f38; }
     .nxa-orb { width: 26px; height: 26px; border-radius: 50%; flex: none; position: relative;
@@ -194,6 +212,7 @@
         dock.setAttribute('role', 'region');
         dock.dataset.mode = 'ready';
         dock.innerHTML = `
+            <button type="button" class="nxa-handle" aria-expanded="false"><span class="dot"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
             <div class="nxa-head">
                 <div class="nxa-orb" aria-hidden="true"></div>
                 <div class="nxa-titles"><div class="nxa-title"></div><div class="nxa-status"></div></div>
@@ -220,6 +239,8 @@
         live = dock.querySelector('.nxa-sr');
         chipsEl = dock.querySelector('.nxa-chips');
         dock.querySelector('.nxa-close').addEventListener('click', close);
+        dock.querySelector('.nxa-handle').addEventListener('click', () => setExpanded(dock.classList.contains('collapsed')));
+        dock.classList.add('collapsed');
         dock.querySelector('form').addEventListener('submit', e => {
             e.preventDefault();
             const v = input.value.trim();
@@ -275,8 +296,11 @@
         dock.setAttribute('aria-label', t('title'));
         dock.querySelector('.nxa-title').textContent = t('title');
         dock.querySelector('.nxa-close').setAttribute('aria-label', t('close'));
-        input.placeholder = t('placeholder');
+        paintPlaceholder();
         input.setAttribute('aria-label', t('placeholder'));
+        const h = dock.querySelector('.nxa-handle');
+        h.setAttribute('aria-label', dock.classList.contains('collapsed') ? t('expand') : t('collapse'));
+        h.title = h.getAttribute('aria-label');
         dock.querySelector('[data-pref="voice"]').textContent = '🔊 ' + t('voice');
         dock.querySelector('[data-pref="detail"]').textContent = '📖 ' + t('detail');
         dock.querySelectorAll('[data-pref]').forEach(b => b.setAttribute('aria-pressed', String(!!prefs[b.dataset.pref])));
@@ -298,9 +322,25 @@
         micBtn.title = micBtn.getAttribute('aria-label');
         if (btn) btn.classList.toggle('mic', !!prefs.mic);
     }
+    // Open / close the conversation above the bar (also by voice: "extend yourself", "unextend")
+    function setExpanded(on) {
+        dock.classList.toggle('collapsed', !on);
+        document.documentElement.classList.toggle('nxa-exp', !!on);
+        const h = dock.querySelector('.nxa-handle');
+        h.setAttribute('aria-expanded', String(!!on));
+        h.setAttribute('aria-label', on ? t('collapse') : t('expand'));
+        h.title = h.getAttribute('aria-label');
+        if (on) { h.classList.remove('new'); log.scrollTop = log.scrollHeight; }
+        paintPlaceholder();
+    }
+    function paintPlaceholder() {
+        const m = dock.dataset.mode;
+        input.placeholder = dock.classList.contains('collapsed') && m && m !== 'ready' ? (t(m) || t('placeholder')) : t('placeholder');
+    }
     function setMode(mode) {
         dock.dataset.mode = mode;
         statusEl.textContent = t(mode) || '';
+        if (input) paintPlaceholder();
         dock.querySelector('.nxa-stop').hidden = !(mode === 'working' || mode === 'thinking' || mode === 'speaking');
     }
 
@@ -334,6 +374,7 @@
         save();
         renderLog();
         if (role === 'ai') live.textContent = text;
+        if (role !== 'user' && dock.classList.contains('collapsed')) dock.querySelector('.nxa-handle').classList.add('new');
     }
 
     // ---------- open / close ----------
@@ -342,6 +383,7 @@
         save();
         dock.classList.add('show');
         document.documentElement.classList.add('nxa-open');
+        setExpanded(false);
         paint();
         if (fromClick) setTimeout(() => input.focus(), 60);
         if (fromClick && !state.history.length && prefs.voice) speak(t('hello'));
@@ -352,7 +394,7 @@
         state.pending = null;
         save();
         dock.classList.remove('show');
-        document.documentElement.classList.remove('nxa-open');
+        document.documentElement.classList.remove('nxa-open', 'nxa-exp');
         hideCursor();
         paint();
         btn.focus();
@@ -619,6 +661,7 @@
                 if (['click', 'type', 'select', 'check', 'point'].includes(a.do) && (!el || !document.contains(el))) {
                     done.push(`${a.do} ${a.id}: element not found`); continue;
                 }
+                if (a.do === 'expand' || a.do === 'collapse') { setExpanded(a.do === 'expand'); done.push(a.do === 'expand' ? 'opened the conversation' : 'made the assistant small'); continue; }
                 if (a.do === 'point') { await moveTo(el); unmark(el); done.push(`pointed at ${name}`); }
                 else if (a.do === 'click') {
                     await moveTo(el); ripple(); await sleep(150);
@@ -746,6 +789,7 @@
         afterReply();
     }
     function confirmFirst(actions, keepGoing, step) {
+        setExpanded(true);
         askBox = document.createElement('div');
         askBox.className = 'nxa-ask';
         askBox.innerHTML = `<button type="button" class="nxa-go">${esc(t('yes'))}</button><button type="button" class="nxa-go no">${esc(t('no'))}</button>`;
@@ -769,6 +813,14 @@
             const no = /^(no|nope|don'?t|cancel|stop|വേണ്ട|ഇല്ല)\b/i.test(text.trim());
             if (yes || no) { add('user', text); confirmFirst.answer(yes); return; }
             askBox = null;
+        }
+        const cmd = text.trim().toLowerCase().replace(/[.!?,]+/g, '').replace(/-/g, ' ').replace(/\s+/g, ' ').replace(/^(please|hey neutrix|neutrix|ok|okay)\s+/, '').replace(/\s+please$/, '');
+        const WHO = '(?:(?:the|my|this) )?(yourself|urself|you|neutrix assistant|neutrix|assistant|panel|chat|window|it)';
+        if (new RegExp(`^(un ?extend|un ?expand|collapse|minimi[sz]e|shrink|hide|fold|close up|go small|get small|make ${WHO} small(er)?|smaller)( ${WHO})?( down)?$`).test(cmd) || /^(ചെറുതാക്കൂ|ചുരുക്കൂ)/.test(cmd)) {
+            add('user', text); setExpanded(false); return;
+        }
+        if (new RegExp(`^(extend|expand|un ?collapse|unfold|open( up)?|show|maximi[sz]e|enlarge|make ${WHO} (big|bigger|large)|bigger)( ${WHO})?( up)?$`).test(cmd) || /^(വലുതാക്കൂ|തുറക്കൂ)/.test(cmd)) {
+            add('user', text); setExpanded(true); return;
         }
         if (/^(stop|cancel|be quiet|shut up|നിർത്ത്|നിർത്തൂ)\.?$/i.test(text.trim())) { add('user', text); stopAll(); add('ai', t('stopped')); return; }
         if (busy) stopFlag = true;

@@ -76,6 +76,8 @@ To act, return steps in "actions" (they run in order, with a visible pointer mov
   {"do": "go", "page": "tracking.html"}              (open a page of this website)
   {"do": "back"}
   {"do": "point", "id": 3}                           (just move the pointer to show the user where something is)
+  {"do": "expand"} / {"do": "collapse"}             (open / hide your own conversation panel, if the user asks to "extend" or
+                                                     "unextend" you; you start small, showing only the type/mic bar)
 Use ONLY ids from the snapshot. After your steps the page is looked at again and you are called once more with
 what happened: set "continue": true when you still need to look at the page to finish the task (for example after
 opening another page, or after a click that changes the screen). Set "continue": false when the task is done or
@@ -128,7 +130,7 @@ def _parse(raw: str) -> dict:
     data = json.loads(m.group(0) if m else raw)
     acts = []
     for a in (data.get("actions") or [])[:6]:
-        if isinstance(a, dict) and a.get("do") in {"click", "type", "select", "check", "scroll", "go", "back", "point"}:
+        if isinstance(a, dict) and a.get("do") in {"click", "type", "select", "check", "scroll", "go", "back", "point", "expand", "collapse"}:
             acts.append(a)
     return {
         "say": str(data.get("say") or "").strip(),
