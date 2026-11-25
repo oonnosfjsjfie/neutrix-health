@@ -287,6 +287,7 @@
     }
 
     async function signOut() {
+        stopLive();
         try {
             await Promise.race([flush(), new Promise(r => setTimeout(r, 6000))]);
         } catch (e) { console.warn('[cloud] last upload failed', e); }
@@ -296,6 +297,142 @@
         } catch (e) {}
         clearLocalData();
     }
+
+    // ---------- Live sync: changes made on another device (website <-> app) arrive within seconds ----------
+    let liveStop = null;
+    async function startLive(user) {
+        if (liveStop || !user) return;
+        try {
+            const { db } = await init();
+            const since = Number(rawGet.call(localStorage, 'neutrixCloudPull') || 0) || Date.now();
+            liveStop = storeCol(db, user.uid)
+                .where('t', '>', firebase.firestore.Timestamp.fromMillis(since))
+                .onSnapshot(async snap => {
+                    if (snap.metadata.hasPendingWrites) return;          // our own upload echoing back
+                    const dirty = getDirty();
+                    let latest = Number(rawGet.call(localStorage, 'neutrixCloudPull') || 0);
+                    let changed = 0;
+                    for (const ch of snap.docChanges()) {
+                        if (ch.type === 'removed') continue;
+                        const data = ch.doc.data({ serverTimestamps: 'estimate' });
+                        if (data.t && data.t.toMillis) latest = Math.max(latest, data.t.toMillis());
+                        const key = data.k;
+                        if (!isSynced(key) || dirty[key]) continue;
+                        const value = await readValue(db, user.uid, ch.doc.id, data);
+                        if (value === rawGet.call(localStorage, key)) continue;
+                        applying = true;
+                        try {
+                            if (value === null) rawRemove.call(localStorage, key);
+                            else rawSet.call(localStorage, key, value);
+                        } finally { applying = false; }
+                        changed++;
+                    }
+                    if (latest) rawSet.call(localStorage, 'neutrixCloudPull', String(latest));
+                    if (changed) showUpdated();
+                }, err => { console.warn('[cloud] live sync paused', err); liveStop = null; });
+        } catch (e) { console.warn('[cloud] live sync', e); }
+    }
+    function stopLive() { if (liveStop) { try { liveStop(); } catch (e) {} liveStop = null; } }
+
+    // Show the new data: refresh the page now, unless the person is in the middle of something
+    function busy() {
+        const el = document.activeElement;
+        if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.type !== 'checkbox' && el.type !== 'radio') return true;
+        if (document.querySelector('.cal-modal, .vis-modal, .nx-cam-modal, .nx-fb-modal, dialog[open]')) return true;
+        const chat = document.querySelector('.chat-panel');
+        if (chat && !chat.classList.contains('hidden') && getComputedStyle(chat).display !== 'none') return true;
+        if (window.neutrixBusy) return true;                     // a page can set this while it works (exercise camera, uploads)
+        return false;
+    }
+    let updateTimer = null;
+    function showUpdated() {
+        clearTimeout(updateTimer);
+        updateTimer = setTimeout(() => {
+            if (!busy()) { location.reload(); return; }
+            notice(L('updated'), L('refresh'), () => location.reload(), 0);
+        }, 600);
+    }
+
+    // ---------- Offline mode: banner, and a clear message instead of AI errors ----------
+    const TXT = {
+        English: {
+            offline: 'You\'re offline. Everything you add is saved on this device and will sync when you\'re back online.',
+            online: 'Back online. Syncing your changes…',
+            updated: 'New changes from your other device.',
+            refresh: 'Refresh',
+            needsNet: 'You\'re offline. This needs the internet: the AI can\'t work without it. Your saved summary, medicines and readings still work.'
+        },
+        Malayalam: {
+            offline: 'നിങ്ങൾ ഓഫ്‌ലൈനാണ്. നിങ്ങൾ ചേർക്കുന്നതെല്ലാം ഈ ഉപകരണത്തിൽ സേവ് ചെയ്യും, ഇന്റർനെറ്റ് തിരിച്ചുവരുമ്പോൾ സിങ്ക് ചെയ്യും.',
+            online: 'ഓൺലൈനായി. മാറ്റങ്ങൾ സിങ്ക് ചെയ്യുന്നു…',
+            updated: 'നിങ്ങളുടെ മറ്റൊരു ഉപകരണത്തിൽ നിന്നുള്ള പുതിയ മാറ്റങ്ങൾ.',
+            refresh: 'പുതുക്കുക',
+            needsNet: 'നിങ്ങൾ ഓഫ്‌ലൈനാണ്. ഇതിന് ഇന്റർനെറ്റ് വേണം: AI ഇന്റർനെറ്റ് ഇല്ലാതെ പ്രവർത്തിക്കില്ല. സേവ് ചെയ്ത സംഗ്രഹം, മരുന്നുകൾ, റീഡിംഗുകൾ എന്നിവ ഇപ്പോഴും പ്രവർത്തിക്കും.'
+        }
+    };
+    const L = k => {
+        let lang = 'English';
+        try { lang = rawGet.call(localStorage, 'neutrixLang') || 'English'; } catch (e) {}
+        return (TXT[lang] || TXT.English)[k];
+    };
+
+    let bar = null;
+    function notice(text, action, onAction, hideAfter) {
+        if (!document.body) { document.addEventListener('DOMContentLoaded', () => notice(text, action, onAction, hideAfter)); return; }
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.className = 'nx-net-bar';
+            bar.setAttribute('role', 'status');
+            document.body.appendChild(bar);
+            const st = document.createElement('style');
+            st.textContent = `.nx-net-bar { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 6000; width: max-content; max-width: min(560px, calc(100vw - 24px)); box-sizing: border-box;
+                display: flex; gap: 12px; align-items: center; padding: 10px 16px; border-radius: 14px; background: #111; color: #fff; font: 600 13.5px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+                .nx-net-bar[hidden] { display: none; }
+                .nx-net-bar.off { background: #7c2d12; }
+                .nx-net-bar button { flex-shrink: 0; border: none; border-radius: 20px; padding: 6px 14px; background: #fff; color: #111; font: inherit; cursor: pointer; }
+                body.nx-offline .chat-fab { bottom: 84px; }`;
+            document.head.appendChild(st);
+        }
+        bar.hidden = false;
+        bar.classList.toggle('off', navigator.onLine === false);
+        bar.innerHTML = '';
+        const span = document.createElement('span');
+        span.textContent = text;
+        bar.appendChild(span);
+        if (action) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = action;
+            b.addEventListener('click', onAction);
+            bar.appendChild(b);
+        }
+        clearTimeout(bar._t);
+        if (hideAfter) bar._t = setTimeout(() => { bar.hidden = true; }, hideAfter);
+    }
+    function showNetState() {
+        const off = navigator.onLine === false;
+        document.documentElement.classList.toggle('nx-offline', off);
+        if (document.body) document.body.classList.toggle('nx-offline', off);
+        if (off) notice(L('offline'), null, null, 0);
+        else if (bar && !bar.hidden && bar.classList.contains('off')) notice(L('online'), null, null, 3000);
+    }
+    window.addEventListener('offline', showNetState);
+    window.addEventListener('online', showNetState);
+    if (navigator.onLine === false) showNetState();
+
+    // AI calls while offline: answer straight away with a clear message (pages show "message")
+    const rawFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+        try {
+            const url = typeof input === 'string' ? input : (input && input.url) || '';
+            if (navigator.onLine === false && /\/api\//.test(url)) {
+                const body = JSON.stringify({ ok: false, offline: true, message: L('needsNet'), answer: L('needsNet') });
+                return Promise.resolve(new Response(body, { status: 503, headers: { 'Content-Type': 'application/json' } }));
+            }
+        } catch (e) {}
+        return rawFetch(input, init);
+    };
 
     // ---------- On every app page ----------
     function startPageSync() {
@@ -311,17 +448,32 @@
                 return;
             }
             saveProfile(user);
-            await flush();
-            const changed = await pull();
-            syncContact(user).catch(e => console.warn('[cloud] contact card', e));
-            // Data arrived from another device: reload once so the page shows it
-            if (changed > 0 && !sessionStorage.getItem('neutrixCloudReloaded')) {
-                sessionStorage.setItem('neutrixCloudReloaded', '1');
-                location.reload();
-            } else {
+            if (navigator.onLine !== false) {
+                await flush();
+                const changed = await pull();
+                syncContact(user).catch(e => console.warn('[cloud] contact card', e));
+                // Data arrived from another device: reload once so the page shows it
+                if (changed > 0 && !sessionStorage.getItem('neutrixCloudReloaded')) {
+                    sessionStorage.setItem('neutrixCloudReloaded', '1');
+                    location.reload();
+                    return;
+                }
                 sessionStorage.removeItem('neutrixCloudReloaded');
             }
+            startLive(user);
         }).catch(e => console.warn('[cloud] sync failed', e));
+
+        // Back online: send what was saved offline, then fetch what changed elsewhere
+        window.addEventListener('online', async () => {
+            try {
+                const user = await currentUser();
+                if (!user) return;
+                await flush();
+                const changed = await pull();
+                if (changed > 0) showUpdated();
+                startLive(user);
+            } catch (e) { console.warn('[cloud] resync failed', e); }
+        });
 
         window.addEventListener('pagehide', () => { flush().catch(() => {}); });
         document.addEventListener('visibilitychange', () => {
@@ -348,7 +500,8 @@
         saveProfile,
         cachedProfile,
         signInUrl,
-        syncContact
+        syncContact,
+        notice
     };
 
     startPageSync();

@@ -27,14 +27,19 @@ prescribe, or replace a doctor.
 
 ## Android app
 - Download: https://github.com/oonnosfjsjfie/neutrix-health/releases/latest/download/NeutrixHealth.apk (also the 📱 button on the website).
-- It is a Trusted Web Activity: the app opens the live website full screen using Chrome on the phone, so every website
-  change shows up in the app straight away. A new APK is only needed if the app itself changes (name, icon, start page).
-- Code in `android/`. GitHub Actions (`.github/workflows/android.yml`) builds the APK whenever `android/` changes, or by hand
+- A real app (Capacitor, folder `app/`): its own app window (no browser bar) showing the same screens as the website, so
+  every website update reaches the app at once. Downloads open in the right app, outside links open in an in-app browser,
+  the Back button works, and the camera works.
+- **Offline mode** (app and website): after the first launch with internet, every page is kept on the device (`sw.js`).
+  Without internet everything still opens; ticks, readings and profile changes are saved and sent when the internet
+  returns. AI features say they need the internet.
+- **Two-way sync**: a change on the phone shows on the website within seconds, and the other way round
+  (`neutrix-cloud.js`, Firestore live updates).
+- GitHub Actions (`.github/workflows/android.yml`) builds the APK whenever `app/` changes, or by hand
   (Actions → Build Android app → Run workflow), and publishes it under Releases → `android-latest`.
-- Signing: repo secrets `NEUTRIX_KEYSTORE_BASE64` and `NEUTRIX_KEYSTORE_PASSWORD`. Keep the key file safe; it is needed for
-  every future update (and for Google Play). Without the secrets the build uses a temporary key and shows an address bar.
-- `/.well-known/assetlinks.json` (served by the backend from `android/app-link.json`) tells Android the app and the website belong together.
-- The website is also installable from Chrome (⋮ → Add to Home screen) thanks to `manifest.webmanifest` and `sw.js`.
+- GitHub secrets: `NEUTRIX_KEYSTORE_BASE64` + `NEUTRIX_KEYSTORE_PASSWORD` (signing key; keep the key file safe) and
+  `GOOGLE_SERVICES_JSON_BASE64` (Google sign-in in the app; without it the app uses email sign-in).
+- The website is also installable from Chrome (⋮ → Add to Home screen).
 
 ## Run it on your computer
 1. Create `backend/.env` (copy `backend/.env.example`) and fill in your own values.

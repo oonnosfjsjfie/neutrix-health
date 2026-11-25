@@ -37,6 +37,8 @@ function setMode(next) {
 $('tabSignIn').addEventListener('click', () => setMode('signin'));
 $('tabSignUp').addEventListener('click', () => setMode('signup'));
 
+const OFFLINE_SIGNIN = 'You\'re offline. Connect to the internet to sign in. After that, Neutrix also works without internet.';
+
 // Firebase error codes → plain words
 function friendly(err) {
     const code = (err && err.code) || '';
@@ -54,6 +56,8 @@ function friendly(err) {
         'auth/unauthorized-domain': 'This website address is not allowed in Firebase yet (Authentication → Settings → Authorized domains).',
         'auth/operation-not-allowed': 'This sign-in method is not turned on in Firebase yet.',
         'auth/network-request-failed': 'No internet connection. Check your connection and try again.',
+        'neutrix/google-not-ready': 'Google sign-in in the app is still being set up. For now, use email and password (on the website you can set one with "Forgot password?").',
+        'neutrix/cancelled': 'Google sign-in was cancelled.',
         'auth/account-exists-with-different-credential': 'This email is already registered with another sign-in method. Try email and password.'
     };
     return map[code] || (err && err.message) || 'Something went wrong. Please try again.';
@@ -96,6 +100,7 @@ if (!NeutrixCloud.configured) {
 // ---------- Email + password ----------
 $('signInForm').addEventListener('submit', async e => {
     e.preventDefault();
+    if (navigator.onLine === false) { show('error', OFFLINE_SIGNIN); return; }
     busy(true);
     show();
     try {
@@ -116,6 +121,7 @@ $('signUpForm').addEventListener('submit', async e => {
         show('error', 'The two passwords do not match.');
         return;
     }
+    if (navigator.onLine === false) { show('error', OFFLINE_SIGNIN); return; }
     busy(true);
     show();
     try {
@@ -150,10 +156,18 @@ $('googleBtn').addEventListener('click', async () => {
     busy(true);
     show();
     try {
+        if (navigator.onLine === false) { show('error', OFFLINE_SIGNIN); busy(false); return; }
         const { auth } = await NeutrixCloud.init();
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        const cred = await auth.signInWithPopup(provider);
+        let cred;
+        if (window.NxNative && NxNative.isApp) {
+            // Inside the Android app Google blocks its web sign-in window, so the phone's own Google sign-in is used
+            const idToken = await NxNative.googleIdToken();
+            cred = await auth.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(idToken));
+        } else {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            cred = await auth.signInWithPopup(provider);
+        }
         const isNew = !!(cred.additionalUserInfo && cred.additionalUserInfo.isNewUser);
         await finish(cred.user, cred.user.displayName, isNew);
     } catch (err) {

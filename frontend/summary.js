@@ -113,6 +113,7 @@ document.getElementById('processBtn').addEventListener('click', async () => {
     showStatus('info', 'loading');
     resultOutput.classList.add('hidden');
     processBtn.disabled = true;
+    window.neutrixBusy = true;   // don't refresh for sync during an upload
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 120000);
@@ -182,6 +183,7 @@ document.getElementById('processBtn').addEventListener('click', async () => {
         }
     } finally {
         processBtn.disabled = false;
+        window.neutrixBusy = false;
     }
 });
 
@@ -230,6 +232,7 @@ document.getElementById('updateBtn').addEventListener('click', async () => {
 
     showStatus('info', 'updateLoading');
     updateBtn.disabled = true;
+    window.neutrixBusy = true;   // don't refresh for sync during an upload
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 120000);
@@ -300,6 +303,7 @@ document.getElementById('updateBtn').addEventListener('click', async () => {
         }
     } finally {
         updateBtn.disabled = false;
+        window.neutrixBusy = false;
     }
 });
 
@@ -325,6 +329,7 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
 
     showStatus('info', 'compareLoading');
     compareBtn.disabled = true;
+    window.neutrixBusy = true;   // don't refresh for sync during an upload
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 120000);
@@ -369,6 +374,7 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
         }
     } finally {
         compareBtn.disabled = false;
+        window.neutrixBusy = false;
     }
 });
 

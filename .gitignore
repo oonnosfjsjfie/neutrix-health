@@ -17,3 +17,9 @@ android/app/build/
 android/local.properties
 *.jks
 *.keystore
+
+# Android app (Capacitor): generated on GitHub Actions, never committed
+app/node_modules/
+app/android/
+app/out/
+google-services.json

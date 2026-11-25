@@ -1,0 +1,22 @@
+{
+  "name": "neutrix-health-app",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Neutrix Health Android app (Capacitor). Opens the live Neutrix website in its own app window, works offline, syncs with the website.",
+  "scripts": {
+    "setup:android": "npx cap add android && npx @capacitor/assets generate --android --iconBackgroundColor '#000000' --iconBackgroundColorDark '#000000' --splashBackgroundColor '#000000' --splashBackgroundColorDark '#000000' && node scripts/patch-android.js && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/browser": "^6.0.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/filesystem": "^6.0.1",
+    "@capacitor/share": "^6.0.2",
+    "@capacitor/splash-screen": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2"
+  }
+}

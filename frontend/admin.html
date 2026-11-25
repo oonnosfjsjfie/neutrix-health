@@ -5,11 +5,13 @@
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#000000">
-    <script src="pwa.js?v=20261030a" defer></script>
+    <script src="pwa.js?v=20261125a" defer></script>
+    <script src="native-app.js?v=20261125b"></script>
+    <script src="app-shell.js?v=20261125a"></script>
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts (must load first) -->
     <script src="firebase-config.js?v=20261030c"></script>
-    <script src="neutrix-cloud.js?v=20261030c"></script>
+    <script src="neutrix-cloud.js?v=20261125a"></script>
     <script>
         // Signed-in users only (the admin check itself happens below, and in the Firestore rules)
         if (localStorage.getItem('neutrix_authenticated') !== 'true') location.replace('signin.html?next=admin.html');

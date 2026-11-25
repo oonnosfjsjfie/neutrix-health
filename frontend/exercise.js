@@ -653,6 +653,7 @@
     }
 
     async function startCamera() {
+        window.neutrixBusy = true;   // don't refresh the page for sync while the camera is on
         $('startBtn').disabled = true;
         try {
             stageMessage('⏳', x('loadingModel'));
@@ -701,6 +702,7 @@
     }
 
     function stopCamera() {
+        window.neutrixBusy = false;
         running = false;
         clearInterval(restTimer);
         resting = false;

@@ -1,0 +1,27 @@
+{
+  "appId": "com.neutrinos.neutrixhealth",
+  "appName": "Neutrix Health",
+  "webDir": "www",
+  "server": {
+    "url": "https://neutrix-health.onrender.com/issues.html?source=app",
+    "errorPath": "offline.html",
+    "androidScheme": "https",
+    "allowNavigation": ["neutrix-health.onrender.com"]
+  },
+  "android": {
+    "backgroundColor": "#000000",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#000000",
+      "showSpinner": false
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com"]
+    }
+  }
+}
