@@ -17,11 +17,14 @@ const manifestPath = 'app/src/main/AndroidManifest.xml';
 let manifest = read(manifestPath);
 const perms = [
     '<uses-permission android:name="android.permission.CAMERA" />',
-    '<uses-feature android:name="android.hardware.camera" android:required="false" />'
+    '<uses-feature android:name="android.hardware.camera" android:required="false" />',
+    // Neutrix Assistant: talk to it (speech recognition) and it talks back (text to speech)
+    '<uses-permission android:name="android.permission.RECORD_AUDIO" />',
+    '<queries><intent><action android:name="android.speech.RecognitionService" /></intent><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>'
 ];
 perms.forEach(p => { if (!manifest.includes(p)) manifest = manifest.replace('</manifest>', `    ${p}\n</manifest>`); });
 write(manifestPath, manifest);
-console.log('patch-android: camera permission added');
+console.log('patch-android: camera + microphone permissions added');
 
 // ---------- app/build.gradle: version + signing ----------
 const gradlePath = 'app/build.gradle';

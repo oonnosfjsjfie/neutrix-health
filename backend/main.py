@@ -190,6 +190,24 @@ def ask_question(req: AskRequest):
     return {"answer": answer, "info": dict(ai_engine.LAST_CHAT_INFO)}
 
 
+# ---------- Neutrix Assistant (voice + text helper that can use the website) ----------
+class AssistantRequest(BaseModel):
+    message: str = ""
+    history: list = []
+    page: dict = {}
+    results: str = ""
+    detail: bool = False
+    language: str = "English"
+    signed_in: bool = False
+    device: str = "web"
+
+
+@app.post("/api/assistant")
+def assistant(req: AssistantRequest):
+    from services.assistant import assistant_turn
+    return assistant_turn(req.model_dump())
+
+
 # ---------- Medicine plan, check-ups, schedule ----------
 class PlanRequest(BaseModel):
     report_text: str

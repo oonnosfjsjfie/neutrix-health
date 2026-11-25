@@ -36,6 +36,9 @@ jobs:
           npm install --no-audit --no-fund
           # Opens downloaded PDFs and calendar files in the right app (optional: the app falls back to Share)
           npm install --no-audit --no-fund @capacitor-community/file-opener@^6 || echo "::warning::file-opener not installed"
+          # Neutrix Assistant voice: listen (speech recognition) and talk (text to speech)
+          npm install --no-audit --no-fund @capacitor-community/speech-recognition@^6 || echo "::warning::speech-recognition not installed"
+          npm install --no-audit --no-fund @capacitor-community/text-to-speech@^5 || echo "::warning::text-to-speech not installed"
 
       - name: Google sign-in (only if the google-services.json secret is set)
         env:

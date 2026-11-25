@@ -20,6 +20,7 @@ prescribe, or replace a doctor.
 | Ask Doctor | Write an update and email it to the doctor. |
 | Overall Progress Report | One AI report for the doctor from everything recorded (adherence, readings, symptoms, exercise, report changes), as a PDF. |
 | Ask Neutrix | Chat that knows the website and your data; draws charts of your readings and shows the pictures from your reports. |
+| ✦ Neutrix Assistant | Button at the top right of every page (Alt+A). Talk or type; it answers out loud in simple words (or in detail when asked) and can use the website for you: a pointer moves on the screen and clicks, types, scrolls and opens pages. Made for people with disabilities; casual chat works too. Asks before deleting, sending or signing out. No pop-ups: it sits in a panel and the page stays usable. |
 | 🖼 Show visual representation | On the AI Patient Reports Portal and My Improvements, only when a report has pictures (X-ray, scan, ECG): the picture with numbered labels and a simple AI explanation. |
 | Patient Profile | Next → Next → Save: patient info (name, phone, email), medical baseline, optional caregiver. Take or upload a photo. |
 | Feedback | ⚑ Report button on every page (except Admin) and a skippable rating pop-up on the website every 8 days. |
@@ -57,6 +58,7 @@ prescribe, or replace a doctor.
 | Name | Used for |
 |---|---|
 | `GEMINI_API_KEY` | All AI features |
+| `NEUTRIX_ASSISTANT_API_KEY` | Optional: a separate Gemini key just for the Neutrix Assistant (uses `GEMINI_API_KEY` if not set) |
 | `FIREBASE_CONFIG` | Accounts (the web config snippet; also gives the server the project id) |
 | `NEUTRIX_MAIL_WEBHOOK`, `NEUTRIX_MAIL_TOKEN` | Sending email (Ask Doctor, Admin emails) via Google Apps Script (`email-script/Code.gs`) |
 | `FIREBASE_SERVICE_ACCOUNT` | Only for **Delete user** in the Admin page (Firebase → Project settings → Service accounts → Generate new private key; paste the JSON). Keep it secret. |
