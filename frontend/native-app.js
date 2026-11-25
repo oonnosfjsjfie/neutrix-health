@@ -102,6 +102,7 @@
 
     // ---------- Back button ----------
     function closeTopPopup() {
+        if (window.NxCloseUpdate && NxCloseUpdate()) return true;
         if (window.NxAppUI && NxAppUI.closeSheet && NxAppUI.closeSheet()) return true;
         const sel = '.vis-modal, .cal-modal, .nx-cam-modal, .nx-fb-modal';
         if (document.querySelector(sel)) {
@@ -124,6 +125,75 @@
             if (first) P.App.exitApp(); else history.back();
         });
     }
+
+    // ---------- "Update available" message ----------
+    // Each app build publishes "versionCode: N" in the GitHub release notes. When that number is higher than
+    // this app's own build number, the user is asked to update: the button opens the download page
+    // (get-app.html) in the phone's browser, which tells them to delete the old app and install the new one.
+    const RELEASE_API = 'https://api.github.com/repos/oonnosfjsjfie/neutrix-health/releases/tags/android-latest';
+    const GET_APP_URL = location.origin + '/get-app.html';
+    const SNOOZE_KEY = 'nxUpdateSnooze';
+    let checking = false, lastCheck = 0;
+    async function checkForUpdate() {
+        if (checking || !navigator.onLine || !P.App || !P.App.getInfo) return;
+        if (Date.now() - lastCheck < 30 * 60 * 1000) return;          // at most every 30 minutes
+        checking = true; lastCheck = Date.now();
+        try {
+            const info = await P.App.getInfo();
+            const mine = parseInt(info && info.build, 10);
+            const rel = await fetch(RELEASE_API, { cache: 'no-store' }).then(r => r.ok ? r.json() : null);
+            const m = rel && /versionCode:\s*(\d+)/.exec(rel.body || '');
+            const latest = m ? parseInt(m[1], 10) : 0;
+            const nameMatch = rel && /versionName:\s*([\w.]+)/.exec(rel.body || '');
+            if (!mine || !latest || latest <= mine) return;
+            let snooze = {};
+            try { snooze = JSON.parse(sessionStorage.getItem(SNOOZE_KEY) || '{}'); } catch (e) {}
+            if (snooze.v === latest) return;                           // "Later" pressed for this version
+            showUpdate(latest, nameMatch ? nameMatch[1] : '');
+        } catch (e) {
+            console.warn('[app] update check', e);
+        } finally {
+            checking = false;
+        }
+    }
+    function showUpdate(latest, name) {
+        if (document.getElementById('nx-update')) return;
+        const style = document.createElement('style');
+        style.textContent = `
+            #nx-update { position: fixed; inset: 0; z-index: 2147483000; background: rgba(0,0,0,.6); display: flex; align-items: flex-end; justify-content: center; }
+            #nx-update .box { background: #141414; color: #f5f5f5; width: 100%; max-width: 480px; border-radius: 22px 22px 0 0; padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+                              font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; box-shadow: 0 -10px 40px rgba(0,0,0,.5); animation: nxUp .25s ease-out; }
+            @keyframes nxUp { from { transform: translateY(100%); } to { transform: none; } }
+            #nx-update h3 { margin: 0 0 6px; font-size: 19px; }
+            #nx-update p { margin: 0 0 12px; color: #b5b5b5; font-size: 14.5px; line-height: 1.45; }
+            #nx-update .warn { background: #2a1a06; border: 1px solid #b45309; color: #fcd34d; border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.4; margin-bottom: 16px; }
+            #nx-update .row { display: flex; gap: 10px; }
+            #nx-update button { flex: 1; padding: 13px; border-radius: 26px; font-size: 15.5px; font-weight: 700; border: 1px solid #333; background: transparent; color: #ddd; }
+            #nx-update button.go { background: #fff; color: #000; border-color: #fff; }`;
+        const wrap = document.createElement('div');
+        wrap.id = 'nx-update';
+        wrap.innerHTML = `<div class="box" role="dialog" aria-labelledby="nx-up-t">
+            <h3 id="nx-up-t">Update available${name ? ' · v' + name : ''}</h3>
+            <p>A new version of the Neutrix app is ready with the latest changes.<br>പുതിയ അപ്ഡേറ്റ് ലഭ്യമാണ്.</p>
+            <div class="warn">⚠️ <b>Delete the current (old) Neutrix app first</b>, then install the new one. Your data is safe in your account and comes back when you sign in.</div>
+            <div class="row"><button type="button" data-later>Later</button><button type="button" class="go" data-go>Update app</button></div>
+        </div>`;
+        document.head.appendChild(style);
+        document.body.appendChild(wrap);
+        const close = () => { wrap.remove(); style.remove(); };
+        wrap.querySelector('[data-later]').onclick = () => {
+            try { sessionStorage.setItem(SNOOZE_KEY, JSON.stringify({ v: latest })); } catch (e) {}
+            close();
+        };
+        wrap.querySelector('[data-go]').onclick = () => {
+            if (P.Browser) P.Browser.open({ url: GET_APP_URL }); else location.href = GET_APP_URL;
+        };
+        window.NxCloseUpdate = () => { if (document.getElementById('nx-update')) { wrap.querySelector('[data-later]').click(); return true; } return false; };
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(checkForUpdate, 1500));
+    else setTimeout(checkForUpdate, 1500);
+    window.addEventListener('online', () => setTimeout(checkForUpdate, 1500));
+    if (P.App && P.App.addListener) P.App.addListener('resume', () => { lastCheck = 0; checkForUpdate(); });
 
     // Small message at the bottom (uses the sync bar when available)
     function alertBar(text) {

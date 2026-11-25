@@ -91,8 +91,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # versionCode/versionName lines are read by the app (native-app.js) to show "Update available"
+          VC=$((100 + GITHUB_RUN_NUMBER)); VN="2.${GITHUB_RUN_NUMBER}"
           gh release delete android-latest --yes --cleanup-tag || true
           gh release create android-latest out/NeutrixHealth.apk \
             --title "Neutrix Health Android app (latest)" \
-            --notes "Install on Android: download NeutrixHealth.apk, open it, and allow 'Install unknown apps' if asked. Works offline after the first launch, and syncs with the website both ways. Built from ${GITHUB_SHA::7}." \
+            --notes "Install on Android: delete the old Neutrix app first, then download NeutrixHealth.apk, open it, and allow 'Install unknown apps' if asked. Works offline after the first launch, and syncs with the website both ways. Built from ${GITHUB_SHA::7}.
+
+          versionCode: ${VC}
+          versionName: ${VN}" \
             --latest

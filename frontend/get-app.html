@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <title>Neutrix | Get the Android app</title>
+    <link rel="icon" href="assets/favicon.png">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; background: #0b0b0b; color: #f5f5f5;
+               font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 28px 16px 48px; }
+        main { max-width: 460px; margin: 0 auto; }
+        .head { text-align: center; }
+        .head img { width: 88px; height: 88px; border-radius: 20px; }
+        h1 { font-size: 24px; margin: 16px 0 6px; }
+        .ver { color: #a3a3a3; font-size: 14px; margin: 0 0 24px; min-height: 1.2em; }
+        ol { list-style: none; padding: 0; margin: 0; counter-reset: s; }
+        li { counter-increment: s; background: #161616; border: 1px solid #262626; border-radius: 16px; padding: 16px 16px 16px 60px;
+             position: relative; margin-bottom: 12px; line-height: 1.45; font-size: 15px; }
+        li::before { content: counter(s); position: absolute; left: 16px; top: 14px; width: 30px; height: 30px; border-radius: 50%;
+                     background: #fff; color: #000; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        li.warn { border-color: #b45309; background: #1f1408; }
+        li.warn::before { background: #f59e0b; }
+        li b { display: block; font-size: 16px; margin-bottom: 4px; }
+        li small { color: #a3a3a3; display: block; margin-top: 6px; }
+        .ml { color: #a3a3a3; font-size: 13px; display: block; margin-top: 4px; }
+        .dl { display: block; text-align: center; margin: 10px 0 4px; padding: 14px; border-radius: 30px; background: #fff; color: #000;
+              font-size: 17px; font-weight: 800; text-decoration: none; }
+        .back { display: block; text-align: center; color: #a3a3a3; margin-top: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+<main>
+    <div class="head">
+        <img src="assets/app/icon-192.png" alt="Neutrix Health">
+        <h1>Neutrix Health for Android</h1>
+        <p class="ver" id="ver"></p>
+    </div>
+    <ol>
+        <li class="warn">
+            <b>Delete the old Neutrix app first</b>
+            Press and hold the Neutrix icon on your phone → <b style="display:inline">Uninstall</b> (or App info → Uninstall).
+            <span class="ml">പഴയ Neutrix ആപ്പ് ആദ്യം അൺഇൻസ്റ്റാൾ ചെയ്യുക.</span>
+            <small>Your data is safe: it is saved in your Neutrix account and comes back when you sign in again.</small>
+        </li>
+        <li>
+            <b>Download the new app</b>
+            <a class="dl" id="dl" href="https://github.com/oonnosfjsjfie/neutrix-health/releases/latest/download/NeutrixHealth.apk">⬇ Download NeutrixHealth.apk</a>
+        </li>
+        <li>
+            <b>Open the downloaded file</b>
+            Tap the download when it finishes (or find it in Files → Downloads). If your phone asks, allow <b style="display:inline">Install unknown apps</b>, then tap Install.
+        </li>
+        <li>
+            <b>Open Neutrix and sign in</b>
+            Use the same account as before. Your plans, ticks and readings sync back automatically.
+        </li>
+    </ol>
+    <a class="back" href="home.html">← Back to the Neutrix website</a>
+</main>
+<script>
+    // Show which version will be downloaded (from the GitHub release the app build publishes)
+    fetch('https://api.github.com/repos/oonnosfjsjfie/neutrix-health/releases/tags/android-latest')
+        .then(r => r.ok ? r.json() : null)
+        .then(rel => {
+            if (!rel) return;
+            const m = /versionName:\s*([\w.]+)/.exec(rel.body || '');
+            const date = new Date(rel.published_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+            document.getElementById('ver').textContent = (m ? 'Version ' + m[1] + ' · ' : 'Latest version · ') + 'updated ' + date;
+        })
+        .catch(() => {});
+</script>
+</body>
+</html>
