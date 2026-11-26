@@ -54,8 +54,9 @@ def speak(text: str, voice: str = "") -> bytes:
             voice_config=types.VoiceConfig(prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice))
         ),
     )
-    models = ([_working_model] if _working_model else []) + [m for m in TTS_MODELS if m != _working_model]
+    models = ([_working_model] if _working_model else []) + [m for m in _tts_models() if m != _working_model]
     last = None
+    errors = []
     for model in models:
         try:
             r = client().models.generate_content(model=model, contents=STYLE + text, config=config)
@@ -72,6 +73,25 @@ def speak(text: str, voice: str = "") -> bytes:
             return data if "wav" in mime else _wav(data, rate)
         except Exception as e:
             last = e
+            errors.append(f"{model}: {str(e)[:120]}")
             print(f"[voice] {model}: {str(e)[:160]}")
             continue
-    raise RuntimeError(str(last))
+    raise RuntimeError(" | ".join(errors) or str(last))
+
+
+_found = None
+
+
+def _tts_models():
+    """The voice models this key can use (asks Google once), fastest first; falls back to the known names."""
+    global _found
+    if _found is None:
+        try:
+            names = [m.name.split("/")[-1] for m in client().models.list() if "tts" in (m.name or "").lower()]
+            names.sort(key=lambda n: (("pro" in n), ("preview" not in n and "flash" not in n), n), reverse=False)
+            _found = names or list(TTS_MODELS)
+            print(f"[voice] models: {_found}")
+        except Exception as e:
+            print(f"[voice] could not list models: {str(e)[:120]}")
+            _found = list(TTS_MODELS)
+    return _found
