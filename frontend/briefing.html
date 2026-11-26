@@ -314,7 +314,7 @@
 
         // ---------- Build the doctor message (always in English, for the doctor) ----------
         const issue = window.neutrixActiveIssue || {};
-        const patientName = localStorage.getItem('neutrix_patient_name') || (() => { try { return JSON.parse(localStorage.getItem('neutrix_hospital_profile') || '{}').patientName || ''; } catch (e) { return ''; } })();
+        const patientName = localStorage.getItem('neutrix_patient_name') || '';
 
         document.getElementById('briefForm').addEventListener('submit', function (e) {
             e.preventDefault();
