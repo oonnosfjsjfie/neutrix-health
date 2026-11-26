@@ -95,7 +95,7 @@
     async function getBodyMap() {
         const text = reportText();
         if (!text) return null;
-        const key = hash(text + '|' + lang());
+        const key = hash(text + '|' + lang() + '|' + bodySex());
         let saved = null;
         try { saved = window.storeGet ? storeGet('neutrixBodyMap') : null; } catch (e) {}
         if (saved && saved.key === key && saved.data) return saved.data;
@@ -104,7 +104,7 @@
             const timer = setTimeout(() => ctrl.abort(), 45000);
             const res = await fetch((window.API_BASE || '') + '/api/body-map', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
-                body: JSON.stringify({ report: text, language: lang() }) });
+                body: JSON.stringify({ report: text, language: lang(), sex: bodySex() }) });
             clearTimeout(timer);
             if (!res.ok) throw new Error('body map ' + res.status);
             const data = await res.json();
@@ -113,9 +113,16 @@
             return data;
         } catch (e) {
             console.warn('[body3d] AI body map not available, using a simple word match', e);
-            if (saved && saved.data && saved.key.endsWith('|' + lang())) return saved.data;    // an older map is better than none
+            if (saved && saved.data) return saved.data;    // an older map is better than none
             return fallbackMap(text);
         }
+    }
+
+    // The body follows the gender in the patient profile: 'male', 'female', or 'neutral' (other / not set)
+    function bodySex() {
+        let g = '';
+        try { g = String((JSON.parse(localStorage.getItem('neutrix_hospital_profile') || '{}').gender) || '').toLowerCase(); } catch (e) {}
+        return g.startsWith('f') ? 'female' : g.startsWith('m') ? 'male' : 'neutral';
     }
 
     // ---------- the real anatomy (BodyParts3D, simplified for the web: assets/body/body.bin) ----------
@@ -499,6 +506,48 @@
             this.root.add(this.organGroup);
             this.glowGroup = new THREE.Group(); this.root.add(this.glowGroup);
         }
+        // Women and 'other': no male genitals on the skin; women also get a female chest shape
+        reshapeSkin(g, sex) {
+            const a = g.attributes.position.array;
+            const smooth = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+            for (let i = 0; i < a.length; i += 3) {
+                const x = a[i], y = a[i + 1], z = a[i + 2], ax = Math.abs(x);
+                // groin: flatten everything in front of a smooth line from the pubic mound down to between the legs
+                if (y > 0.70 && y < 0.875 && ax < 0.042) {
+                    const base = 0.012 + 0.05 * smooth(0.72, 0.85, y), w = 1 - smooth(0.03, 0.042, ax);
+                    if (z > base) a[i + 2] = z + (base - z) * w;
+                }
+                // breasts
+                if (sex === 'female' && z > 0.03 && ax < 0.16 && y > 1.18 && y < 1.42) {
+                    const dx = (ax - 0.088) / 0.048, dy = (y - 1.30) / (y < 1.30 ? 0.04 : 0.06);
+                    const k = Math.exp(-(dx * dx + dy * dy));
+                    a[i + 2] = z + 0.034 * k; a[i + 1] = y - 0.012 * k;
+                }
+            }
+            g.attributes.position.needsUpdate = true;
+            g.computeVertexNormals(); g.computeBoundingBox();
+        }
+
+        // Uterus, ovaries and fallopian tubes (drawn to normal adult size and position; the scanned model is male)
+        femaleOrgans(addOrgan) {
+            const PINK = 0xe88aa6, OVARY = 0xf2b6c6;
+            // uterus: a pear shape, cervix down and back, tilted forward over the bladder
+            const prof = [[0, 0], [0.011, 0.002], [0.012, 0.018], [0.017, 0.032], [0.025, 0.048], [0.027, 0.060], [0.022, 0.070], [0.012, 0.076], [0, 0.078]]
+                .map(([r, h]) => new THREE.Vector2(r, h));
+            const ut = new THREE.LatheGeometry(prof, 28);
+            ut.scale(1, 1, 0.62);
+            ut.rotateX(0.62);
+            ut.translate(0, 0.852, -0.05);
+            addOrgan(ut, PINK, 'reproductive', 'uterus');
+            for (const s of [1, -1]) {
+                const ov = new THREE.SphereGeometry(1, 20, 14);
+                ov.scale(0.015, 0.009, 0.011); ov.rotateZ(s * 0.5); ov.translate(s * 0.058, 0.9, -0.042);
+                addOrgan(ov, OVARY, 'reproductive', 'ovary');
+                const tube = new THREE.CatmullRomCurve3([[s * 0.02, 0.905, -0.012], [s * 0.04, 0.922, -0.018], [s * 0.062, 0.92, -0.03], [s * 0.072, 0.905, -0.042], [s * 0.066, 0.893, -0.05]].map(p => new THREE.Vector3(...p)));
+                addOrgan(new THREE.TubeGeometry(tube, 30, 0.0028, 8, false), PINK, 'reproductive', 'tube');
+            }
+        }
+
         // ----- the real anatomy: skin, organs and bones from BodyParts3D; nerves and limb vessels along the real bones -----
         buildReal(M) {
             const meta = M.meta, sc = meta.posScale, L = meta.landmarks;
@@ -518,9 +567,26 @@
             this.dotsMat = new THREE.PointsMaterial({ color: CYAN, size: 0.005, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
             const O = { brain: [], eyes: [], thyroid: [], heart: [], lungs: [], liver: [], stomach: [], pancreas: [], kidneys: [], intestines: [], bladder: [], reproductive: [], spine: [], bones_joints: [], blood_vessels: [], skin: [] };
             const box = {};
+            const sex = this.sex = bodySex();
+            const addOrgan = (g, color, area, name) => {
+                const mat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.25, transparent: true, opacity: 0, shininess: 70, depthWrite: false, side: THREE.DoubleSide });
+                const m = new THREE.Mesh(g, mat);
+                m.userData.baseScale = new THREE.Vector3(1, 1, 1); m.userData.color = new THREE.Color(color);
+                if (name === 'diaphragm') m.userData.quietPart = true;
+                g.computeBoundingBox();
+                const c = g.boundingBox.getCenter(new THREE.Vector3());      // grow from the organ's own centre during the intro
+                g.translate(-c.x, -c.y, -c.z); m.position.copy(c);
+                (O[area] = O[area] || []).push(m);
+                const b = (box[area] = box[area] || new THREE.Box3()); b.union(g.boundingBox.clone().translate(c));
+                if (name === 'lungs') this.lungBox = g.boundingBox.clone().translate(c);
+                if (name === 'brain') this.brainBox = g.boundingBox.clone().translate(c);
+                return m;
+            };
             for (const p of meta.parts) {
+                if (p.name === 'prostate' && sex !== 'male') continue;       // only men have a prostate
                 const g = geoOf(p);
                 if (p.area === 'skin') {
+                    if (sex !== 'male') this.reshapeSkin(g, sex);
                     this.shell.add(new THREE.Mesh(g, this.shellMat));
                     const src = g.attributes.position.array, d = [];
                     for (let i = 0; i < src.length; i += 9) d.push(src[i], src[i + 1], src[i + 2]);
@@ -528,18 +594,9 @@
                     this.shell.add(new THREE.Points(dg, this.dotsMat));
                     continue;
                 }
-                const mat = new THREE.MeshPhongMaterial({ color: p.color, emissive: p.color, emissiveIntensity: 0.25, transparent: true, opacity: 0, shininess: 70, depthWrite: false, side: THREE.DoubleSide });
-                const m = new THREE.Mesh(g, mat);
-                m.userData.baseScale = new THREE.Vector3(1, 1, 1); m.userData.color = new THREE.Color(p.color);
-                if (p.name === 'diaphragm') m.userData.quietPart = true;
-                // grow from the organ's own centre during the intro
-                const c = g.boundingBox.getCenter(new THREE.Vector3());
-                g.translate(-c.x, -c.y, -c.z); m.position.copy(c);
-                (O[p.area] = O[p.area] || []).push(m);
-                const b = (box[p.area] = box[p.area] || new THREE.Box3()); b.union(g.boundingBox.clone().translate(c));
-                if (p.name === 'lungs') this.lungBox = g.boundingBox.clone().translate(c);
-                if (p.name === 'brain') this.brainBox = g.boundingBox.clone().translate(c);
+                addOrgan(g, p.color, p.area, p.name);
             }
+            if (sex === 'female') this.femaleOrgans(addOrgan);
             this.root.add(this.shell);
             this.organs = O;
             this.organGroup = new THREE.Group();
@@ -550,6 +607,8 @@
             // where each area's red marker goes
             this.centers = {};
             for (const [k, c] of Object.entries(meta.centers)) this.centers[k] = V(c);
+            if (sex === 'female') this.centers.reproductive = new THREE.Vector3(0, 0.905, -0.02);   // the uterus
+            else if (sex === 'neutral') delete this.centers.reproductive;
             const lh = L.left_humerus;                                   // blood pressure: the brachial artery in the upper arm
             this.centers.blood_vessels = V(lh[0]).lerp(V(lh[1]), 0.55).add(new THREE.Vector3(0.01, 0, 0.05));
             this.centers.skin = new THREE.Vector3(-0.11, 1.05, 0.12);
@@ -880,13 +939,13 @@
                 btn: 'ⓘ ഈ മോഡൽ ഏകദേശം 80% മെഡിക്കലായി കൃത്യം',
                 rows: [['~90%', 'അവയവങ്ങൾ, അസ്ഥികൂടം, നട്ടെല്ല്, പ്രധാന രക്തക്കുഴലുകൾ — യഥാർത്ഥ മനുഷ്യ ശരീരത്തിന്റെ CT സ്കാനിൽ നിന്ന്'],
                        ['~50–60%', 'ഞരമ്പുകളും കൈകാലുകളിലെ രക്തക്കുഴലുകളും — യഥാർത്ഥ എല്ലുകൾക്കൊപ്പം വരച്ചത്, ലളിതമാക്കിയത്'],
-                       ['—', 'തൈറോയ്ഡ്, പേശികൾ, ചെറിയ രക്തക്കുഴലുകൾ ഇല്ല. ഒരു മുതിർന്ന പുരുഷ ശരീരം മാത്രം. ചുവന്ന അടയാളം ഭാഗം കാണിക്കുന്നു, കൃത്യ സ്ഥലം അല്ല.']],
+                       ['—', 'തൈറോയ്ഡ്, പേശികൾ, ചെറിയ രക്തക്കുഴലുകൾ ഇല്ല. ശരീരം പ്രൊഫൈലിലെ ലിംഗം അനുസരിച്ച് മാറുന്നു (സ്ത്രീ അവയവങ്ങൾ വരച്ചത്, ലളിതമാക്കിയത്). ചുവന്ന അടയാളം ഭാഗം കാണിക്കുന്നു, കൃത്യ സ്ഥലം അല്ല.']],
                 foot: 'രോഗികൾക്ക് മനസ്സിലാക്കാൻ — ഡോക്ടർമാർക്കുള്ള ഉപകരണം അല്ല.'
             } : {
                 btn: 'ⓘ This model is about 80% medically accurate',
                 rows: [['~90%', 'Organs, skeleton, spine and main blood vessels — real anatomy from CT scans of a human body'],
                        ['~50–60%', 'Nerves and the arm and leg blood vessels — drawn along the real bones, simplified'],
-                       ['—', 'Not shown: thyroid, muscles, small vessels. One adult male body for everyone. Red markers show the area, not the exact spot.']],
+                       ['—', 'Not shown: thyroid, muscles, small vessels. The body follows the gender in your profile (female organs are drawn, simplified). Red markers show the area, not the exact spot.']],
                 foot: 'Made to help patients understand their report — not a tool for diagnosis.'
             };
             view.insertAdjacentHTML('beforeend', `<div class="nxb-credit"><button type="button" class="nxb-acc-btn" aria-expanded="false">${esc(A.btn)}</button>

@@ -45,6 +45,7 @@ medical word in brackets), based ONLY on the report — never invent anything:
 - "cause": 1 sentence: what may have caused it, as the report says or suggests ("The report doesn't say" if unknown)
 - "treatment": 1-2 sentences: what was done and what the report recommends (medicines, tests, lifestyle)
 Order from most to least important. At most 6 areas. Language of the text: {language}.
+The patient is {sex}: only name organs this patient has (no prostate for a woman, no uterus or ovaries for a man).
 Also give "overview": one short sentence summing up.
 
 REPORT:
@@ -63,11 +64,12 @@ def _keys():
     return keys
 
 
-def body_map(report: str, language: str = "English") -> dict:
+def body_map(report: str, language: str = "English", sex: str = "neutral") -> dict:
     report = (report or "").strip()[:12000]
     if not report:
         return {"overview": "", "areas": []}
-    prompt = PROMPT.format(areas="\n".join(f"- {k}: {v}" for k, v in AREAS.items()), language=language, report=report)
+    prompt = PROMPT.format(areas="\n".join(f"- {k}: {v}" for k, v in AREAS.items()), language=language, report=report,
+                           sex={'female': 'a woman', 'male': 'a man'}.get((sex or '').lower(), 'of unknown gender'))
     config = types.GenerateContentConfig(response_mime_type="application/json", temperature=0.2, max_output_tokens=2500)
     last = None
     for key in _keys():

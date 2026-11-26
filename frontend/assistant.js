@@ -28,7 +28,7 @@
     const T = {
         English: {
             btn: 'Emma', open: 'Open Emma, your Neutrix assistant', title: 'Emma · Neutrix Assistant', close: 'Close assistant',
-            hello: "Hi, I'm Emma. Talk or type, boss. I can open any page, fill things in, read the screen to you, or just chat.",
+            hello: "Hi, I'm Emma. Talk or type. I can open any page, fill things in, read the screen to you, or just chat.",
             placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. Say “Hey Emma” and then what you need.', wakeHint: 'Say “Hey Emma”…', tapToHear: 'Tap anywhere on the page so I can talk to you.', micOff: 'Mic off.',
             listening: 'Listening…', thinking: 'Thinking…', speaking: 'Speaking…', working: 'Working on the page…', ready: 'Ready',
             detail: 'Detailed', voice: 'Voice', yes: 'Yes, do it', no: 'No', stop: 'Stop',
@@ -570,7 +570,7 @@
         return awake() ? text : null;
     }
     function heardName() {
-        const r = lang() === 'Malayalam' ? 'പറയൂ?' : ['Yes, boss?', "I'm listening.", 'Go ahead.', 'Yes?'][Math.floor(Math.random() * 4)];
+        const r = lang() === 'Malayalam' ? 'പറയൂ?' : [firstName() ? 'Yes, ' + firstName() + '?' : 'Yes?', "I'm listening.", 'Go ahead.', 'Yes?'][Math.floor(Math.random() * 4)];
         if (!state.open) open(false);
         add('ai', r);
         speak(r);
@@ -914,7 +914,7 @@
                     message: message || '', results: results || '',
                     history: state.history.filter(m => m.role !== 'note').slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', text: m.text + (m.show ? '\n' + m.show : '') })),
                     page: snapshot(), detail: !!prefs.detail, language: lang(),
-                    signed_in: localStorage.getItem('neutrix_authenticated') === 'true', device: isApp ? 'Android app' : (innerWidth <= 720 ? 'phone browser' : 'computer browser')
+                    signed_in: localStorage.getItem('neutrix_authenticated') === 'true', name: firstName(), device: isApp ? 'Android app' : (innerWidth <= 720 ? 'phone browser' : 'computer browser')
                 })
             });
             data = await res.json();
@@ -1072,14 +1072,14 @@
             for (let i = 0; i < 40; i++) {
                 await sleep(250);
                 const msg = document.querySelector('.nx-fb-modal .nx-fb-msg');
-                if (!document.querySelector('.nx-fb-modal') || (msg && /ok/.test(msg.className))) { setTimeout(hideCursor, 800); await reply('Sent. Thanks, boss, the team will look at it.'); return 'sent'; }
+                if (!document.querySelector('.nx-fb-modal') || (msg && /ok/.test(msg.className))) { setTimeout(hideCursor, 800); await reply('Sent. Thanks' + (firstName() ? ', ' + firstName() : '') + ', the team will look at it.'); return 'sent'; }
                 if (msg && /err/.test(msg.className) && msg.textContent) { hideCursor(); await reply("I couldn't send it: " + msg.textContent); return 'not sent: ' + msg.textContent; }
             }
             hideCursor();
             await reply("It's taking a while to send. Check the form, or try again in a moment.");
             return 'still sending';
         }
-        try { await NxFeedback.send('report', 0, what); await reply('Sent. Thanks, boss, the team will look at it.'); return 'sent'; }
+        try { await NxFeedback.send('report', 0, what); await reply('Sent. Thanks' + (firstName() ? ', ' + firstName() : '') + ', the team will look at it.'); return 'sent'; }
         catch (e) { await reply("I couldn't send the report. Please check you're signed in and online."); return 'not sent: not signed in or offline'; }
     }
 
@@ -1265,6 +1265,16 @@
     registerProcessor('nx-mic', NxMic);`;
 
     // Turn the Live conversation on. Returns false if it can't (then the old way is used).
+    // The user's first name (from their profile, or their account), so Emma can call them by it
+    function firstName() {
+        let n = '';
+        try { n = (JSON.parse(localStorage.getItem('neutrix_hospital_profile') || '{}').patientName || '').trim(); } catch (e) {}
+        n = n || (localStorage.getItem('neutrix_patient_name') || '').trim();
+        try { n = n || ((window.firebase && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.displayName) || '').trim(); } catch (e) {}
+        n = n.replace(/^(mr|mrs|ms|miss|dr|shri|smt)\.?\s+/i, '').split(/\s+/)[0] || '';
+        return /^[\p{L}][\p{L}'\-]{0,30}$/u.test(n) ? n.charAt(0).toUpperCase() + n.slice(1) : '';
+    }
+
     async function liveStart() {
         if (LV.on || LV.connecting) return true;
         if (!navigator.onLine || Date.now() < LV.failedUntil || !window.WebSocket || !window.AudioWorkletNode || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) return false;
@@ -1318,7 +1328,7 @@
                 const setup = {
                     model: 'models/' + model,
                     generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: pass.voice || 'Leda' } } } },
-                    systemInstruction: { parts: [{ text: pass.instructions + `\nNow: the user is on ${here()} ("${document.title}"). Website language: ${lang()}. Signed in: ${localStorage.getItem('neutrix_authenticated') === 'true'}. Device: ${isApp ? 'Android app' : (innerWidth <= 720 ? 'phone' : 'computer')}.` }] },
+                    systemInstruction: { parts: [{ text: pass.instructions + `\nNow: the user is on ${here()} ("${document.title}"). Website language: ${lang()}. Signed in: ${localStorage.getItem('neutrix_authenticated') === 'true'}. User's first name: ${firstName() || '(not known: use no name)'}. Device: ${isApp ? 'Android app' : (innerWidth <= 720 ? 'phone' : 'computer')}.` }] },
                     tools: LIVE_TOOLS,
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},

@@ -200,6 +200,7 @@ class AssistantRequest(BaseModel):
     language: str = "English"
     signed_in: bool = False
     device: str = "web"
+    name: str = ""
 
 
 @app.get("/api/assistant/ping")
@@ -228,6 +229,7 @@ def assistant_voice(req: VoiceRequest):
 class BodyMapRequest(BaseModel):
     report: str
     language: str = "English"
+    sex: str = "neutral"
 
 
 @app.post("/api/body-map")
@@ -235,7 +237,7 @@ def body_map_route(req: BodyMapRequest):
     # 3D body view: which parts of the body the report is about, with simple explanations
     from services.body_map import body_map
     try:
-        return body_map(req.report, req.language)
+        return body_map(req.report, req.language, req.sex)
     except Exception as e:
         return JSONResponse({"error": str(e)[:300]}, status_code=503)
 
