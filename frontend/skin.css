@@ -537,3 +537,12 @@ textarea, input, select, button { font-family: inherit; }
 /* "↑ Top" pill sits just right of the chat button */
 body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
 @media (max-width: 640px) { body:has(.chat-fab) .nx-top-btn { left: 84px; bottom: 22px; } }
+
+/* Dark mode: dark scrollbars everywhere (page, boxes, panels) */
+:root[data-theme="dark"] { color-scheme: dark; }
+[data-theme="dark"] *:not(.output-text):not(.chat-box) { scrollbar-color: #3a414d transparent; }
+[data-theme="dark"] .output-text:hover, [data-theme="dark"] .chat-box:hover { scrollbar-color: #3a414d transparent; }
+[data-theme="dark"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: #0b0d10; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #353b45; border-radius: 10px; border: 2px solid #0b0d10; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4a525e; }

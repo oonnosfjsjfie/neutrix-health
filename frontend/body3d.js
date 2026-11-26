@@ -26,7 +26,8 @@
             noReport: 'Upload a report to see your body map', what: 'What happened', cause: 'What may have caused it', fix: 'What your report says to do',
             high: 'Main problem', medium: 'Watch', low: 'Minor', listen: 'Listen', close: 'Close', overview: 'Your body map',
             layers: 'Layers', nerves: 'Nerves', organs: 'Organs', skin: 'Body', vessels: 'Blood vessels', replay: 'Replay scan', reset: 'Reset view',
-            hint: 'Drag to turn · scroll or pinch to zoom · tap a red area', pick: 'Tap a red area (or one below) to learn more.',
+            hint: 'Drag to turn · scroll or pinch to zoom · tap a red area to learn more', pick: 'Tap a red area (or one below) to learn more.',
+            dismiss: 'Hide problem areas', showAreas: 'Show problem areas',
             loading: 'Reading your report…', aiOff: 'Simple match (AI not available right now)', disclaimer: 'A simple picture to help you understand your report — not a medical scan.'
         },
         Malayalam: {
@@ -36,6 +37,7 @@
             high: 'പ്രധാന പ്രശ്നം', medium: 'ശ്രദ്ധിക്കുക', low: 'ചെറുത്', listen: 'കേൾക്കുക', close: 'അടയ്ക്കുക', overview: 'നിങ്ങളുടെ ബോഡി മാപ്പ്',
             layers: 'ലെയറുകൾ', nerves: 'നാഡികൾ', organs: 'അവയവങ്ങൾ', skin: 'ശരീരം', vessels: 'രക്തക്കുഴലുകൾ', replay: 'വീണ്ടും സ്കാൻ', reset: 'റീസെറ്റ്',
             hint: 'തിരിക്കാൻ വലിക്കുക · സൂം ചെയ്യുക · ചുവന്ന ഭാഗം ടാപ്പ് ചെയ്യുക', pick: 'കൂടുതൽ അറിയാൻ ഒരു ചുവന്ന ഭാഗം ടാപ്പ് ചെയ്യുക.',
+            dismiss: 'പ്രശ്ന ഭാഗങ്ങൾ മറയ്ക്കുക', showAreas: 'പ്രശ്ന ഭാഗങ്ങൾ കാണിക്കുക',
             loading: 'റിപ്പോർട്ട് വായിക്കുന്നു…', aiOff: 'ലളിതമായ പൊരുത്തം (AI ഇപ്പോൾ ലഭ്യമല്ല)', disclaimer: 'റിപ്പോർട്ട് മനസ്സിലാക്കാനുള്ള ലളിതമായ ചിത്രം — മെഡിക്കൽ സ്കാൻ അല്ല.'
         }
     };
@@ -152,6 +154,7 @@
             this.target = new THREE.Vector3(0, this.opts.mode === 'mini' ? 0.86 : 0.9, 0);
             this.wantTarget = this.target.clone(); this.wantDist = this.dist;
             this.labels = [];
+            this.areasOn = true;
             this.running = true;
             this.build();
         }
@@ -306,22 +309,44 @@
                 return m;
             };
             const sph = (r, w, h) => new THREE.SphereGeometry(r, w || 24, h || 18);
-            O.brain = [mk(sph(0.08), 0xf4a7b9, 0, 1.675, 0, 1.0, 0.86, 1.1)];
+            O.brain = [mk(sph(0.08), 0xf4a7b9, 0, 1.68, 0.005, 1.0, 0.84, 1.12),                     // cerebrum
+                       mk(sph(0.035), 0xe58aa2, 0, 1.6, -0.06, 1.3, 0.8, 1.0),                         // cerebellum (back, below)
+                       mk(new THREE.CapsuleGeometry(0.014, 0.05, 4, 10), 0xe58aa2, 0, 1.57, -0.035)];  // brainstem
             O.eyes = [-1, 1].map(s => mk(sph(0.011, 14, 10), 0xdff6ff, s * 0.034, 1.64, 0.088));
             O.thyroid = [-1, 1].map(s => mk(sph(0.016, 14, 10), 0xc58cff, s * 0.016, 1.5, 0.035, 1, 1.4, 0.8));
-            O.lungs = [-1, 1].map(s => mk(sph(0.07), 0xff9fb3, s * 0.075, 1.3, -0.005, 0.95, 1.75, 0.95));
+            // right lung (patient's right = -x) is bigger (3 lobes); the left one leaves room for the heart
+            O.lungs = [mk(sph(0.07), 0xff9fb3, -0.078, 1.3, -0.01, 1.02, 1.78, 0.98), mk(sph(0.07), 0xff9fb3, 0.08, 1.31, -0.015, 0.86, 1.7, 0.95),
+                       mk(new THREE.CapsuleGeometry(0.011, 0.14, 4, 10), 0xd8e9f2, 0, 1.47, 0.02),                      // windpipe
+                       mk(new THREE.CapsuleGeometry(0.008, 0.06, 4, 8), 0xd8e9f2, -0.03, 1.375, 0.01, 1, 1, 1, 0.75),   // bronchi
+                       mk(new THREE.CapsuleGeometry(0.008, 0.06, 4, 8), 0xd8e9f2, 0.03, 1.375, 0.01, 1, 1, 1, -0.75)];
             O.heart = [mk(sph(0.05), 0xff4d5e, 0.025, 1.27, 0.045, 1.0, 1.2, 0.95, -0.45)];
-            O.liver = [mk(sph(0.09), 0xb8455a, -0.065, 1.16, 0.03, 1.25, 0.55, 0.85, 0.22)];
-            O.stomach = [mk(sph(0.05), 0xffa86b, 0.06, 1.13, 0.045, 1.15, 0.85, 0.75, -0.5)];
+            O.liver = [mk(sph(0.09), 0xb8455a, -0.06, 1.165, 0.025, 1.3, 0.55, 0.85, 0.22),          // under the right ribs
+                       mk(sph(0.016), 0x6fbf5a, -0.05, 1.12, 0.07, 1, 1.4, 1)];                        // gallbladder
+            O.stomach = [mk(sph(0.05), 0xffa86b, 0.065, 1.14, 0.04, 1.15, 0.85, 0.75, -0.5),
+                         mk(sph(0.028), 0x9a5cc6, 0.115, 1.15, -0.04, 0.8, 1.3, 0.8, -0.3)];             // spleen (left, behind)
             O.pancreas = [mk(new THREE.CapsuleGeometry(0.013, 0.1, 4, 10), 0xffd36b, 0.015, 1.08, 0.005, 1, 1, 1, Math.PI / 2 - 0.25)];
-            O.kidneys = [-1, 1].map(s => mk(sph(0.03), 0xc23b52, s * 0.065, 1.06, -0.045, 0.85, 1.5, 0.8, s * 0.2));
-            O.intestines = [mk(new THREE.TorusKnotGeometry(0.052, 0.013, 120, 10, 3, 5), 0xffb3a0, 0, 0.97, 0.035, 1.25, 0.8, 0.9)];
+            // the left kidney sits a little higher than the right (the liver pushes the right one down)
+            O.kidneys = [-1, 1].map(s => mk(sph(0.03), 0xc23b52, s * 0.065, s > 0 ? 1.075 : 1.055, -0.045, 0.85, 1.5, 0.8, s * 0.2));
+            const colon = new THREE.CatmullRomCurve3(pts([[-0.075, 0.9, 0.04], [-0.085, 0.98, 0.04], [-0.08, 1.05, 0.045], [-0.04, 1.07, 0.06], [0.04, 1.065, 0.06],
+                [0.085, 1.05, 0.045], [0.09, 0.98, 0.04], [0.08, 0.91, 0.04], [0.03, 0.88, 0.05], [0.0, 0.86, 0.03]]));
+            O.intestines = [mk(new THREE.TorusKnotGeometry(0.042, 0.011, 140, 10, 3, 7), 0xffb3a0, 0, 0.965, 0.045, 1.25, 0.85, 0.8),   // small intestine
+                            mk(new THREE.TubeGeometry(colon, 90, 0.014, 10, false), 0xe9967a, 0, 0, 0)];                                    // large intestine frame
             O.bladder = [mk(sph(0.032), 0xffe37a, 0, 0.875, 0.045)];
             O.reproductive = [mk(sph(0.024), 0xff8fd1, 0, 0.845, 0.02, 1.3, 0.8, 1)];
             const vert = []; for (let i = 0; i < 24; i++) { const y = 0.92 + i * 0.027; vert.push(mk(new THREE.BoxGeometry(0.028, 0.013, 0.022), 0x9fd8ff, 0, y, -0.072 - Math.sin(i / 23 * Math.PI) * 0.012)); }
             O.spine = vert;
             const joints = [];
             for (const s of [-1, 1]) for (const [x, y, r] of [[0.175, 1.425, 0.03], [0.235, 1.135, 0.025], [0.262, 0.875, 0.02], [0.08, 0.86, 0.035], [0.09, 0.47, 0.035], [0.09, 0.08, 0.025]]) joints.push(mk(sph(r * 0.6, 14, 10), 0x9fd8ff, s * x, y, 0.0));
+            // ribcage: 10 pairs of ribs curving from the spine round to the front
+            for (let i = 0; i < 10; i++) {
+                const y = 1.43 - i * 0.033, w = 0.115 + Math.sin(Math.min(i, 7) / 7 * Math.PI * 0.6) * 0.04, drop = 0.03 + i * 0.004;
+                for (const s of [-1, 1]) {
+                    const rib = new THREE.CatmullRomCurve3(pts([[0, y, -0.07], [s * w * 0.75, y - 0.005, -0.06], [s * w, y - drop * 0.6, 0.0], [s * w * 0.75, y - drop, 0.065], [s * 0.025, y - drop * 1.25, 0.085]]));
+                    joints.push(mk(new THREE.TubeGeometry(rib, 24, 0.004, 5, false), 0x9fd8ff, 0, 0, 0));
+                }
+            }
+            joints.push(mk(new THREE.BoxGeometry(0.022, 0.15, 0.01), 0x9fd8ff, 0, 1.33, 0.085));          // breastbone
+            joints.push(mk(new THREE.TorusGeometry(0.085, 0.018, 8, 30, Math.PI), 0x9fd8ff, 0, 0.9, 0, 1.25, 0.7, 1, Math.PI, 0));   // pelvis
             O.bones_joints = joints;
             O.skin = [];
             O.blood_vessels = [];
@@ -350,8 +375,8 @@
                 const meshes = this.organs[a.key] || [];
                 const center = new THREE.Vector3();
                 if (meshes.length) { meshes.forEach(m => center.add(m.position)); center.divideScalar(meshes.length); }
-                else if (a.key === 'blood_vessels') center.set(0.16, 1.2, 0.03);
-                else center.set(-0.15, 1.05, 0.08);
+                else if (a.key === 'blood_vessels') center.set(0.22, 1.23, 0.045);   // upper-arm artery (where blood pressure is measured)
+                else center.set(-0.12, 1.02, 0.1);                                     // skin of the belly
                 const glows = meshes.slice(0, 8).map(m => {
                     const g = new THREE.Mesh(m.geometry, holoMaterial(RED, 1.6));
                     g.position.copy(m.position); g.rotation.copy(m.rotation); g.scale.copy(m.userData.baseScale).multiplyScalar(1.45);
@@ -370,6 +395,7 @@
             }
         }
         setLayer(name, on) { this.layers[name] = on; }
+        showAreas(on) { this.areasOn = on; if (!on) this.selected = null; }
         replay() { this.introAt = this.clock.getElapsedTime(); }
         resetView() { this.wantTarget.set(0, this.opts.mode === 'mini' ? 0.86 : 0.9, 0); this.wantDist = this.opts.mode === 'mini' ? 3.45 : 3.3; this.selected = null; this.yaw = 0; this.pitch = 0.05; }
         focus(key) {
@@ -415,6 +441,7 @@
             const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, this.camera);
             const objs = [...this.glowGroup.children, ...this.organGroup.children.filter(m => this.areaKeys && this.areaKeys.has(m.userData.area))];
             const hits = ray.intersectObjects(objs, false);
+            if (!this.areasOn) return null;
             if (hits.length) return hits[0].object.userData.area;
             // near a label's point?
             let best = null, bd = 0.09;
@@ -427,7 +454,9 @@
             const t = now - this.introAt;
             const dt = Math.min(0.05, now - (this.last || now)); this.last = now;
             // intro timeline
-            const pNerve = ease(span(t, 0.1, 1.9)), pShell = ease(span(t, 1.2, 2.7)), pRed = ease(span(t, 3.9, 4.7));
+            const pNerve = ease(span(t, 0.1, 1.9)), pShell = ease(span(t, 1.2, 2.7));
+            this.redLevel = (this.redLevel || 0) + ((this.areasOn ? 1 : 0) - (this.redLevel || 0)) * 0.12;   // fades when dismissed
+            const pRed = ease(span(t, 3.9, 4.7)) * this.redLevel;
             this.nerveLines.forEach(l => l.line.geometry.setDrawRange(0, Math.floor(l.n * pNerve)));
             const nerveFade = 1 - 0.55 * ease(span(t, 3.4, 4.4));
             this.nerveLines.forEach(l => { l.line.material.opacity = 0.9 * nerveFade; });
@@ -451,7 +480,7 @@
                     m.scale.copy(m.userData.baseScale).multiplyScalar(Math.max(0.001, back(p)));
                     const quiet = (k === 'spine' || k === 'bones_joints' || k === 'eyes') && !(this.areaKeys && this.areaKeys.has(k));
                     m.material.opacity = (quiet ? 0.35 : 0.72) * ease(p);
-                    if (bad) { m.material.color.lerpColors(m.userData.color, new THREE.Color(RED), pRed); m.material.emissive.copy(m.material.color); m.material.emissiveIntensity = 0.5 + 0.45 * Math.sin(now * 5); }
+                    if (bad) { m.material.color.lerpColors(m.userData.color, new THREE.Color(RED), pRed); m.material.emissive.copy(m.material.color); m.material.emissiveIntensity = 0.25 + pRed * (0.25 + 0.45 * Math.sin(now * 5)); }
                     else { m.material.color.copy(m.userData.color); m.material.emissive.copy(m.userData.color); m.material.emissiveIntensity = this.selected ? 0.12 : 0.25; }
                 });
             });
@@ -493,6 +522,7 @@
                 const x = (p.x + 1) / 2 * r.width, y = (1 - p.y) / 2 * r.height;
                 l.el.style.transform = `translate(${x}px, ${y}px)`;
                 l.el.style.opacity = front ? String(pRed) : '0';
+                l.el.style.pointerEvents = pRed > 0.5 ? '' : 'none';
                 l.el.classList.toggle('sel', this.selected === l.key);
                 l.el.classList.toggle('left', x > r.width * (r.width < 480 ? 0.5 : 0.62));
             }
@@ -556,10 +586,18 @@
         tools.innerHTML = `<div class="nxb-tools-title">${esc(tx('layers'))}</div>
             ${['nerves', 'organs', 'skin', 'vessels'].map(k => `<button type="button" class="nxb-chip on" data-layer="${k}">${esc(tx(k))}</button>`).join('')}
             <span class="nxb-sep"></span>
+            <button type="button" class="nxb-chip nxb-dismiss" data-act="dismiss">◎ ${esc(tx('dismiss'))}</button>
             <button type="button" class="nxb-chip" data-act="replay">↻ ${esc(tx('replay'))}</button>
             <button type="button" class="nxb-chip" data-act="reset">⌖ ${esc(tx('reset'))}</button>`;
         view.appendChild(tools);
-        side.innerHTML = `<div class="nxb-side-title">${esc(tx('overview'))}</div><p class="nxb-overview">${esc(tx('loading'))}</p>
+        const page = view.closest('.nxb-page') || document.body;
+        page.classList.add('no-side');                       // the explanations appear when a red area is tapped
+        const closeSide = () => {
+            page.classList.add('no-side');
+            side.querySelector('.nxb-info') && side.querySelector('.nxb-info').classList.add('hidden');
+            side.querySelectorAll('.nxb-item').forEach(x => x.classList.remove('sel'));
+        };
+        side.innerHTML = `<button type="button" class="nxb-x nxb-side-x" aria-label="${esc(tx('close'))}">×</button><div class="nxb-side-title">${esc(tx('overview'))}</div><p class="nxb-overview">${esc(tx('loading'))}</p>
             <div class="nxb-list"></div><div class="nxb-info hidden" aria-live="polite"></div><p class="nxb-disclaimer">${esc(tx('disclaimer'))}</p>`;
         let body;
         try { await loadThree(); body = new Body3D(view, { mode: 'full', onPick: key => showInfo(key) }); }
@@ -568,8 +606,17 @@
         tools.addEventListener('click', e => {
             const b = e.target.closest('button'); if (!b || !body) return;
             if (b.dataset.layer) { b.classList.toggle('on'); body.setLayer(b.dataset.layer, b.classList.contains('on')); }
-            if (b.dataset.act === 'replay') { body.replay(); side.querySelector('.nxb-info').classList.add('hidden'); body.resetView(); }
-            if (b.dataset.act === 'reset') { body.resetView(); side.querySelector('.nxb-info').classList.add('hidden'); side.querySelectorAll('.nxb-item').forEach(x => x.classList.remove('sel')); }
+            if (b.dataset.act === 'replay') { body.replay(); closeSide(); body.resetView(); }
+            if (b.dataset.act === 'reset') { body.resetView(); closeSide(); }
+            if (b.dataset.act === 'dismiss') {                 // plain 3D body: no red areas, labels or explanations
+                const hide = !b.classList.contains('on');
+                b.classList.toggle('on', hide);
+                b.textContent = (hide ? '◉ ' + tx('showAreas') : '◎ ' + tx('dismiss'));
+                body.showAreas(!hide);
+                view.classList.toggle('dismissed', hide);
+                h.el.querySelector('.nxb-found').style.visibility = hide ? 'hidden' : '';
+                if (hide) { body.resetView(); closeSide(); }
+            }
         });
         const map = await getBodyMap();
         let areas = map ? map.areas : [];
@@ -579,8 +626,11 @@
         list.innerHTML = areas.map(a => `<button type="button" class="nxb-item sev-${esc(a.severity || 'medium')}" data-key="${esc(a.key)}">
                 <span class="nxb-dot"></span><span class="nxb-item-txt"><b>${esc(a.label || areaName(a.key))}</b><small>${esc(areaName(a.key))} · ${esc(tx(a.severity) || '')}</small></span><span class="nxb-go">›</span></button>`).join('');
         list.addEventListener('click', e => { const b = e.target.closest('.nxb-item'); if (b) { if (body) body.pick(b.dataset.key); else showInfo(b.dataset.key); } });
+        side.querySelector('.nxb-side-x').addEventListener('click', () => { closeSide(); if (body) body.resetView(); });
         function showInfo(key) {
             const a = areas.find(x => x.key === key); if (!a) return;
+            if (body && !body.areasOn) return;
+            page.classList.remove('no-side');
             list.querySelectorAll('.nxb-item').forEach(x => x.classList.toggle('sel', x.dataset.key === key));
             const info = side.querySelector('.nxb-info');
             info.innerHTML = `<div class="nxb-info-head sev-${esc(a.severity || 'medium')}"><span class="nxb-dot"></span><div><div class="nxb-info-title">${esc(a.label || areaName(a.key))}</div>
@@ -591,13 +641,13 @@
                 <div class="nxb-sec"><div class="nxb-sec-t">💊 ${esc(tx('fix'))}</div><p>${esc(a.treatment)}</p></div>
                 <button type="button" class="nxb-listen">🔊 ${esc(tx('listen'))}</button>`;
             info.classList.remove('hidden');
-            info.querySelector('.nxb-x').onclick = () => { info.classList.add('hidden'); if (body) body.resetView(); list.querySelectorAll('.nxb-item').forEach(x => x.classList.remove('sel')); };
+            info.querySelector('.nxb-x').onclick = () => { closeSide(); if (body) body.resetView(); };
             info.querySelector('.nxb-listen').onclick = () => {
                 const say = `${a.label}. ${a.what_happened} ${a.cause} ${a.treatment}`;
                 if (window.NxVoice) NxVoice.speak(say, ml() ? 'ml-IN' : 'en-GB');
                 else if ('speechSynthesis' in window) speechSynthesis.speak(new SpeechSynthesisUtterance(say));
             };
-            if (innerWidth <= 900) info.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (innerWidth <= 900) setTimeout(() => side.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
         }
         if (body) {
             const wait = Math.max(0, 3.8 - (body.clock.getElapsedTime() - body.introAt));
