@@ -202,6 +202,12 @@ class AssistantRequest(BaseModel):
     device: str = "web"
 
 
+@app.get("/api/assistant/ping")
+def assistant_ping():
+    # Called when a page opens, so a sleeping free server is awake before the user talks
+    return {"ok": True}
+
+
 @app.post("/api/assistant")
 def assistant(req: AssistantRequest):
     from services.assistant import assistant_turn

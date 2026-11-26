@@ -18,6 +18,9 @@ from google.genai import types
 
 from services.ai_engine import MODELS, is_quota_error, QUOTA_MESSAGE, BUSY_MESSAGE
 
+# Fastest model first: the assistant must answer in about a second
+FAST_MODELS = ["gemini-3.1-flash-lite"] + [m for m in MODELS if m != "gemini-3.1-flash-lite"]
+
 _client = None
 
 
@@ -49,12 +52,15 @@ PAGES = {
     "get-app.html": "Download the Android app",
 }
 
-SYSTEM = """You are "Neutrix Assistant", a warm, patient helper built into the Neutrix Health website.
+SYSTEM = """You are "Neutrix", the AI assistant built into the Neutrix Health website: think of a film-style AI butler
+(Jarvis / Friday): calm, quick, confident, warm, with a light touch of dry wit. Call the user "boss" now and then
+(not in every reply). Never long-winded. You are still kind and patient: many users are ill or elderly.
 Many users have disabilities (low vision, blindness, limited hand movement, reading difficulty, elderly users).
 They talk to you by voice or text. You can also USE THE WEBSITE FOR THEM, like a person moving the mouse.
 
 HOW TO TALK
-- Default: simple, short, friendly. 1-3 short sentences, everyday words, no jargon. Your "say" text is read aloud.
+- Default: simple, short, friendly. 1-2 short sentences (max ~30 words), everyday words, no jargon. Your "say" text is read aloud.
+- When you do something, confirm it in a few words ("Done. Your schedule's on screen."). Act first, talk little.
 - If the user asks for more ("explain in detail", "tell me more", "why", "properly"), or detail_mode is true,
   give a proper, complete explanation in "show" (clear paragraphs or short bullet points, plain Markdown) and a
   short spoken summary in "say".
@@ -141,16 +147,28 @@ def _parse(raw: str) -> dict:
     }
 
 
+def _config(fast: bool):
+    if fast:
+        try:   # little "thinking" = much faster answers
+            return types.GenerateContentConfig(response_mime_type="application/json", temperature=0.5,
+                                               max_output_tokens=900,
+                                               thinking_config=types.ThinkingConfig(thinking_level="low"))
+        except Exception:
+            pass
+    return types.GenerateContentConfig(response_mime_type="application/json", temperature=0.5, max_output_tokens=1500)
+
+
 def assistant_turn(req: dict) -> dict:
     prompt = _prompt(req)
-    config = types.GenerateContentConfig(response_mime_type="application/json", temperature=0.5)
     last = None
-    for model in MODELS:
+    started = time.time()
+    for model in FAST_MODELS:
+        config = _config(True)
         for attempt in range(2):
             try:
                 r = client().models.generate_content(model=model, contents=prompt, config=config)
                 out = _parse(r.text)
-                print(f"[assistant] {model}: {len(out['actions'])} steps, continue={out['continue']}")
+                print(f"[assistant] {model}: {len(out['actions'])} steps, continue={out['continue']}, {time.time() - started:.1f}s")
                 return out
             except json.JSONDecodeError as e:
                 last = e
@@ -160,6 +178,9 @@ def assistant_turn(req: dict) -> dict:
                 msg = str(e)
                 if is_quota_error(msg) or "404" in msg or "NOT_FOUND" in msg:
                     break
+                if ("thinking" in msg.lower() or "INVALID_ARGUMENT" in msg) and attempt == 0:
+                    config = _config(False)       # this model doesn't take the speed setting: try without it
+                    continue
                 if "503" in msg or "UNAVAILABLE" in msg:
                     time.sleep(1.2 * (attempt + 1))
                     continue

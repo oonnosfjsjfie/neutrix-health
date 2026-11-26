@@ -28,13 +28,13 @@
     const T = {
         English: {
             btn: 'Assistant', open: 'Open Neutrix Assistant', title: 'Neutrix Assistant', close: 'Close assistant',
-            hello: "Hi! I'm your Neutrix Assistant. Talk to me or type. I can explain things simply, or do things on this website for you, like “open my medicine schedule”.",
+            hello: "Neutrix online. Talk or type, boss. I can open any page, fill things in, read the screen to you, or just chat.",
             placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. I will keep listening until you tap the mic again.', micOff: 'Mic off.',
             listening: 'Listening…', thinking: 'Thinking…', speaking: 'Speaking…', working: 'Working on the page…', ready: 'Ready',
             detail: 'Detailed', voice: 'Voice', yes: 'Yes, do it', no: 'No', stop: 'Stop',
             stopped: 'Okay, I stopped.', cancelled: "Okay, I won't do that.", noMic: "Your browser can't use the microphone here. Please type instead.",
             micDenied: 'Microphone permission is off. Allow it, or type instead.', offline: "You're offline. I need the internet to answer.",
-            error: "Sorry, I couldn't reach the assistant. Please try again.", tooMany: 'I stopped after several steps. Tell me what to do next.',
+            error: "Sorry, I couldn't reach the assistant. Please try again.", waking: 'Waking up the AI server, one moment…', tooMany: 'I stopped after several steps. Tell me what to do next.',
             chips: ['What can you do?', 'Open my medicine schedule', 'Read this page to me', 'Make the text bigger']
         },
         Malayalam: {
@@ -44,7 +44,7 @@
             listening: 'കേൾക്കുന്നു…', thinking: 'ആലോചിക്കുന്നു…', speaking: 'സംസാരിക്കുന്നു…', working: 'പേജിൽ ചെയ്യുന്നു…', ready: 'തയ്യാർ',
             detail: 'വിശദമായി', voice: 'ശബ്ദം', yes: 'അതെ, ചെയ്യൂ', no: 'വേണ്ട', stop: 'നിർത്തുക',
             stopped: 'ശരി, നിർത്തി.', cancelled: 'ശരി, അത് ചെയ്യുന്നില്ല.', noMic: 'ഇവിടെ മൈക്ക് ഉപയോഗിക്കാൻ കഴിയില്ല. ടൈപ്പ് ചെയ്യുക.',
-            micDenied: 'മൈക്ക് അനുമതി ഓഫാണ്.', offline: 'ഇന്റർനെറ്റ് ഇല്ല.', error: 'ക്ഷമിക്കണം, വീണ്ടും ശ്രമിക്കുക.', tooMany: 'കുറച്ച് ഘട്ടങ്ങൾക്ക് ശേഷം നിർത്തി. അടുത്തത് പറയൂ.',
+            micDenied: 'മൈക്ക് അനുമതി ഓഫാണ്.', offline: 'ഇന്റർനെറ്റ് ഇല്ല.', error: 'ക്ഷമിക്കണം, വീണ്ടും ശ്രമിക്കുക.', waking: 'AI സെർവർ ഉണരുന്നു, ഒരു നിമിഷം…', tooMany: 'കുറച്ച് ഘട്ടങ്ങൾക്ക് ശേഷം നിർത്തി. അടുത്തത് പറയൂ.',
             chips: ['എന്തൊക്കെ ചെയ്യാം?', 'മരുന്ന് ഷെഡ്യൂൾ തുറക്കൂ', 'ഈ പേജ് വായിച്ചു തരൂ']
         }
     };
@@ -123,6 +123,11 @@
     #nxa-dock[data-mode="thinking"] .nxa-orb, #nxa-dock[data-mode="working"] .nxa-orb { animation: nxaSpin 1s linear infinite; }
     #nxa-dock[data-mode="thinking"] .nxa-orb::after, #nxa-dock[data-mode="working"] .nxa-orb::after { transform: scale(.5) translateX(9px); }
     #nxa-dock[data-mode="speaking"] .nxa-orb::after { animation: nxaTalk .45s ease-in-out infinite alternate; }
+    /* Arc-reactor glow while it talks or works */
+    #nxa-dock[data-mode="speaking"], #nxa-dock[data-mode="working"] { box-shadow: 0 0 0 1.5px rgba(56,189,248,.65), 0 0 26px rgba(56,189,248,.45), 0 18px 50px rgba(15,23,42,.28); }
+    #nxa-dock[data-mode="listening"] { box-shadow: 0 0 0 1.5px rgba(239,68,68,.55), 0 0 22px rgba(239,68,68,.3), 0 18px 50px rgba(15,23,42,.28); }
+    .nxa-orb { background: radial-gradient(circle at 50% 50%, #e0f2fe 0 18%, #38bdf8 30%, #0369a1 62%, #0c4a6e 100%) !important; }
+    #nxa-dock[data-mode="listening"] .nxa-orb { background: radial-gradient(circle at 50% 50%, #fee2e2 0 18%, #f87171 32%, #b91c1c 70%) !important; }
     @keyframes nxaPulse { 0% { box-shadow: 0 0 0 0 rgba(220,38,38,.55); } 100% { box-shadow: 0 0 0 14px rgba(220,38,38,0); } }
     @keyframes nxaSpin { to { transform: rotate(360deg); } }
     @keyframes nxaTalk { from { transform: scale(.55); } to { transform: scale(1); } }
@@ -403,8 +408,19 @@
     // ---------- speaking (text to speech) ----------
     // One voice for everything on the site (assistant, exercise coach...): picked once, remembered on this
     // device, and used every time. The phone app uses the phone's own text-to-speech voice.
-    const VOICE_KEY = 'nxVoiceName';
-    const PREFERRED = [/Google UK English Female/i, /Neerja|Heera|Swara/i, /Google US English/i, /Samantha|Karen|Moira/i, /Zira|Aria|Jenny/i, /Female/i];
+    // Voice style: a calm Irish / British woman's voice, like an AI butler from the films (closest voice the device has)
+    const VOICE_KEY = 'nxVoiceV2';
+    const PREFERRED = [
+        v => /moira/i.test(v.name),                                            // Apple: Irish English
+        v => /en[-_]IE/i.test(v.lang) && /emily|orla|female|natural/i.test(v.name),   // Edge / Windows: Ireland
+        v => /en[-_]IE/i.test(v.lang),
+        v => /Google UK English Female/i.test(v.name),                         // Chrome
+        v => /en[-_]GB/i.test(v.lang) && /libby|sonia|maisie|hazel|susan|serena|kate|martha|stephanie|female/i.test(v.name),
+        v => /fiona|karen|tessa|catherine/i.test(v.name),                     // Apple: Scottish / Australian / SA
+        v => /en[-_]GB/i.test(v.lang) && !/male|daniel|george|ryan|thomas|arthur|oliver/i.test(v.name),
+        v => /Neerja|Heera|Swara/i.test(v.name),
+        v => /samantha|zira|aria|jenny|female/i.test(v.name)
+    ];
     function pickVoice(code) {
         const all = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
         if (!all.length) return null;
@@ -418,7 +434,7 @@
         if (!pool.length) return null;
         const exact = pool.filter(v => v.lang.toLowerCase() === code.toLowerCase());
         let v = null;
-        for (const re of PREFERRED) { v = (exact.find(x => re.test(x.name)) || pool.find(x => re.test(x.name))); if (v) break; }
+        if (two === 'en') { for (const ok of PREFERRED) { v = pool.find(ok); if (v) break; } }
         v = v || exact[0] || pool[0];
         saved[two] = v.name;
         try { localStorage.setItem(VOICE_KEY, JSON.stringify(saved)); } catch (e) {}
@@ -430,7 +446,7 @@
         text = cleanForSpeech(text);
         if (!text) return Promise.resolve();
         if (isApp && P.TextToSpeech) {
-            return P.TextToSpeech.speak({ text, lang: code, rate: 1.0, pitch: 1.0, category: 'playback' }).catch(() => {});
+            return P.TextToSpeech.speak({ text, lang: code.startsWith('en') ? 'en-GB' : code, rate: 1.05, pitch: 1.05, category: 'playback' }).catch(() => {});
         }
         if (!('speechSynthesis' in window)) return Promise.resolve();
         return new Promise(resolve => {
@@ -438,7 +454,7 @@
             u.lang = code;
             const v = pickVoice(code);
             if (v) u.voice = v;
-            u.rate = 1; u.pitch = 1;
+            u.rate = 1.05; u.pitch = 1.05;
             u.onend = u.onerror = resolve;
             speechSynthesis.speak(u);
             setTimeout(resolve, 60000);
@@ -570,24 +586,30 @@
     }
     function snapshot() {
         elMap = new Map();
-        const sel = 'a[href], button, input:not([type=hidden]), select, textarea, [role=button], [role=link], [role=tab], [role=checkbox], [role=switch], [role=menuitem], [onclick], summary, [contenteditable="true"]';
-        const all = [...document.querySelectorAll(sel)].filter(visible);
+        const sel = 'a[href], button, input:not([type=hidden]), select, textarea, [role=button], [role=link], [role=tab], [role=checkbox], [role=switch], [role=radio], [role=menuitem], [onclick], summary, [contenteditable="true"], label';
+        // Styled tick boxes / choices hide the real box: use the visible label instead
+        const all = [...document.querySelectorAll(sel)].filter(el => {
+            if (el.tagName === 'LABEL') { const c = el.control; return !!c && ['radio', 'checkbox'].includes(c.type) && !visible(c) && visible(el); }
+            return visible(el);
+        });
         const vh = innerHeight;
         const inView = el => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < vh; };
         all.sort((a, b) => (inView(b) - inView(a)));
         const lines = [];
         let id = 0;
-        for (const el of all.slice(0, 160)) {
+        for (const el of all.slice(0, 110)) {
             id++;
             elMap.set(id, el);
             const tag = el.tagName.toLowerCase();
             let kind = el.getAttribute('role') || tag;
             if (tag === 'input') kind = `input(${el.type || 'text'})`;
+            if (tag === 'label') kind = el.control.type;
             if (tag === 'a') kind = 'link';
             let line = `[${id}] ${kind} "${labelOf(el)}"`;
             if ((tag === 'input' || tag === 'textarea') && !['password', 'checkbox', 'radio', 'file'].includes(el.type)) line += ` value="${String(el.value || '').slice(0, 60)}"`;
             if (el.type === 'password') line += ' (password: user must type it)';
-            if (el.type === 'checkbox' || el.type === 'radio' || el.getAttribute('role') === 'checkbox') line += el.checked || el.getAttribute('aria-checked') === 'true' ? ' [checked]' : ' [not checked]';
+            const box = tag === 'label' ? el.control : el;
+            if (box.type === 'checkbox' || box.type === 'radio' || el.getAttribute('role') === 'checkbox') line += box.checked || el.getAttribute('aria-checked') === 'true' ? ' [checked]' : ' [not checked]';
             if (tag === 'select') line += ` selected="${(el.options[el.selectedIndex] || {}).text || ''}" options=${JSON.stringify([...el.options].slice(0, 12).map(o => o.text))}`;
             if (tag === 'a') { const h = el.getAttribute('href') || ''; if (h && !h.startsWith('#') && !h.startsWith('javascript')) line += ` -> ${h.slice(0, 60)}`; }
             if (el.disabled || el.getAttribute('aria-disabled') === 'true') line += ' (disabled)';
@@ -601,9 +623,9 @@
             text = [...clone.querySelectorAll('h1, h2, h3, h4, p, li, td, th, label, .card, [class*="title"], [class*="value"]')]
                 .filter(el => !el.closest('#nxa-dock') && el.offsetParent !== null)
                 .map(el => el.innerText.replace(/\s+/g, ' ').trim()).filter(Boolean);
-            text = [...new Set(text)].join('\n').slice(0, 3500);
+            text = [...new Set(text)].join('\n').slice(0, 2200);
         } catch (e) {}
-        if (!text) text = (clone.innerText || '').replace(/\n{2,}/g, '\n').slice(0, 3500);
+        if (!text) text = (clone.innerText || '').replace(/\n{2,}/g, '\n').slice(0, 2200);
         return { url: location.pathname.split('/').pop() || 'home.html', title: document.title, elements: lines, text,
             scroll: `${Math.round(scrollY)} of ${Math.max(0, document.documentElement.scrollHeight - innerHeight)}` };
     }
@@ -693,7 +715,7 @@
                     unmark(el);
                 } else if (a.do === 'check') {
                     await moveTo(el);
-                    const isOn = el.checked || el.getAttribute('aria-checked') === 'true';
+                    const isOn = (el.tagName === 'LABEL' ? el.control.checked : el.checked) || el.getAttribute('aria-checked') === 'true';
                     if (!!a.on !== isOn) { ripple(); el.click(); }
                     unmark(el);
                     done.push(`${a.on ? 'ticked' : 'unticked'} ${name}`);
@@ -707,6 +729,7 @@
                 } else if (a.do === 'go') {
                     const page = String(a.page || '').replace(/^\/+/, '').split(/[?#]/)[0];
                     if (!PAGES.includes(page)) { done.push(`unknown page ${a.page}`); continue; }
+                    for (let i = 0; i < 15 && speaking; i++) await sleep(100);
                     done.push(`opened ${page}`);
                     if (state.pending) state.pending.results = done.join('; ');
                     save();
@@ -735,18 +758,21 @@
         busy = true; stopFlag = false;
         setMode(results ? 'working' : 'thinking');
         let data;
+        const slow = setTimeout(() => { if (busy) add('note', t('waking')); }, 6000);
         try {
             const res = await fetch(API(), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: message || '', results: results || '',
-                    history: state.history.filter(m => m.role !== 'note').slice(-14).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', text: m.text + (m.show ? '\n' + m.show : '') })),
+                    history: state.history.filter(m => m.role !== 'note').slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', text: m.text + (m.show ? '\n' + m.show : '') })),
                     page: snapshot(), detail: !!prefs.detail, language: lang(),
                     signed_in: localStorage.getItem('neutrix_authenticated') === 'true', device: isApp ? 'Android app' : (innerWidth <= 720 ? 'phone browser' : 'computer browser')
                 })
             });
             data = await res.json();
+            clearTimeout(slow);
         } catch (e) {
+            clearTimeout(slow);
             busy = false; setMode('ready');
             add('note', t('error'));
             return;
@@ -805,6 +831,125 @@
         setMode('ready');
         askBox.querySelector('.nxa-go').focus();
     }
+
+    // ---------- Instant commands: done right here, no waiting for the AI ----------
+    const NAV = [
+        ['summary.html', /\b(ai summary|upload( my)? (reports?|discharge|bills?|documents?|files?)|scan( my)? (reports?|documents?)|discharge summary|summari[sz]e( my)? reports?)\b/],
+        ['report.html', /\b(summary result|report result|my summary)\b/],
+        ['schedule.html', /\b(medicine schedule|med schedule|schedule|medicine times?|pill times?|reminders?|time ?table)\b/],
+        ['medplan.html', /\b(medicine plan|med ?plan|my medicines?|medicines?|medications?|tablets?|pills?)\b/],
+        ['checkups.html', /\b(check ?ups?|appointments?|follow ?ups?|doctor visits?|next visit)\b/],
+        ['tracking.html', /\b(recovery tracker|tracker|tracking|readings?|vitals?|log( my)? (bp|blood pressure|sugar|readings?))\b/],
+        ['improvements.html', /\b(improvements?|compare( my)? (reports?|labs?)|lab comparison)\b/],
+        ['exercise.html', /\b(exercises?|workouts?|physio(therapy)?|camera coach)\b/],
+        ['briefing.html', /\b(ask (the )?doctor|doctor questions|questions for (the |my )?doctor|briefing)\b/],
+        ['progress.html', /\b(progress( report)?|overall progress)\b/],
+        ['profile.html', /\b(profile|patient profile|my details|my info(rmation)?)\b/],
+        ['issues.html', /\b(my issues|medical issues|issues|switch issue|change issue|my problems)\b/],
+        ['index.html', /\b(dashboard|main menu|home screen|all tools|tools)\b/],
+        ['home.html', /\b(website home|home ?page|about neutrix|main website)\b/],
+        ['get-app.html', /\b(download( the)? app|get( the)? app|android app|install( the)? app)\b/]
+    ];
+    const PAGE_NAMES = { 'summary.html': 'AI Summary', 'report.html': 'your summary', 'schedule.html': 'your medicine schedule', 'medplan.html': 'your medicine plan',
+        'checkups.html': 'your check-ups', 'tracking.html': 'the recovery tracker', 'improvements.html': 'your improvements', 'exercise.html': 'exercises',
+        'briefing.html': 'Ask Doctor', 'progress.html': 'your progress report', 'profile.html': 'your profile', 'issues.html': 'your medical issues',
+        'index.html': 'the dashboard', 'home.html': 'the Neutrix home page', 'get-app.html': 'the app download page' };
+    const GO_WORDS = /^(open|go( to)?|take me( to)?|show( me)?|bring up|pull up|launch|start|navigate( to)?|switch to|jump to|let'?s go( to)?|i (want|need|wanna|would like)( to)?( go to| see| open| check| look at| use)?|can (you|u) (open|show)( me)?|where('?s| is)|check)\b/;
+    const here = () => location.pathname.split('/').pop() || 'home.html';
+
+    async function reply(text, opts) {
+        add('ai', text);
+        const p = speak(text);
+        if (opts && opts.wait) await Promise.race([p, sleep(opts.wait)]);
+    }
+    async function goPage(page) {
+        const name = PAGE_NAMES[page] || page;
+        if (here() === page) { await reply(`You're already on ${name}.`); return; }
+        await reply(`Opening ${name}.`, { wait: 1600 });      // say it first: a new page can't start talking by itself
+        location.href = page;
+    }
+    function findByLabel(words) {
+        snapshot();
+        const want = words.toLowerCase().replace(/\b(the|button|link|tab|option|box)\b/g, '').replace(/\s+/g, ' ').trim();
+        if (!want) return null;
+        let best = null, score = 0;
+        elMap.forEach((el, id) => {
+            const l = labelOf(el).toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim();
+            if (!l) return;
+            const sc = l === want ? 3 : l.startsWith(want) ? 2 : l.includes(want) ? 1 : 0;
+            if (sc > score) { score = sc; best = id; }
+        });
+        return best;
+    }
+    function pageText() {
+        const root = document.querySelector('main') || document.body;
+        return [...root.querySelectorAll('h1, h2, h3, p, li, label, td, .card-title, [class*="value"]')]
+            .filter(el => !el.closest('#nxa-dock, nav, header, footer, .ehr-navbar') && el.offsetParent !== null)
+            .map(el => el.innerText.replace(/\s+/g, ' ').trim()).filter(x => x && x.length > 1)
+            .filter((x, i, a) => a.indexOf(x) === i).join('. ').slice(0, 1400);
+    }
+    function setZoom(z) {
+        prefs.zoom = Math.max(0.8, Math.min(1.6, Math.round(z * 10) / 10));
+        savePrefs();
+        document.body.style.zoom = prefs.zoom === 1 ? '' : String(prefs.zoom);
+    }
+
+    // Returns true when the command was handled here
+    async function quick(cmd) {
+        const c = cmd.replace(/^(can|could|would) (you|u) (please )?/, '').replace(/^(hey|ok|okay|yo) /, '');
+        // Report a problem with the app / rate it
+        if (/\b(report|complain|feedback|bug|issue with (the )?(app|site|website))\b/.test(c) && !/\b(upload|my report|medical|lab|summary|result|discharge|scan|progress)\b/.test(c)) {
+            if (window.NxFeedback && NxFeedback.openReport) { NxFeedback.openReport(); await reply("Report form's open. Tell me what went wrong and I'll type it in for you."); return true; }
+        }
+        if (/\b(rate|rating|review)\b.*\b(app|neutrix|website|site|you)\b|^rate( us)?$/.test(c) && window.NxFeedback && NxFeedback.openRating) {
+            NxFeedback.openRating(); await reply('Rating form is open.'); return true;
+        }
+        // Pages
+        const target = NAV.find(([, re]) => re.test(c));
+        if (target && (GO_WORDS.test(c) || c.replace(target[1], '').replace(/\b(my|the|page|screen|please|now)\b/g, '').trim() === '')) { await goPage(target[0]); return true; }
+        // Scrolling, back, reload
+        let m;
+        if ((m = /^(scroll|go|move|page)? ?(down|up)( a bit| a little| more)?$/.exec(c))) { scrollBy({ top: (m[2] === 'up' ? -1 : 1) * innerHeight * (m[3] && /bit|little/.test(m[3]) ? 0.35 : 0.75), behavior: 'smooth' }); await reply(m[2] === 'up' ? 'Up we go.' : 'Scrolling down.'); return true; }
+        if (/^(scroll |go )?(to (the )?)?(top|bottom)( of (the )?page)?$/.test(c)) { const top = /top/.test(c); scrollTo({ top: top ? 0 : document.documentElement.scrollHeight, behavior: 'smooth' }); await reply(top ? 'Top of the page.' : 'Bottom of the page.'); return true; }
+        if (/^(go )?back$|^(previous|last) page$|^go to (the )?previous page$/.test(c)) { await reply('Going back.', { wait: 900 }); history.back(); return true; }
+        if (/^(refresh|reload)( the)?( page)?$/.test(c)) { await reply('Refreshing.', { wait: 800 }); location.reload(); return true; }
+        // Look and language
+        if ((m = /\b(dark|night|light|day) (mode|theme)\b|^(dark|light)$/.exec(c))) {
+            const wantDark = /dark|night/.test(c), isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const tb = document.getElementById('themeToggle');
+            if (wantDark !== isDark && tb) tb.click();
+            await reply(wantDark ? 'Dark mode on.' : 'Light mode on.'); return true;
+        }
+        if (/\b(malayalam|മലയാളം)\b/.test(c) && /\b(switch|change|speak|talk|language|in|to)\b|^malayalam$/.test(c) || /\benglish\b/.test(c) && /\b(switch|change|speak|talk|language|to)\b|^english$/.test(c)) {
+            const wantMl = /malayalam|മലയാളം/.test(c), lb = document.getElementById('langToggle');
+            if (lb && wantMl !== (lang() === 'Malayalam')) lb.click();
+            await reply(wantMl ? 'ശരി, ഇനി മലയാളത്തിൽ.' : 'Switched to English.'); return true;
+        }
+        if (/\b(bigger|larger|increase|zoom in)\b.*\b(text|font|page|screen|everything)?\b/.test(c) && /\b(text|font|zoom|page|screen|everything)\b/.test(c)) { setZoom((prefs.zoom || 1) + 0.15); await reply('Text is bigger.'); return true; }
+        if (/\b(smaller|decrease|zoom out|reduce)\b/.test(c) && /\b(text|font|zoom|page|screen)\b/.test(c)) { setZoom((prefs.zoom || 1) - 0.15); await reply('Text is smaller.'); return true; }
+        if (/\b(normal|reset|default)\b.*\b(text|size|zoom)\b/.test(c)) { setZoom(1); await reply('Back to normal size.'); return true; }
+        // Reading
+        if (/\b(read|tell me)\b.*\b(page|screen|this)\b|what('?s| is) on (the |this |my )?(page|screen)/.test(c)) {
+            const txt = pageText();
+            add('ai', txt ? 'Reading the page.' : "There's nothing to read here.");
+            if (txt) { const was = prefs.voice; prefs.voice = true; await speak(txt); prefs.voice = was; }
+            return true;
+        }
+        // Mic, time, help
+        if (/^(mute|unmute)?( the)? ?(mic|microphone)( off)?$|^stop listening$|^mute( yourself)?$/.test(c) && prefs.mic) { await reply('Mic off. Tap the mic when you need me.'); toggleMic(); return true; }
+        if (/\b(what('?s| is) the time|what time is it|time now)\b/.test(c)) { await reply(`It's ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`); return true; }
+        if (/\b(what('?s| is) (the |today'?s )?date|what day is it|today'?s date)\b/.test(c)) { await reply(`It's ${new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}.`); return true; }
+        // "Click / press / tap ..." something on the screen
+        if ((m = /^(click|press|tap|hit|select|choose|push)( on)? (.+)$/.exec(c))) {
+            const id = findByLabel(m[3]);
+            if (id) {
+                const el = elMap.get(id);
+                if (!RISKY.test(labelOf(el))) { add('ai', `Pressing ${labelOf(el)}.`); speak(`Pressing ${labelOf(el)}.`); await run([{ do: 'click', id }]); setTimeout(hideCursor, 1500); return true; }
+            }
+        }
+        return false;
+    }
+
     function userSays(text) {
         if (!state.open) open(false);
         stopSpeaking();
@@ -825,7 +970,7 @@
         if (/^(stop|cancel|be quiet|shut up|നിർത്ത്|നിർത്തൂ)\.?$/i.test(text.trim())) { add('user', text); stopAll(); add('ai', t('stopped')); return; }
         if (busy) stopFlag = true;
         add('user', text);
-        ask(text, '', 0);
+        quick(cmd).then(done => { if (!done) ask(text, '', 0); }).catch(() => ask(text, '', 0));
     }
     function stopAll(silent) {
         stopFlag = true;
@@ -843,6 +988,15 @@
     // ---------- start ----------
     function start() {
         build();
+        if (prefs.zoom && prefs.zoom !== 1) document.body.style.zoom = String(prefs.zoom);
+        // Wake the AI server early (free servers sleep), so the first answer is quick
+        try {
+            const last = +sessionStorage.getItem('nxAsstWarm') || 0;
+            if (navigator.onLine && Date.now() - last > 4 * 60 * 1000) {
+                sessionStorage.setItem('nxAsstWarm', String(Date.now()));
+                fetch(API().replace(/\/api\/assistant$/, '/api/assistant/ping'), { cache: 'no-store' }).catch(() => {});
+            }
+        } catch (e) {}
         if (state.open) {
             dock.classList.add('show');
             document.documentElement.classList.add('nxa-open');
