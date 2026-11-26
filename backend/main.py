@@ -225,6 +225,19 @@ def assistant_voice(req: VoiceRequest):
         return _Resp(content=str(e)[:200], status_code=503, media_type="text/plain")
 
 
+@app.post("/api/assistant/voice/stream")
+def assistant_voice_stream(req: VoiceRequest):
+    # Same voice, sent piece by piece so it starts talking straight away (raw 16-bit PCM, 24 kHz, mono)
+    from fastapi.responses import Response as _Resp, StreamingResponse
+    from services.voice import stream
+    try:
+        pieces = stream(req.text, req.voice)
+    except Exception as e:
+        return _Resp(content=str(e)[:300], status_code=503, media_type="text/plain")
+    return StreamingResponse(pieces, media_type="audio/L16; rate=24000; channels=1",
+                             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+
 @app.post("/api/assistant")
 def assistant(req: AssistantRequest):
     from services.assistant import assistant_turn

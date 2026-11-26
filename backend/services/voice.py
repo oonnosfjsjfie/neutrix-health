@@ -96,3 +96,49 @@ def _tts_models():
             print(f"[voice] could not list models: {str(e)[:120]}")
             _found = list(TTS_MODELS)
     return _found
+
+
+def stream(text: str, voice: str = ""):
+    """Yields raw 16-bit 24 kHz mono audio pieces as they are made, so speaking can start at once.
+    The first piece is fetched before returning, so a failure raises here (and the page uses another voice)."""
+    global _working_model
+    text = (text or "").strip()[:1500]
+    if not text:
+        raise ValueError("empty")
+    voice = voice or os.getenv("NEUTRIX_VOICE", "Aoede")
+    config = types.GenerateContentConfig(
+        response_modalities=["AUDIO"],
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice))
+        ),
+    )
+    models = ([_working_model] if _working_model else []) + [m for m in _tts_models() if m != _working_model]
+    errors = []
+    for model in models:
+        try:
+            it = client().models.generate_content_stream(model=model, contents=STYLE + text, config=config)
+
+            def pieces(it=it):
+                for chunk in it:
+                    for c in (chunk.candidates or []):
+                        for part in ((c.content and c.content.parts) or []):
+                            if part.inline_data and part.inline_data.data:
+                                yield part.inline_data.data
+
+            gen = pieces()
+            first = next(gen)          # raises if this model fails
+            _working_model = model
+
+            def all_pieces(first=first, gen=gen):
+                yield first
+                try:
+                    yield from gen
+                except Exception as e:
+                    print(f"[voice] stream stopped: {str(e)[:120]}")
+            return all_pieces()
+        except StopIteration:
+            errors.append(f"{model}: no audio")
+        except Exception as e:
+            errors.append(f"{model}: {str(e)[:120]}")
+            print(f"[voice] {model} (stream): {str(e)[:160]}")
+    raise RuntimeError(" | ".join(errors) or "no voice model")
