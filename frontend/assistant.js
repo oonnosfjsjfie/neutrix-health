@@ -174,7 +174,7 @@
     .nxa-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
     #nxa-cursor { position: fixed; left: 0; top: 0; z-index: 2147483600; width: 30px; height: 30px; pointer-events: none; opacity: 0;
-        transform: translate(var(--x, 50vw), var(--y, 50vh)); transition: transform .65s cubic-bezier(.4,.1,.2,1), opacity .25s;
+        transform: translate(var(--x, 50vw), var(--y, 50vh)); transition: transform .42s cubic-bezier(.4,.1,.2,1), opacity .2s;
         filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
     #nxa-cursor.show { opacity: 1; }
     #nxa-cursor .tag { position: absolute; left: 24px; top: 24px; background: #4f46e5; color: #fff; font: 700 11px/1 system-ui, sans-serif;
@@ -762,7 +762,7 @@
         cursor.classList.add('show');
         setCursor(Math.round(r.left + Math.min(r.width / 2, 60)), Math.round(r.top + r.height / 2));
         el.classList.add('nxa-target');
-        await sleep(700);
+        await sleep(450);
         return r;
     }
     function ripple() {
@@ -804,7 +804,7 @@
                     el.focus({ preventScroll: true });
                     el.click();
                     done.push(`clicked ${name}`);
-                    await sleep(700);
+                    await sleep(450);
                 } else if (a.do === 'type') {
                     if (el.type === 'password') { done.push(`did not type into password box ${name} (user must type it)`); continue; }
                     await moveTo(el); ripple();
@@ -813,7 +813,7 @@
                     if (el.isContentEditable) { el.textContent = text; el.dispatchEvent(new Event('input', { bubbles: true })); }
                     else {
                         setValue(el, '');
-                        for (let i = 1; i <= text.length; i++) { setValue(el, text.slice(0, i)); await sleep(text.length > 40 ? 8 : 35); if (stopFlag) break; }
+                        for (let i = 1; i <= text.length; i++) { setValue(el, text.slice(0, i)); await sleep(text.length > 40 ? 5 : 16); if (stopFlag) break; }
                         el.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                     unmark(el);
@@ -1070,7 +1070,12 @@
         }
         // Pages
         const target = NAV.find(([, re]) => re.test(c));
-        if (target && (GO_WORDS.test(c) || c.replace(target[1], '').replace(/\b(my|the|page|screen|please|now)\b/g, '').trim() === '')) { await goPage(target[0]); return true; }
+        if (target) {
+            // Only a plain "open X". Anything more ("... and tell me / and add ...") goes to the AI, which opens the page and carries on
+            const left = c.replace(GO_WORDS, ' ').replace(target[1], ' ').replace(/\b(my|the|a|page|screen|section|tab|please|now|for me|up|to|in|on)\b/g, ' ').trim();
+            const words = left ? left.split(/\s+/).length : 0;
+            if ((GO_WORDS.test(c) && words <= 1) || words === 0) { await goPage(target[0]); return true; }
+        }
         // Scrolling, back, reload
         let m;
         if ((m = /^(scroll|go|move|page)? ?(down|up)( a bit| a little| more)?$/.exec(c))) { scrollBy({ top: (m[2] === 'up' ? -1 : 1) * innerHeight * (m[3] && /bit|little/.test(m[3]) ? 0.35 : 0.75), behavior: 'smooth' }); await reply(m[2] === 'up' ? 'Up we go.' : 'Scrolling down.'); return true; }
