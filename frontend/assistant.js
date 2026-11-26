@@ -441,10 +441,54 @@
         return v;
     }
     if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
-    function voiceSpeak(text, code) {
+    // Natural, human-sounding woman's voice (Gemini voice from our server). Saved on the device after the first
+    // time, so repeated phrases play at once. If it isn't available, the device's own voice is used.
+    const VOICE_CACHE = 'nx-voice-v1';
+    let curAudio = null, speakId = 0, naturalDownUntil = 0;
+    const hashText = str => { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+    async function naturalAudio(text) {
+        const key = new Request(location.origin + '/__nxvoice/' + hashText(text) + '-' + text.length);
+        let cache = null;
+        try { cache = await caches.open(VOICE_CACHE); const hit = await cache.match(key); if (hit) return await hit.blob(); } catch (e) {}
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 12000);
+        try {
+            const res = await fetch(API().replace(/\/api\/assistant$/, '/api/assistant/voice'), {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }), signal: ctrl.signal });
+            if (!res.ok) throw new Error('voice ' + res.status);
+            const blob = await res.blob();
+            if (blob.size < 2000) throw new Error('voice empty');
+            if (cache && text.length <= 220) cache.put(key, new Response(blob, { headers: { 'Content-Type': 'audio/wav' } })).catch(() => {});
+            return blob;
+        } finally { clearTimeout(to); }
+    }
+    function playBlob(blob, my) {
+        return new Promise(resolve => {
+            if (my !== speakId) return resolve();
+            const a = new Audio(URL.createObjectURL(blob));
+            curAudio = a;
+            const end = () => { try { URL.revokeObjectURL(a.src); } catch (e) {} if (curAudio === a) curAudio = null; resolve(); };
+            a.onended = end; a.onerror = end;
+            a.play().catch(end);
+        });
+    }
+    async function voiceSpeak(text, code) {
         code = code || speechLang();
         text = cleanForSpeech(text);
-        if (!text) return Promise.resolve();
+        if (!text) return;
+        const my = ++speakId;
+        if (navigator.onLine && Date.now() > naturalDownUntil) {
+            try {
+                const blob = await naturalAudio(text);
+                if (my !== speakId) return;
+                await playBlob(blob, my);
+                return;
+            } catch (e) {
+                if (my !== speakId) return;
+                naturalDownUntil = Date.now() + 60000;      // try the natural voice again in a minute
+                console.warn('[assistant] natural voice not available, using the device voice', e);
+            }
+        }
         if (isApp && P.TextToSpeech) {
             return P.TextToSpeech.speak({ text, lang: code.startsWith('en') ? 'en-GB' : code, rate: 1.05, pitch: 1.05, category: 'playback' }).catch(() => {});
         }
@@ -454,13 +498,15 @@
             u.lang = code;
             const v = pickVoice(code);
             if (v) u.voice = v;
-            u.rate = 1.05; u.pitch = 1.05;
+            u.rate = 1; u.pitch = 1.1;
             u.onend = u.onerror = resolve;
             speechSynthesis.speak(u);
             setTimeout(resolve, 60000);
         });
     }
     function voiceStop() {
+        speakId++;
+        try { if (curAudio) { curAudio.pause(); curAudio = null; } } catch (e) {}
         try { if (isApp && P.TextToSpeech) P.TextToSpeech.stop(); } catch (e) {}
         try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
     }
@@ -729,7 +775,7 @@
                 } else if (a.do === 'go') {
                     const page = String(a.page || '').replace(/^\/+/, '').split(/[?#]/)[0];
                     if (!PAGES.includes(page)) { done.push(`unknown page ${a.page}`); continue; }
-                    for (let i = 0; i < 15 && speaking; i++) await sleep(100);
+                    for (let i = 0; i < 40 && speaking; i++) await sleep(100);
                     done.push(`opened ${page}`);
                     if (state.pending) state.pending.results = done.join('; ');
                     save();
@@ -865,7 +911,7 @@
     async function goPage(page) {
         const name = PAGE_NAMES[page] || page;
         if (here() === page) { await reply(`You're already on ${name}.`); return; }
-        await reply(`Opening ${name}.`, { wait: 1600 });      // say it first: a new page can't start talking by itself
+        await reply(`Opening ${name}.`, { wait: 3800 });      // say it first: a new page can't start talking by itself
         location.href = page;
     }
     function findByLabel(words) {

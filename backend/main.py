@@ -208,6 +208,23 @@ def assistant_ping():
     return {"ok": True}
 
 
+class VoiceRequest(BaseModel):
+    text: str
+    voice: str = ""
+
+
+@app.post("/api/assistant/voice")
+def assistant_voice(req: VoiceRequest):
+    # Human-sounding voice for the assistant's replies (WAV). 503 = use the device's own voice.
+    from fastapi.responses import Response as _Resp
+    from services.voice import speak
+    try:
+        return _Resp(content=speak(req.text, req.voice), media_type="audio/wav",
+                     headers={"Cache-Control": "public, max-age=604800"})
+    except Exception as e:
+        return _Resp(content=str(e)[:200], status_code=503, media_type="text/plain")
+
+
 @app.post("/api/assistant")
 def assistant(req: AssistantRequest):
     from services.assistant import assistant_turn
