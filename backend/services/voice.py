@@ -19,16 +19,24 @@ TTS_MODELS = ["gemini-2.5-flash-preview-tts", "gemini-2.5-flash-tts", "gemini-3.
 STYLE = ("Read this aloud as a warm, friendly young woman having a relaxed, natural conversation: "
          "a smooth, human, expressive tone, not robotic, at a comfortable pace. Text: ")
 
-_client = None
+_clients = {}
 _working_model = None
 
 
-def client():
-    global _client
-    if _client is None:
-        key = (os.getenv("NEUTRIX_ASSISTANT_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
-        _client = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=20_000, api_version="v1beta"))
-    return _client
+def _keys():
+    keys = []
+    for name in ("NEUTRIX_ASSISTANT_API_KEY", "GEMINI_API_KEY"):
+        k = (os.getenv(name) or "").strip()
+        if k and k not in keys:
+            keys.append(k)
+    return keys or [""]
+
+
+def client(key=None):
+    key = key if key is not None else _keys()[0]
+    if key not in _clients:
+        _clients[key] = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=20_000, api_version="v1beta"))
+    return _clients[key]
 
 
 def _wav(pcm: bytes, rate: int = 24000) -> bytes:
@@ -57,9 +65,9 @@ def speak(text: str, voice: str = "") -> bytes:
     models = ([_working_model] if _working_model else []) + [m for m in _tts_models() if m != _working_model]
     last = None
     errors = []
-    for model in models:
+    for model, key in [(m, k) for k in _keys() for m in models]:    # the main key is a spare if the first runs out
         try:
-            r = client().models.generate_content(model=model, contents=STYLE + text, config=config)
+            r = client(key).models.generate_content(model=model, contents=STYLE + text, config=config)
             part = r.candidates[0].content.parts[0]
             data = part.inline_data.data
             mime = (part.inline_data.mime_type or "").lower()

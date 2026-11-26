@@ -12,7 +12,7 @@ import os
 import re
 import json
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 
 from google import genai
 from google.genai import types
@@ -23,16 +23,25 @@ from services.ai_engine import MODELS, is_quota_error, QUOTA_MESSAGE, BUSY_MESSA
 FAST_MODELS = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"] + \
     [m for m in MODELS if m not in ("gemini-3.1-flash-lite", "gemini-3.5-flash")]
 
-_client = None
+_clients = {}
 
 
-def client():
-    global _client
-    if _client is None:
-        key = (os.getenv("NEUTRIX_ASSISTANT_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
+def _keys():
+    """The assistant's own key first, then the site's main key as a spare (if they differ)."""
+    keys = []
+    for name in ("NEUTRIX_ASSISTANT_API_KEY", "GEMINI_API_KEY"):
+        k = (os.getenv(name) or "").strip()
+        if k and k not in keys:
+            keys.append(k)
+    return keys or [""]
+
+
+def client(key=None):
+    key = key if key is not None else _keys()[0]
+    if key not in _clients:
         # Short wait per try: if a model is slow, another one answers instead
-        _client = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=14_000))
-    return _client
+        _clients[key] = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=14_000))
+    return _clients[key]
 
 
 # What each page of the website is for, so the assistant can take the user to the right place
@@ -176,13 +185,13 @@ def _config(model: str, fast: bool = True):
     return types.GenerateContentConfig(**base)
 
 
-def _try(model: str):
-    """One model, at most two quick tries. Returns the answer or raises."""
+def _try(model: str, key: str):
+    """One model with one key, at most two quick tries. Returns the answer or raises."""
     def run(prompt):
         last = None
         for fast in (True, False):
             try:
-                r = client().models.generate_content(model=model, contents=prompt, config=_config(model, fast))
+                r = client(key).models.generate_content(model=model, contents=prompt, config=_config(model, fast))
                 return _parse(r.text)
             except json.JSONDecodeError as e:
                 last = e
@@ -196,29 +205,45 @@ def _try(model: str):
     return run
 
 
+# Models that recently ran out of quota on a key are skipped for a while
+_cooldown = {}
+
+
 def assistant_turn(req: dict) -> dict:
-    """Asks two models at the same time and uses the first good answer (Gemini is sometimes very slow)."""
+    """Asks the fastest model; if it hasn't answered in 2.5 s (or fails), also asks the next one, and so on.
+    The first good answer wins. Uses the assistant's own key, then the site's main key if that one runs out."""
     prompt = _prompt(req)
     started = time.time()
+    keys = _keys()
+    now = time.time()
+    attempts = [(m, k) for k in keys for m in FAST_MODELS if _cooldown.get((m, k), 0) < now] or \
+               [(m, k) for k in keys for m in FAST_MODELS]
     errors = []
-    pool = ThreadPoolExecutor(max_workers=2)
+    pool = ThreadPoolExecutor(max_workers=3)
+    running = {}
     try:
-        for i in range(0, len(FAST_MODELS), 2):
-            pair = FAST_MODELS[i:i + 2]
-            futures = {pool.submit(_try(m), prompt): m for m in pair}
-            for f in as_completed(futures):
-                m = futures[f]
+        i = 0
+        while (i < len(attempts) or running) and time.time() - started < 28:
+            if i < len(attempts) and len(running) < 3:
+                m, k = attempts[i]
+                running[pool.submit(_try(m, k), prompt)] = (m, k)
+                i += 1
+            done, _ = wait(list(running), timeout=2.5, return_when=FIRST_COMPLETED)
+            for f in done:
+                m, k = running.pop(f)
+                tag = f"{m}{'' if k == keys[0] else ' (main key)'}"
                 try:
                     out = f.result()
-                    print(f"[assistant] {m}: {len(out['actions'])} steps, continue={out['continue']}, {time.time() - started:.1f}s")
+                    print(f"[assistant] {tag}: {len(out['actions'])} steps, continue={out['continue']}, {time.time() - started:.1f}s")
                     return out
                 except Exception as e:
-                    errors.append(str(e))
-                    print(f"[assistant] {m}: {str(e)[:160]} ({time.time() - started:.1f}s)")
-            if time.time() - started > 28:
-                break
+                    msg = str(e)
+                    errors.append(msg)
+                    if is_quota_error(msg):
+                        _cooldown[(m, k)] = time.time() + 60
+                    print(f"[assistant] {tag}: {msg[:140]} ({time.time() - started:.1f}s)")
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
     msg = " ".join(errors)
-    say = QUOTA_MESSAGE if is_quota_error(msg) else BUSY_MESSAGE
+    say = QUOTA_MESSAGE if errors and all(is_quota_error(e) for e in errors) else BUSY_MESSAGE
     return {"say": say, "show": "", "actions": [], "continue": False, "confirm": False, "error": True}
