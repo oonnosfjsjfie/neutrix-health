@@ -16,9 +16,10 @@ from google import genai
 from google.genai import types
 
 TTS_MODELS = ["gemini-2.5-flash-preview-tts", "gemini-2.5-flash-tts", "gemini-3.1-flash-tts-preview", "gemini-2.5-pro-preview-tts"]
-STYLE = ("Say this as Emma: a young woman with a beautiful, smooth, warm voice — calm, confident and charming, "
-         "softly smiling, gently expressive, relaxed natural pace, like a real person in a friendly conversation. "
-         "Never robotic. Text: ")
+STYLE = ("Say this as Emma: a young British woman from England with a soft, clear, refined English accent "
+         "(southern English, received pronunciation): a beautiful, smooth, warm voice — calm, confident, charming "
+         "and softly smiling, gently expressive, at a relaxed natural pace, like a real person in a friendly "
+         "conversation. Never robotic, never American. Text: ")
 
 _clients = {}
 _working_model = None

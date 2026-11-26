@@ -410,17 +410,14 @@
     // One voice for everything on the site (assistant, exercise coach...): picked once, remembered on this
     // device, and used every time. The phone app uses the phone's own text-to-speech voice.
     // Voice style: a calm Irish / British woman's voice, like an AI butler from the films (closest voice the device has)
-    const VOICE_KEY = 'nxVoiceV2';
+    const VOICE_KEY = 'nxVoiceV3';
     const PREFERRED = [
-        v => /moira/i.test(v.name),                                            // Apple: Irish English
-        v => /en[-_]IE/i.test(v.lang) && /emily|orla|female|natural/i.test(v.name),   // Edge / Windows: Ireland
+        v => /Google UK English Female/i.test(v.name),                         // Chrome: young British woman
+        v => /en[-_]GB/i.test(v.lang) && /libby|sonia|maisie|bella|hazel|susan|serena|kate|stephanie|female/i.test(v.name),   // Edge / Windows / Apple: England
+        v => /en[-_]GB/i.test(v.lang) && !/male|daniel|george|ryan|thomas|arthur|oliver|alfie|elliot|noah|ethan/i.test(v.name),
+        v => /moira|fiona/i.test(v.name),
         v => /en[-_]IE/i.test(v.lang),
-        v => /Google UK English Female/i.test(v.name),                         // Chrome
-        v => /en[-_]GB/i.test(v.lang) && /libby|sonia|maisie|hazel|susan|serena|kate|martha|stephanie|female/i.test(v.name),
-        v => /fiona|karen|tessa|catherine/i.test(v.name),                     // Apple: Scottish / Australian / SA
-        v => /en[-_]GB/i.test(v.lang) && !/male|daniel|george|ryan|thomas|arthur|oliver/i.test(v.name),
-        v => /Neerja|Heera|Swara/i.test(v.name),
-        v => /samantha|zira|aria|jenny|female/i.test(v.name)
+        v => /karen|tessa|catherine|samantha|zira|aria|jenny|female/i.test(v.name)
     ];
     function pickVoice(code) {
         const all = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
@@ -444,8 +441,8 @@
     if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
     // Natural, human-sounding woman's voice (Gemini voice from our server). Saved on the device after the first
     // time, so repeated phrases play at once. If it isn't available, the device's own voice is used.
-    const VOICE_CACHE = 'nx-voice-v2';      // v2: Emma's new voice (old saved phrases are not used)
-    try { caches.delete('nx-voice-v1'); } catch (e) {}       // free the space used by the old voice
+    const VOICE_CACHE = 'nx-voice-v3';      // v3: Emma's British voice (old saved phrases are not used)
+    try { caches.delete('nx-voice-v1'); caches.delete('nx-voice-v2'); } catch (e) {}       // free the space used by old voices
     let curAudio = null, speakId = 0, naturalDownUntil = 0, curAbort = null, curSources = [];
     const hashText = str => { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
     const voiceKey = text => new Request(location.origin + '/__nxvoice/' + hashText(text) + '-' + text.length);
@@ -477,7 +474,7 @@
     }
     function naturalDeviceVoice() {
         const all = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
-        return all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_](IE|GB)/i.test(v.lang) && /emily|libby|sonia|maisie|hazel|bella/i.test(v.name))
+        return all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_]GB/i.test(v.lang) && /libby|sonia|maisie|bella|hazel/i.test(v.name))
             || all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_]/i.test(v.lang) && /ava|emma|jenny|aria|michelle|neerja|natasha|clara/i.test(v.name)) || null;
     }
     function playBlob(blob, my) {
