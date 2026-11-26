@@ -1,0 +1,121 @@
+/* =====================================================
+   Neutrix 3D body (body3d.js): holographic body scan.
+   Always dark inside the 3D panel (it looks like a hologram projector).
+   ===================================================== */
+.nxb-box {
+    position: relative; overflow: hidden; border-radius: 20px; isolation: isolate; cursor: pointer; user-select: none;
+    background:
+        radial-gradient(ellipse 60% 45% at 50% 92%, rgba(56, 216, 255, .16), transparent 70%),
+        radial-gradient(ellipse 80% 60% at 50% 40%, rgba(40, 90, 160, .22), transparent 75%),
+        linear-gradient(180deg, #02060d 0%, #050d19 60%, #02060c 100%);
+    border: 1px solid rgba(56, 216, 255, .28);
+    box-shadow: inset 0 0 60px rgba(56, 216, 255, .08), 0 18px 50px rgba(0, 10, 30, .35);
+    color: #cfefff; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+.nxb-box.full { cursor: grab; }
+.nxb-box:focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
+/* fine grid + corner brackets */
+.nxb-box::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: .35;
+    background-image: linear-gradient(rgba(56, 216, 255, .07) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 216, 255, .07) 1px, transparent 1px);
+    background-size: 28px 28px; mask-image: radial-gradient(ellipse at 50% 50%, #000 40%, transparent 85%);
+}
+.nxb-box::after {
+    content: ''; position: absolute; inset: 10px; pointer-events: none; z-index: 3;
+    background:
+        linear-gradient(#38d8ff, #38d8ff) top left / 18px 2px no-repeat, linear-gradient(#38d8ff, #38d8ff) top left / 2px 18px no-repeat,
+        linear-gradient(#38d8ff, #38d8ff) top right / 18px 2px no-repeat, linear-gradient(#38d8ff, #38d8ff) top right / 2px 18px no-repeat,
+        linear-gradient(#38d8ff, #38d8ff) bottom left / 18px 2px no-repeat, linear-gradient(#38d8ff, #38d8ff) bottom left / 2px 18px no-repeat,
+        linear-gradient(#38d8ff, #38d8ff) bottom right / 18px 2px no-repeat, linear-gradient(#38d8ff, #38d8ff) bottom right / 2px 18px no-repeat;
+    opacity: .7;
+}
+.nxb-canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; z-index: 1; display: block; touch-action: none; }
+
+/* scan status (top left) */
+.nxb-hud { position: absolute; top: 18px; left: 20px; z-index: 4; pointer-events: none; font: 600 11px/1.55 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; letter-spacing: .04em; color: #7fdcff; }
+.nxb-title { font-weight: 800; letter-spacing: .16em; color: #e6f8ff; margin-bottom: 6px; text-shadow: 0 0 12px rgba(56, 216, 255, .8); }
+.nxb-step { opacity: .25; transition: opacity .3s, color .3s; }
+.nxb-step.on { opacity: .8; } .nxb-step.done { opacity: 1; color: #b9f3ff; }
+.nxb-step.done .ok { color: #4ade80; text-shadow: 0 0 8px #4ade80; }
+.nxb-found { margin-top: 6px; opacity: 0; transform: translateY(4px); transition: all .4s; color: #b9f3ff; font-weight: 800; }
+.nxb-found.show { opacity: 1; transform: none; } .nxb-found.red { color: #ff8a95; text-shadow: 0 0 10px rgba(255, 42, 61, .7); }
+.nxb-hud.mini { top: 14px; left: 16px; font-size: 10px; }
+
+/* labels that follow the organs */
+.nxb-labels { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.nxb-label {
+    position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: auto; border: 0; padding: 0; background: none; cursor: pointer;
+    font: 700 12px/1.2 system-ui, sans-serif; color: #fff; transition: opacity .3s; white-space: nowrap;
+}
+.nxb-label .dot { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: #ff2a3d; box-shadow: 0 0 0 3px rgba(255, 42, 61, .25), 0 0 16px #ff2a3d; animation: nxbPing 1.6s infinite; }
+.nxb-label .txt { position: absolute; left: 16px; top: 0; transform: translateY(-50%); padding: 5px 10px; border-radius: 10px; background: rgba(40, 4, 10, .8); border: 1px solid rgba(255, 70, 90, .7); box-shadow: 0 0 18px rgba(255, 42, 61, .35); backdrop-filter: blur(4px); }
+.nxb-label .txt::before { content: ''; position: absolute; left: -10px; top: 50%; width: 10px; height: 1px; background: rgba(255, 70, 90, .8); }
+.nxb-label.left .txt { left: auto; right: 16px; }
+.nxb-label.left .txt::before { left: auto; right: -10px; }
+.nxb-label.sev-medium .dot { background: #ff6b3d; box-shadow: 0 0 0 3px rgba(255, 107, 61, .25), 0 0 14px #ff6b3d; }
+.nxb-label.sev-low .dot { background: #ffb020; box-shadow: 0 0 0 3px rgba(255, 176, 32, .25), 0 0 12px #ffb020; }
+.nxb-label.sel .txt { background: rgba(255, 42, 61, .92); }
+@keyframes nxbPing { 0% { box-shadow: 0 0 0 0 rgba(255, 42, 61, .6), 0 0 16px #ff2a3d; } 100% { box-shadow: 0 0 0 14px rgba(255, 42, 61, 0), 0 0 16px #ff2a3d; } }
+.nxb-box:not(.full) .nxb-label .txt { font-size: 10.5px; padding: 3px 7px; }
+
+.nxb-tap { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 4; pointer-events: none; padding: 6px 14px; border-radius: 20px;
+    font: 700 12px/1 system-ui, sans-serif; color: #dff6ff; background: rgba(56, 216, 255, .14); border: 1px solid rgba(56, 216, 255, .45); box-shadow: 0 0 18px rgba(56, 216, 255, .25); white-space: nowrap; }
+.nxb-box:hover .nxb-tap { background: rgba(56, 216, 255, .26); }
+.nxb-hint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 4; pointer-events: none; font: 600 11.5px/1 system-ui, sans-serif; color: rgba(190, 235, 255, .7); white-space: nowrap; }
+.nxb-tools { position: absolute; right: 16px; top: 16px; z-index: 6; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.nxb-tools-title { font: 800 10px/1 ui-monospace, monospace; letter-spacing: .16em; color: #7fdcff; margin-bottom: 2px; text-transform: uppercase; }
+.nxb-chip { border: 1px solid rgba(56, 216, 255, .35); background: rgba(4, 20, 36, .7); color: #9fdcf2; border-radius: 14px; padding: 6px 11px; font: 700 11.5px/1 system-ui, sans-serif; cursor: pointer; backdrop-filter: blur(4px); }
+.nxb-chip.on { background: rgba(56, 216, 255, .22); color: #fff; border-color: #38d8ff; box-shadow: 0 0 12px rgba(56, 216, 255, .35); }
+.nxb-chip:focus-visible { outline: 2px solid #f59e0b; }
+.nxb-sep { height: 6px; }
+.nxb-nogl { cursor: pointer; min-height: 200px; }
+
+/* ===== Reports page: body on the left, summary moved right ===== */
+.nx-body-card { padding: 0 !important; overflow: hidden; }
+.nx-body-card .nxb-box { height: 100%; min-height: 560px; border-radius: inherit; border: 0; }
+@media (min-width: 1100px) {
+    .nx-site .ehr-workspace.nx-report-grid { max-width: 1480px; grid-template-columns: 360px minmax(0, 1fr); padding-left: 24px; padding-right: 24px; }
+    .ehr-workspace.nx-report-grid > aside { grid-column: 1 / -1; }
+    .ehr-workspace.nx-report-grid > .nx-body-card { position: sticky; top: 90px; height: calc(100vh - 120px); max-height: 760px; }
+}
+@media (max-width: 1099px) { .nx-body-card .nxb-box { min-height: 420px; height: 58vh; } }
+
+/* ===== 3D View page ===== */
+.nx-site .ehr-workspace.nxb-page, .nxb-page { max-width: 1480px; margin: 18px auto 90px; padding: 0 20px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 22px; align-items: start; }
+.nxb-page .nxb-box.full { height: calc(100vh - 140px); min-height: 520px; }
+.nxb-side { background: var(--card-bg, #fff); border: 1px solid var(--border-color, rgba(0,0,0,.1)); border-radius: 20px; padding: 20px; position: sticky; top: 90px; max-height: calc(100vh - 120px); overflow: auto; }
+.nxb-side-title { font: 800 12px/1 ui-monospace, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted, #64748b); }
+.nxb-overview { margin: 10px 0 14px; font-size: 15px; line-height: 1.5; color: var(--text-primary, #111); }
+.nxb-list { display: flex; flex-direction: column; gap: 8px; }
+.nxb-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 1px solid var(--border-color, rgba(0,0,0,.1)); background: transparent; color: inherit; border-radius: 14px; padding: 11px 12px; cursor: pointer; transition: transform .15s, border-color .15s, box-shadow .15s; }
+.nxb-item:hover { transform: translateX(3px); border-color: rgba(255, 42, 61, .5); }
+.nxb-item.sel { border-color: #ff2a3d; box-shadow: 0 0 0 3px rgba(255, 42, 61, .15); }
+.nxb-item-txt { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nxb-item-txt b { font-size: 14.5px; color: var(--text-primary, #111); }
+.nxb-item-txt small { font-size: 12px; color: var(--text-muted, #64748b); }
+.nxb-go { font-size: 20px; color: var(--text-muted, #64748b); }
+.nxb-dot { width: 12px; height: 12px; border-radius: 50%; background: #ff2a3d; box-shadow: 0 0 10px #ff2a3d; flex: none; }
+.sev-medium .nxb-dot { background: #ff6b3d; box-shadow: 0 0 10px #ff6b3d; } .sev-low .nxb-dot { background: #ffb020; box-shadow: 0 0 10px #ffb020; }
+.nxb-info { margin-top: 14px; border-radius: 16px; padding: 16px; border: 1px solid rgba(255, 42, 61, .35); background: linear-gradient(180deg, rgba(255, 42, 61, .07), transparent 60%); animation: nxbIn .3s ease; }
+.nxb-info.hidden { display: none; }
+@keyframes nxbIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.nxb-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.nxb-info-head > div { flex: 1; }
+.nxb-info-title { font-weight: 800; font-size: 17px; color: var(--text-primary, #111); }
+.nxb-info-sub { font-size: 12.5px; color: var(--text-muted, #64748b); }
+.nxb-x { border: 0; background: transparent; font-size: 24px; line-height: 1; cursor: pointer; color: var(--text-muted, #64748b); width: 34px; height: 34px; border-radius: 50%; }
+.nxb-x:hover { background: rgba(127,127,127,.12); }
+.nxb-sec { margin-top: 10px; }
+.nxb-sec-t { font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #64748b); }
+.nxb-sec p { margin: 4px 0 0; font-size: 14.5px; line-height: 1.55; color: var(--text-primary, #111); }
+.nxb-listen { margin-top: 14px; border: 0; border-radius: 20px; padding: 9px 16px; font: 700 13.5px/1 system-ui, sans-serif; cursor: pointer; color: #fff; background: linear-gradient(135deg, #6d28d9, #2563eb); }
+.nxb-disclaimer { margin: 16px 0 0; font-size: 12px; color: var(--text-muted, #64748b); }
+@media (max-width: 900px) {
+    .nx-site .ehr-workspace.nxb-page, .nxb-page { grid-template-columns: 1fr; padding: 0 12px; }
+    .nxb-page .nxb-box.full { height: 62vh; min-height: 420px; }
+    .nxb-side { position: static; max-height: none; }
+    .nxb-tools { top: auto; bottom: 40px; right: 10px; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; max-width: 70%; }
+    .nxb-tools-title, .nxb-sep { display: none; }
+    .nxb-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .nxb-label .dot { animation: none; } }

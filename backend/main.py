@@ -225,6 +225,21 @@ def assistant_voice(req: VoiceRequest):
         return _Resp(content=str(e)[:200], status_code=503, media_type="text/plain")
 
 
+class BodyMapRequest(BaseModel):
+    report: str
+    language: str = "English"
+
+
+@app.post("/api/body-map")
+def body_map_route(req: BodyMapRequest):
+    # 3D body view: which parts of the body the report is about, with simple explanations
+    from services.body_map import body_map
+    try:
+        return body_map(req.report, req.language)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:300]}, status_code=503)
+
+
 @app.post("/api/assistant/live")
 def assistant_live(origin: str = Header(default=""), referer: str = Header(default="")):
     # A short-lived pass for Gemini Live (real-time voice). The API key itself never leaves the server.

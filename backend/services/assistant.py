@@ -60,6 +60,7 @@ PAGES = {
     "tracking.html": "Recovery Tracker: log blood pressure, sugar, symptoms and daily notes",
     "briefing.html": "Ask Doctor: prepare questions and a briefing for the doctor visit",
     "progress.html": "Overall Progress Report",
+    "body3d.html": "3D View: an interactive 3D human body with the problem areas from the report marked in red; tap one to learn what happened there",
     "profile.html": "Patient Profile: name, age, contacts, doctor details",
     "home.html": "Neutrix website home page (about the product, team, get the Android app)",
     "signin.html": "Sign in / create account",

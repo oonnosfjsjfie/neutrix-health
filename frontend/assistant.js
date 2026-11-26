@@ -20,7 +20,7 @@
     const P = (C && C.Plugins) || {};
     const MAX_STEPS = 8;
     const PAGES = ['issues.html', 'index.html', 'summary.html', 'report.html', 'medplan.html', 'schedule.html', 'checkups.html',
-        'improvements.html', 'exercise.html', 'tracking.html', 'briefing.html', 'progress.html', 'profile.html', 'home.html',
+        'improvements.html', 'exercise.html', 'tracking.html', 'briefing.html', 'progress.html', 'profile.html', 'home.html', 'body3d.html',
         'signin.html', 'get-app.html'];
     const RISKY = /\b(delete|remove|erase|sign ?out|log ?out|send|submit|reset|clear all|deactivate|ഇല്ലാതാക്കുക|അയയ്ക്കുക)\b/i;
 
@@ -991,6 +991,7 @@
         ['improvements.html', /\b(improvements?|compare( my)? (reports?|labs?)|lab comparison)\b/],
         ['exercise.html', /\b(exercises?|workouts?|physio(therapy)?|camera coach)\b/],
         ['briefing.html', /\b(ask (the )?doctor|doctor questions|questions for (the |my )?doctor|briefing)\b/],
+        ['body3d.html', /\b(3 ?d( view| body| model)?|three ?d|body (view|map|scan|model)|human body|my body)\b/],
         ['progress.html', /\b(progress( report)?|overall progress)\b/],
         ['profile.html', /\b(profile|patient profile|my details|my info(rmation)?)\b/],
         ['issues.html', /\b(my issues|medical issues|issues|switch issue|change issue|my problems)\b/],
@@ -1000,7 +1001,7 @@
     ];
     const PAGE_NAMES = { 'summary.html': 'AI Summary', 'report.html': 'your summary', 'schedule.html': 'your medicine schedule', 'medplan.html': 'your medicine plan',
         'checkups.html': 'your check-ups', 'tracking.html': 'the recovery tracker', 'improvements.html': 'your improvements', 'exercise.html': 'exercises',
-        'briefing.html': 'Ask Doctor', 'progress.html': 'your progress report', 'profile.html': 'your profile', 'issues.html': 'your medical issues',
+        'briefing.html': 'Ask Doctor', 'progress.html': 'your progress report', 'body3d.html': 'the 3D body view', 'profile.html': 'your profile', 'issues.html': 'your medical issues',
         'index.html': 'the dashboard', 'home.html': 'the Neutrix home page', 'get-app.html': 'the app download page' };
     const GO_WORDS = /^(open|go( to)?|take me( to)?|show( me)?|bring up|pull up|launch|start|navigate( to)?|switch to|jump to|let'?s go( to)?|i (want|need|wanna|would like)( to)?( go to| see| open| check| look at| use)?|can (you|u) (open|show)( me)?|where('?s| is)|check)\b/;
     const here = () => location.pathname.split('/').pop() || 'home.html';

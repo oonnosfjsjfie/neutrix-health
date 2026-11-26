@@ -523,3 +523,17 @@ textarea, input, select, button { font-family: inherit; }
     .chat-panel-sub { display: none; }
     .chat-panel-header { padding: 8px 12px; }
 }
+
+/* Chat button and chat panel on the bottom LEFT, so Emma (the assistant, bottom right) has her space */
+.chat-fab { right: auto !important; left: 24px; }
+.chat-panel { right: auto !important; left: 24px; transform-origin: bottom left; }
+@media (max-width: 640px) {
+    .chat-fab { left: 16px; }
+    .chat-panel { left: 16px; right: 16px !important; }
+}
+@media (max-height: 520px) { .chat-panel { left: 84px; } }
+/* the floating Report button (pages without a top bar) moves up out of the chat button's way */
+.chat-fab ~ .nx-fb-btn.floating, body:has(.chat-fab) .nx-fb-btn.floating { bottom: 96px; }
+/* "↑ Top" pill sits just right of the chat button */
+body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
+@media (max-width: 640px) { body:has(.chat-fab) .nx-top-btn { left: 84px; bottom: 22px; } }

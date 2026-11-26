@@ -7,8 +7,8 @@
     <meta name="theme-color" content="#000000">
     <script src="pwa.js?v=20261125a" defer></script>
     <script src="native-app.js?v=20261125c"></script>
-    <script src="app-shell.js?v=20261125a"></script>
-    <script src="assistant.js?v=20261126m" defer></script>
+    <script src="app-shell.js?v=20261126a"></script>
+    <script src="assistant.js?v=20261126n" defer></script>
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts + online saving (must load before issue-scope.js) -->
     <script src="firebase-config.js?v=20261030c"></script>
@@ -19,7 +19,7 @@
     <script src="issue-scope.js?v=20261030c"></script>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css?v=20261030g">
+    <link rel="stylesheet" href="skin.css?v=20261126a">
     <style>
         /* Hero header, like the website */
         .dash-hero { text-align: left; padding: 6px 0 26px; border-bottom: 1px solid var(--border-color); margin-bottom: 26px; }
@@ -178,7 +178,7 @@
 
     </main>
 
-    <script src="common.js?v=20261030c"></script>
+    <script src="common.js?v=20261126a"></script>
     <script src="account-menu.js?v=20261030e"></script>
     <script src="feedback.js?v=20261030c"></script>
     <script>
@@ -228,6 +228,9 @@
             { href: 'report.html', icon: '📋', who: 'Ajay', ai: true, needs: 'report',
               en: ['AI Patient Reports Portal', 'Your summary, medicine plan and check-ups'],
               ml: ['AI രോഗി റിപ്പോർട്ട് പോർട്ടൽ', 'നിങ്ങളുടെ സംഗ്രഹം, മരുന്ന് പ്ലാൻ, പരിശോധനകൾ'] },
+            { href: 'body3d.html', icon: '🫀', who: 'Ajay', ai: true, needs: 'report',
+              en: ['3D View', 'Your body in 3D: the parts your report talks about glow red; tap one to learn more'],
+              ml: ['3D വ്യൂ', 'നിങ്ങളുടെ 3D ശരീരം: റിപ്പോർട്ടിൽ പറയുന്ന ഭാഗങ്ങൾ ചുവപ്പിൽ; കൂടുതൽ അറിയാൻ ടാപ്പ് ചെയ്യുക'] },
             { href: 'medplan.html', icon: '💊', who: 'Ajay / Lingesh', ai: true, needs: 'report',
               en: ['Medicine Plan & Schedule', 'Your medicine plan and a daily checklist to tick off'],
               ml: ['മരുന്ന് പ്ലാനും ഷെഡ്യൂളും', 'നിങ്ങളുടെ മരുന്ന് പ്ലാനും ടിക്ക് ചെയ്യാവുന്ന ദൈനംദിന ചെക്ക്‌ലിസ്റ്റും'] },

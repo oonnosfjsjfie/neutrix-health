@@ -855,7 +855,7 @@ langBtn.addEventListener('click', () => {
 const NX_LAYOUT = {
     English: {
         nav: { dashboard: 'Dashboard', upload: 'AI Summary', report: 'Reports', medplan: 'Medicines', schedule: 'Schedule',
-               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Ask Doctor', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website' },
+               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Ask Doctor', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website', body3d: '3D View' },
         hero: {
             issues:       ['MY MEDICAL ISSUES', 'Your recovery, one issue at a time.', 'Pick an issue to continue, or add a new one. Each issue keeps its own reports, plans and history.'],
             upload:       ['AI DISCHARGE SUMMARY', 'Upload. Understand. Recover.', 'Add your discharge summary, lab reports and pharmacy bills. Neutrix turns them into a simple summary.'],
@@ -867,6 +867,7 @@ const NX_LAYOUT = {
             tracking:     ['RECOVERY TRACKER', 'Small readings. Clear signals.', 'Record the patient’s health readings daily to assist your medical care team.'],
             briefing:     ['ASK DOCTOR', 'Tell your doctor, clearly.', 'Prepare a clear, structured message and send it straight to your doctor.'],
             exercise:     ['AI EXERCISE COACH', 'Move right. Recover stronger.', 'The exercises from your reports, with your camera checking each movement as you go.'],
+            body3d:       ['3D VIEW', 'See inside. Understand more.', 'Your body in 3D, with the areas your report talks about lit up in red. Tap one to learn what happened there.'],
             progress:     ['OVERALL PROGRESS REPORT', 'Everything, in one report.', 'Your medicines, readings, exercise and reports, turned into one clear report for your doctor.'],
             admin:        ['ADMIN ACCESS', 'Neutrix admin.', 'Registered people (email and phone, for contact only), ratings and problem reports. Everything else stays private.']
         },
@@ -875,7 +876,7 @@ const NX_LAYOUT = {
     },
     Malayalam: {
         nav: { dashboard: 'ഡാഷ്ബോർഡ്', upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്നുകൾ', schedule: 'ഷെഡ്യൂൾ',
-               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്' },
+               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്', body3d: '3D വ്യൂ' },
         hero: {
             issues:       ['എന്റെ ആരോഗ്യ പ്രശ്നങ്ങൾ', 'ഓരോ പ്രശ്നവും, ഓരോ ചുവടും.', 'തുടരാൻ ഒരു പ്രശ്നം തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ പുതിയത് ചേർക്കുക.'],
             upload:       ['AI ഡിസ്ചാർജ് സംഗ്രഹം', 'അപ്‌ലോഡ് ചെയ്യൂ. മനസ്സിലാക്കൂ.', 'ഡിസ്ചാർജ് സമ്മറി, ലാബ് റിപ്പോർട്ടുകൾ, ഫാർമസി ബില്ലുകൾ എന്നിവ ചേർക്കുക.'],
@@ -887,6 +888,7 @@ const NX_LAYOUT = {
             tracking:     ['റിക്കവറി ട്രാക്കർ', 'ചെറിയ അളവുകൾ. വ്യക്തമായ സൂചനകൾ.', 'നിങ്ങളുടെ മെഡിക്കൽ കെയർ ടീമിനെ സഹായിക്കുന്നതിന് രോഗിയുടെ ആരോഗ്യ വിവരങ്ങൾ ദിവസവും രേഖപ്പെടുത്തുക.'],
             briefing:     ['ഡോക്ടറോട് ചോദിക്കുക', 'ഡോക്ടറോട് വ്യക്തമായി പറയൂ.', 'വ്യക്തമായ ഒരു സന്ദേശം തയ്യാറാക്കി ഡോക്ടർക്ക് നേരിട്ട് അയക്കുക.'],
             exercise:     ['AI വ്യായാമ സഹായി', 'ശരിയായി ചെയ്യൂ. വേഗം സുഖപ്പെടൂ.', 'നിങ്ങളുടെ റിപ്പോർട്ടുകളിലെ വ്യായാമങ്ങൾ, ഓരോ ചലനവും ക്യാമറ പരിശോധിക്കുന്നു.'],
+            body3d:       ['3D വ്യൂ', 'ഉള്ളിലേക്ക് നോക്കൂ. കൂടുതൽ മനസ്സിലാക്കൂ.', 'റിപ്പോർട്ടിൽ പറയുന്ന ഭാഗങ്ങൾ ചുവപ്പിൽ കാണിക്കുന്ന നിങ്ങളുടെ 3D ശരീരം. കൂടുതൽ അറിയാൻ ടാപ്പ് ചെയ്യുക.'],
             progress:     ['മൊത്തം പുരോഗതി റിപ്പോർട്ട്', 'എല്ലാം, ഒരു റിപ്പോർട്ടിൽ.', 'മരുന്നുകൾ, റീഡിംഗുകൾ, വ്യായാമം, റിപ്പോർട്ടുകൾ — ഡോക്ടർക്കായി ഒരു വ്യക്തമായ റിപ്പോർട്ട്.'],
             admin:        ['അഡ്മിൻ ആക്സസ്', 'ന്യൂട്രിക്സ് അഡ്മിൻ.', 'രജിസ്റ്റർ ചെയ്തവർ (ബന്ധപ്പെടാൻ ഇമെയിലും ഫോണും മാത്രം), റേറ്റിംഗുകൾ, പ്രശ്ന റിപ്പോർട്ടുകൾ. മറ്റെല്ലാം സ്വകാര്യമായി തുടരും.']
         },
@@ -930,7 +932,7 @@ const NX_LAYOUT = {
         const hasReport = !!storeGet('neutrixReport');
         const hasProgress = loadFollowups().some(f => f.comparison);
         const items = [['dashboard', 'index.html'], ['upload', 'summary.html']];
-        if (hasReport) items.push(['report', 'report.html'], ['medplan', 'medplan.html'], ['checkups', 'checkups.html']);
+        if (hasReport) items.push(['report', 'report.html'], ['body3d', 'body3d.html'], ['medplan', 'medplan.html'], ['checkups', 'checkups.html']);
         if (hasProgress) items.push(['improvements', 'improvements.html']);
         const ex = window.exerciseInfo && exerciseInfo();
         if (ex && ex.exercises.length) items.push(['exercise', 'exercise.html']);

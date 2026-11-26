@@ -33,7 +33,7 @@
             tools: 'Recovery tools', account: 'Account & settings',
             upload: 'AI Summary', report: 'Reports', medplan: 'Medicine plan', schedule: 'Daily medicines', checkups: 'Check-ups',
             improvements: 'Improvements', exercise: 'Exercise coach', tracking: 'Recovery tracker', briefing: 'Ask Doctor',
-            progress: 'Progress report', issues: 'My issues', profile: 'My profile', admin: 'Admin',
+            progress: 'Progress report', body3d: '3D View', issues: 'My issues', profile: 'My profile', admin: 'Admin',
             dashboard: 'Home', language: 'മലയാളം', dark: 'Dark mode', light: 'Light mode', problem: 'Report a problem',
             signout: 'Sign out', signingOut: 'Signing out…', back: 'Back', close: 'Close', pickIssue: 'Pick a medical issue first.'
         },
@@ -42,7 +42,7 @@
             tools: 'റിക്കവറി ടൂളുകൾ', account: 'അക്കൗണ്ട് & ക്രമീകരണങ്ങൾ',
             upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്ന് പ്ലാൻ', schedule: 'ദിവസേനയുള്ള മരുന്നുകൾ', checkups: 'പരിശോധനകൾ',
             improvements: 'പുരോഗതി', exercise: 'വ്യായാമ സഹായി', tracking: 'റിക്കവറി ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക',
-            progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', profile: 'എന്റെ പ്രൊഫൈൽ', admin: 'അഡ്മിൻ',
+            progress: 'പുരോഗതി റിപ്പോർട്ട്', body3d: '3D വ്യൂ', issues: 'എന്റെ പ്രശ്നങ്ങൾ', profile: 'എന്റെ പ്രൊഫൈൽ', admin: 'അഡ്മിൻ',
             dashboard: 'ഹോം', language: 'English', dark: 'ഡാർക്ക് മോഡ്', light: 'ലൈറ്റ് മോഡ്', problem: 'പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക',
             signout: 'സൈൻ ഔട്ട്', signingOut: 'സൈൻ ഔട്ട് ചെയ്യുന്നു…', back: 'പിന്നോട്ട്', close: 'അടയ്ക്കുക', pickIssue: 'ആദ്യം ഒരു പ്രശ്നം തിരഞ്ഞെടുക്കുക.'
         }
@@ -55,7 +55,7 @@
     const PAGE_BY_FILE = {
         'index.html': 'dashboard', 'summary.html': 'upload', 'report.html': 'report', 'medplan.html': 'medplan',
         'schedule.html': 'schedule', 'checkups.html': 'checkups', 'improvements.html': 'improvements', 'exercise.html': 'exercise',
-        'tracking.html': 'tracking', 'briefing.html': 'briefing', 'progress.html': 'progress', 'issues.html': 'issues',
+        'tracking.html': 'tracking', 'briefing.html': 'briefing', 'progress.html': 'progress', 'issues.html': 'issues', 'body3d.html': 'body3d',
         'profile.html': 'profile', 'admin.html': 'admin', 'signin.html': 'signin'
     };
     const page = PAGE_BY_FILE[page0] || 'other';
@@ -179,6 +179,7 @@
         const tools = issue ? [
             ['📄', 'upload', 'summary.html'],
             hasReport() && ['📋', 'report', 'report.html'],
+            hasReport() && ['🫀', 'body3d', 'body3d.html'],
             hasReport() && ['💊', 'medplan', 'medplan.html'],
             ['✅', 'schedule', 'schedule.html'],
             hasReport() && ['📅', 'checkups', 'checkups.html'],
