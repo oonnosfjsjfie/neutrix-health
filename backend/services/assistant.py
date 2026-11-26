@@ -12,6 +12,7 @@ import os
 import re
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from google import genai
 from google.genai import types
@@ -19,7 +20,8 @@ from google.genai import types
 from services.ai_engine import MODELS, is_quota_error, QUOTA_MESSAGE, BUSY_MESSAGE
 
 # Fastest model first: the assistant must answer in about a second
-FAST_MODELS = ["gemini-3.1-flash-lite"] + [m for m in MODELS if m != "gemini-3.1-flash-lite"]
+FAST_MODELS = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"] + \
+    [m for m in MODELS if m not in ("gemini-3.1-flash-lite", "gemini-3.5-flash")]
 
 _client = None
 
@@ -28,7 +30,8 @@ def client():
     global _client
     if _client is None:
         key = (os.getenv("NEUTRIX_ASSISTANT_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
-        _client = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=30_000))
+        # Short wait per try: if a model is slow, another one answers instead
+        _client = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=14_000))
     return _client
 
 
@@ -147,45 +150,61 @@ def _parse(raw: str) -> dict:
     }
 
 
-def _config(fast: bool):
+def _config(model: str, fast: bool = True):
+    base = dict(response_mime_type="application/json", temperature=0.5, max_output_tokens=900)
     if fast:
-        try:   # little "thinking" = much faster answers
-            return types.GenerateContentConfig(response_mime_type="application/json", temperature=0.5,
-                                               max_output_tokens=900,
-                                               thinking_config=types.ThinkingConfig(thinking_level="low"))
+        try:   # little or no "thinking" = much faster answers
+            if "2.5" in model:
+                return types.GenerateContentConfig(**base, thinking_config=types.ThinkingConfig(thinking_budget=0))
+            return types.GenerateContentConfig(**base, thinking_config=types.ThinkingConfig(thinking_level="low"))
         except Exception:
             pass
-    return types.GenerateContentConfig(response_mime_type="application/json", temperature=0.5, max_output_tokens=1500)
+    return types.GenerateContentConfig(**base)
 
 
-def assistant_turn(req: dict) -> dict:
-    prompt = _prompt(req)
-    last = None
-    started = time.time()
-    for model in FAST_MODELS:
-        config = _config(True)
-        for attempt in range(2):
+def _try(model: str):
+    """One model, at most two quick tries. Returns the answer or raises."""
+    def run(prompt):
+        last = None
+        for fast in (True, False):
             try:
-                r = client().models.generate_content(model=model, contents=prompt, config=config)
-                out = _parse(r.text)
-                print(f"[assistant] {model}: {len(out['actions'])} steps, continue={out['continue']}, {time.time() - started:.1f}s")
-                return out
+                r = client().models.generate_content(model=model, contents=prompt, config=_config(model, fast))
+                return _parse(r.text)
             except json.JSONDecodeError as e:
                 last = e
-                continue
             except Exception as e:
                 last = e
                 msg = str(e)
-                if is_quota_error(msg) or "404" in msg or "NOT_FOUND" in msg:
-                    break
-                if ("thinking" in msg.lower() or "INVALID_ARGUMENT" in msg) and attempt == 0:
-                    config = _config(False)       # this model doesn't take the speed setting: try without it
-                    continue
-                if "503" in msg or "UNAVAILABLE" in msg:
-                    time.sleep(1.2 * (attempt + 1))
-                    continue
-                print(f"[assistant] {model}: {msg[:200]}")
+                if fast and ("thinking" in msg.lower() or "INVALID_ARGUMENT" in msg):
+                    continue          # this model doesn't take the speed setting: try once without it
+                raise
+        raise last
+    return run
+
+
+def assistant_turn(req: dict) -> dict:
+    """Asks two models at the same time and uses the first good answer (Gemini is sometimes very slow)."""
+    prompt = _prompt(req)
+    started = time.time()
+    errors = []
+    pool = ThreadPoolExecutor(max_workers=2)
+    try:
+        for i in range(0, len(FAST_MODELS), 2):
+            pair = FAST_MODELS[i:i + 2]
+            futures = {pool.submit(_try(m), prompt): m for m in pair}
+            for f in as_completed(futures):
+                m = futures[f]
+                try:
+                    out = f.result()
+                    print(f"[assistant] {m}: {len(out['actions'])} steps, continue={out['continue']}, {time.time() - started:.1f}s")
+                    return out
+                except Exception as e:
+                    errors.append(str(e))
+                    print(f"[assistant] {m}: {str(e)[:160]} ({time.time() - started:.1f}s)")
+            if time.time() - started > 28:
                 break
-    msg = str(last or "")
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+    msg = " ".join(errors)
     say = QUOTA_MESSAGE if is_quota_error(msg) else BUSY_MESSAGE
     return {"say": say, "show": "", "actions": [], "continue": False, "confirm": False, "error": True}
