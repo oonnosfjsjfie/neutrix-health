@@ -29,7 +29,7 @@
         English: {
             btn: 'Assistant', open: 'Open Neutrix Assistant', title: 'Neutrix Assistant', close: 'Close assistant',
             hello: "Neutrix online. Talk or type, boss. I can open any page, fill things in, read the screen to you, or just chat.",
-            placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. Say “Hey Neutrix” and then what you need.', wakeHint: 'Say “Hey Neutrix”…', micOff: 'Mic off.',
+            placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. Say “Hey Neutrix” and then what you need.', wakeHint: 'Say “Hey Neutrix”…', tapToHear: 'Tap anywhere on the page so I can talk to you.', micOff: 'Mic off.',
             listening: 'Listening…', thinking: 'Thinking…', speaking: 'Speaking…', working: 'Working on the page…', ready: 'Ready',
             detail: 'Detailed', voice: 'Voice', yes: 'Yes, do it', no: 'No', stop: 'Stop',
             stopped: 'Okay, I stopped.', cancelled: "Okay, I won't do that.", noMic: "Your browser can't use the microphone here. Please type instead.",
@@ -40,7 +40,7 @@
         Malayalam: {
             btn: 'അസിസ്റ്റന്റ്', open: 'Neutrix അസിസ്റ്റന്റ് തുറക്കുക', title: 'Neutrix അസിസ്റ്റന്റ്', close: 'അടയ്ക്കുക',
             hello: 'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ Neutrix അസിസ്റ്റന്റ് ആണ്. സംസാരിക്കുകയോ ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം. ലളിതമായി വിശദീകരിക്കാം, അല്ലെങ്കിൽ ഈ വെബ്സൈറ്റിൽ കാര്യങ്ങൾ ചെയ്തു തരാം.',
-            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', expand: 'സംഭാഷണം കാണിക്കുക', collapse: 'സംഭാഷണം മറയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ. “Hey Neutrix” എന്ന് പറഞ്ഞ ശേഷം സംസാരിക്കുക.', wakeHint: '“Hey Neutrix” എന്ന് പറയൂ…', micOff: 'മൈക്ക് ഓഫ്.',
+            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', expand: 'സംഭാഷണം കാണിക്കുക', collapse: 'സംഭാഷണം മറയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ. “Hey Neutrix” എന്ന് പറഞ്ഞ ശേഷം സംസാരിക്കുക.', wakeHint: '“Hey Neutrix” എന്ന് പറയൂ…', tapToHear: 'ഞാൻ സംസാരിക്കാൻ പേജിൽ എവിടെയെങ്കിലും ടാപ്പ് ചെയ്യുക.', micOff: 'മൈക്ക് ഓഫ്.',
             listening: 'കേൾക്കുന്നു…', thinking: 'ആലോചിക്കുന്നു…', speaking: 'സംസാരിക്കുന്നു…', working: 'പേജിൽ ചെയ്യുന്നു…', ready: 'തയ്യാർ',
             detail: 'വിശദമായി', voice: 'ശബ്ദം', yes: 'അതെ, ചെയ്യൂ', no: 'വേണ്ട', stop: 'നിർത്തുക',
             stopped: 'ശരി, നിർത്തി.', cancelled: 'ശരി, അത് ചെയ്യുന്നില്ല.', noMic: 'ഇവിടെ മൈക്ക് ഉപയോഗിക്കാൻ കഴിയില്ല. ടൈപ്പ് ചെയ്യുക.',
@@ -585,22 +585,22 @@
     function toggleMic() {
         prefs.mic = !prefs.mic;
         savePrefs();
-        if (prefs.mic) { failCount = 0; listen(); }
-        else { discard = true; stopListening(); input.value = ''; }
+        if (prefs.mic) { failCount = 0; liveStart().then(ok => { if (!ok) listen(); }); }
+        else { liveStop(); discard = true; stopListening(); input.value = ''; }
         paint();
         live.textContent = prefs.mic ? t('micOn') : t('micOff');
         if (prefs.mic) add('note', t('micOn'));
     }
     function maybeListen(delay) {
         clearTimeout(restartTimer);
-        restartTimer = setTimeout(() => { if (prefs.mic && !speaking && !listening && !leaving) listen(); }, delay || 300);
+        restartTimer = setTimeout(() => { if (prefs.mic && !speaking && !listening && !leaving && !LV.on && !LV.connecting) listen(); }, delay || 300);
     }
     function micBlocked(msg) {
         prefs.mic = false; savePrefs();
         add('note', msg); paint();
     }
     async function listen() {
-        if (listening || !prefs.mic || speaking) return;
+        if (listening || !prefs.mic || speaking || LV.on || LV.connecting) return;
         discard = false;
         const started = Date.now();
         const done = text => {
@@ -735,6 +735,49 @@
             scroll: `${Math.round(scrollY)} of ${Math.max(0, document.documentElement.scrollHeight - innerHeight)}` };
     }
 
+    // ---------- scrolling: whatever actually scrolls (a pop-up, the page, or a scrolling box inside it) ----------
+    function scroller() {
+        const canScroll = el => { const st = getComputedStyle(el); return /(auto|scroll|overlay)/.test(st.overflowY) && el.scrollHeight > el.clientHeight + 20 && visible(el); };
+        const dialogs = [...document.querySelectorAll('.nx-fb-modal, .vis-modal, .cal-modal, .nx-cam-modal, [role=dialog], [aria-modal=true]')].filter(d => !d.closest('#nxa-dock') && visible(d));
+        for (const d of dialogs.reverse()) {
+            if (canScroll(d)) return d;
+            const inner = [...d.querySelectorAll('*')].find(canScroll);
+            if (inner) return inner;
+        }
+        const doc = document.scrollingElement || document.documentElement;
+        if (doc.scrollHeight > innerHeight + 20 && getComputedStyle(document.body).overflowY !== 'hidden') return null;    // the page itself
+        let best = null, area = 0;
+        for (const el of document.querySelectorAll('main, section, div, ul, article')) {
+            if (el.closest('#nxa-dock') || !canScroll(el)) continue;
+            const r = el.getBoundingClientRect(), a = r.width * r.height;
+            if (a > area) { area = a; best = el; }
+        }
+        return best;
+    }
+    // dir: up / down / top / bottom; screens: how far (0.35 = a bit, 0.8 = a screen, 2 = a lot). Returns where it ended up.
+    async function scrollPage(dir, screens) {
+        const el = scroller();
+        const box = el || document.scrollingElement || document.documentElement;
+        const height = el ? el.clientHeight : innerHeight;
+        const before = box.scrollTop;
+        const opts = top => ({ top, behavior: 'smooth' });
+        if (dir === 'top') (el || window).scrollTo(opts(0));
+        else if (dir === 'bottom') (el || window).scrollTo(opts(box.scrollHeight));
+        else (el || window).scrollBy(opts((dir === 'up' ? -1 : 1) * height * (screens || 0.8)));
+        await sleep(550);
+        const max = Math.max(0, box.scrollHeight - box.clientHeight);
+        const pos = box.scrollTop;
+        return { moved: Math.abs(pos - before) > 4, atTop: pos <= 4, atBottom: pos >= max - 4,
+            percent: max ? Math.round(pos / max * 100) : 100, where: el ? 'a scrolling box' : 'the page' };
+    }
+    function scrollWords(dir, r) {
+        if (!r.moved && (dir === 'down' || dir === 'bottom') && r.atBottom) return "That's the bottom of the page.";
+        if (!r.moved && (dir === 'up' || dir === 'top') && r.atTop) return "You're already at the top.";
+        if (dir === 'top' || r.atTop) return 'Top of the page.';
+        if (dir === 'bottom' || r.atBottom) return 'Bottom of the page.';
+        return dir === 'up' ? 'Up we go.' : 'Scrolling down.';
+    }
+
     // ---------- the moving pointer ----------
     function setCursor(x, y, instant) {
         if (instant) cursor.style.transition = 'none';
@@ -826,11 +869,13 @@
                     done.push(`${a.on ? 'ticked' : 'unticked'} ${name}`);
                 } else if (a.do === 'scroll') {
                     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); await moveTo(el); unmark(el); }
-                    else if (a.dir === 'top') scrollTo({ top: 0, behavior: 'smooth' });
-                    else if (a.dir === 'bottom') scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-                    else scrollBy({ top: (a.dir === 'up' ? -1 : 1) * innerHeight * 0.7, behavior: 'smooth' });
-                    await sleep(650);
-                    done.push(`scrolled ${a.dir || 'to ' + name}`);
+                    else {
+                        const r = await scrollPage(a.dir || 'down', a.screens);
+                        done.push(`scrolled ${a.dir || 'down'} (${r.percent}% down the page${r.atBottom ? ', at the bottom' : ''}${r.atTop ? ', at the top' : ''})`);
+                        continue;
+                    }
+                    await sleep(300);
+                    done.push(`scrolled to ${name}`);
                 } else if (a.do === 'go') {
                     const page = String(a.page || '').replace(/^\/+/, '').split(/[?#]/)[0];
                     if (!PAGES.includes(page)) { done.push(`unknown page ${a.page}`); continue; }
@@ -962,6 +1007,7 @@
     const GO_WORDS = /^(open|go( to)?|take me( to)?|show( me)?|bring up|pull up|launch|start|navigate( to)?|switch to|jump to|let'?s go( to)?|i (want|need|wanna|would like)( to)?( go to| see| open| check| look at| use)?|can (you|u) (open|show)( me)?|where('?s| is)|check)\b/;
     const here = () => location.pathname.split('/').pop() || 'home.html';
 
+    const replyOut = (text, opts) => reply(text, opts);
     async function reply(text, opts) {
         add('ai', text);
         const p = speak(text);
@@ -1006,10 +1052,11 @@
 
     // Sending a problem report (same as the Report button): types it into the form so it can be seen, then sends
     let awaitingReport = false;
-    async function sendReport(what) {
+    async function sendReport(what, quiet) {
         awaitingReport = false;
         stopFlag = false;
-        if (!(window.NxFeedback && NxFeedback.send)) { await reply("Sorry, reporting isn't available on this page."); return; }
+        const reply = quiet ? (async () => {}) : replyOut;
+        if (!(window.NxFeedback && NxFeedback.send)) { await reply("Sorry, reporting isn't available on this page."); return 'reporting is not available on this page'; }
         let box = document.querySelector('.nx-fb-modal #nxFbText');
         if (!box && NxFeedback.openReport) { NxFeedback.openReport(); await sleep(150); box = document.querySelector('.nx-fb-modal #nxFbText'); }
         const btn = box && box.closest('.nx-fb-modal').querySelector('[data-a="send"]');
@@ -1019,22 +1066,22 @@
             if (id) await run([{ do: 'type', id: id[0], text: what }]);
             if (box.value.trim() !== what.trim()) { box.value = what; box.dispatchEvent(new Event('input', { bubbles: true })); }
             const sid = [...elMap.entries()].find(([, el]) => el === btn);
-            add('ai', 'Sending your report…');
+            if (!quiet) add('ai', 'Sending your report…');
             if (sid) { await moveTo(btn); ripple(); unmark(btn); }
             btn.click();
             // wait for the form to say it was sent (or failed)
             for (let i = 0; i < 40; i++) {
                 await sleep(250);
                 const msg = document.querySelector('.nx-fb-modal .nx-fb-msg');
-                if (!document.querySelector('.nx-fb-modal') || (msg && /ok/.test(msg.className))) { setTimeout(hideCursor, 800); await reply('Sent. Thanks, boss, the team will look at it.'); return; }
-                if (msg && /err/.test(msg.className) && msg.textContent) { hideCursor(); await reply("I couldn't send it: " + msg.textContent); return; }
+                if (!document.querySelector('.nx-fb-modal') || (msg && /ok/.test(msg.className))) { setTimeout(hideCursor, 800); await reply('Sent. Thanks, boss, the team will look at it.'); return 'sent'; }
+                if (msg && /err/.test(msg.className) && msg.textContent) { hideCursor(); await reply("I couldn't send it: " + msg.textContent); return 'not sent: ' + msg.textContent; }
             }
             hideCursor();
             await reply("It's taking a while to send. Check the form, or try again in a moment.");
-            return;
+            return 'still sending';
         }
-        try { await NxFeedback.send('report', 0, what); await reply('Sent. Thanks, boss, the team will look at it.'); }
-        catch (e) { await reply("I couldn't send the report. Please check you're signed in and online."); }
+        try { await NxFeedback.send('report', 0, what); await reply('Sent. Thanks, boss, the team will look at it.'); return 'sent'; }
+        catch (e) { await reply("I couldn't send the report. Please check you're signed in and online."); return 'not sent: not signed in or offline'; }
     }
 
     // Returns true when the command was handled here
@@ -1075,8 +1122,23 @@
         }
         // Scrolling, back, reload
         let m;
-        if ((m = /^(scroll|go|move|page)? ?(down|up)( a bit| a little| more)?$/.exec(c))) { scrollBy({ top: (m[2] === 'up' ? -1 : 1) * innerHeight * (m[3] && /bit|little/.test(m[3]) ? 0.35 : 0.75), behavior: 'smooth' }); await reply(m[2] === 'up' ? 'Up we go.' : 'Scrolling down.'); return true; }
-        if (/^(scroll |go )?(to (the )?)?(top|bottom)( of (the )?page)?$/.test(c)) { const top = /top/.test(c); scrollTo({ top: top ? 0 : document.documentElement.scrollHeight, behavior: 'smooth' }); await reply(top ? 'Top of the page.' : 'Bottom of the page.'); return true; }
+        const NUM = { one: 1, once: 1, two: 2, twice: 2, three: 3, four: 4, five: 5 };
+        if ((m = /^(?:scroll|go|move|page|keep scrolling|swipe)?\s*(down|up)(?: the page| this page)?(?:\s+(a (?:little )?bit|a little|slightly|more|a lot|a page|one page|fully|(\w+) times|twice|once))?$/.exec(c))
+            || (m = /^(page) (down|up)$/.exec(c) && [c, c.split(' ')[1]])
+            || (m = /^(keep scrolling|scroll more|more|continue scrolling|next part)$/.exec(c) && [c, 'down'])) {
+            const dir = m[1] === 'up' ? 'up' : 'down';
+            const how = m[2] || '';
+            const times = NUM[m[3]] || parseInt(m[3], 10) || (/twice/.test(how) ? 2 : 1);
+            const screens = /bit|little|slight/.test(how) ? 0.35 : /lot|fully/.test(how) ? 2.5 : 0.8;
+            let r;
+            for (let i = 0; i < Math.min(times, 6); i++) r = await scrollPage(dir, screens);
+            await reply(scrollWords(dir, r));
+            return true;
+        }
+        if (/^(scroll |go |jump |take me )?(back )?(to (the )?)?(very )?(top|bottom|end|start|beginning)( of (the |this )?page)?$/.test(c)) {
+            const dir = /top|start|beginning/.test(c) ? 'top' : 'bottom';
+            await reply(scrollWords(dir, await scrollPage(dir))); return true;
+        }
         if (/^(go )?back$|^(previous|last) page$|^go to (the )?previous page$/.test(c)) { await reply('Going back.', { wait: 900 }); history.back(); return true; }
         if (/^(refresh|reload)( the)?( page)?$/.test(c)) { await reply('Refreshing.', { wait: 800 }); location.reload(); return true; }
         // Look and language
@@ -1137,11 +1199,13 @@
         if (busy) stopFlag = true;
         add('user', text);
         if (!busy) stopFlag = false;
-        quick(cmd, text.trim()).then(done => { if (!done) ask(text, '', 0); }).catch(e => { console.warn('[assistant]', e); ask(text, '', 0); });
+        const toAI = () => (LV.ready ? liveSendText(text) : ask(text, '', 0));
+        quick(cmd, text.trim()).then(done => { if (!done) toAI(); }).catch(e => { console.warn('[assistant]', e); toAI(); });
     }
     function stopAll(silent) {
         stopFlag = true;
         stopSpeaking();
+        liveStopAudio();
         if (listening) { discard = true; stopListening(); }
         state.pending = null;
         save();
@@ -1151,6 +1215,322 @@
         hideCursor();
         if (prefs.mic) maybeListen(600);
     }
+
+
+    // =====================================================================
+    // Gemini Live: real-time voice conversation with Google's talking AI.
+    // The browser streams the microphone to Google and plays the answer as it comes (about a second),
+    // and the user can talk over it. The AI uses the website through "tools" (the functions below).
+    // Our server only hands out a short-lived pass, so the API key never reaches the browser.
+    // If Live isn't available, the older way (speech-to-text + /api/assistant + voice) is used.
+    // =====================================================================
+    const LIVE_URL = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained';
+    const LV = { ws: null, on: false, ready: false, connecting: false, ctxIn: null, ctxOut: null, stream: null, node: null, srcNode: null,
+        playAt: 0, sources: [], speaking: false, userText: '', aiText: '', userMsg: null, aiMsg: null, failedUntil: 0, retries: 0, model: '' };
+    const PAGE_LIST = PAGES;
+    const obj = (props, req) => ({ type: 'OBJECT', properties: props || {}, required: req || [] });
+    const LIVE_TOOLS = [{ functionDeclarations: [
+        { name: 'get_page', description: 'See the screen now: page name, visible text (the user’s data is here) and a numbered list of things you can press or type into.', parameters: obj() },
+        { name: 'click', description: 'Press a button, link, tab, card, menu or choice (number from get_page).', parameters: obj({ id: { type: 'INTEGER' }, confirmed: { type: 'BOOLEAN', description: 'true only after the user said yes to a risky action (delete, sign out, send...)' } }, ['id']) },
+        { name: 'type_text', description: 'Type into a box (replaces what is there).', parameters: obj({ id: { type: 'INTEGER' }, text: { type: 'STRING' } }, ['id', 'text']) },
+        { name: 'select_option', description: 'Choose an option in a dropdown.', parameters: obj({ id: { type: 'INTEGER' }, option: { type: 'STRING' } }, ['id', 'option']) },
+        { name: 'set_checkbox', description: 'Tick or untick a checkbox / choice.', parameters: obj({ id: { type: 'INTEGER' }, on: { type: 'BOOLEAN' } }, ['id', 'on']) },
+        { name: 'scroll_page', description: 'Scroll the page (or the open pop-up) up or down.', parameters: obj({ direction: { type: 'STRING', enum: ['up', 'down', 'top', 'bottom'] }, amount: { type: 'STRING', enum: ['a_bit', 'one_screen', 'a_lot'] } }, ['direction']) },
+        { name: 'scroll_to', description: 'Scroll until a thing from get_page is on screen.', parameters: obj({ id: { type: 'INTEGER' } }, ['id']) },
+        { name: 'open_page', description: 'Open a page of the Neutrix website. The conversation carries on there.', parameters: obj({ page: { type: 'STRING', enum: PAGE_LIST } }, ['page']) },
+        { name: 'go_back', description: 'Go back to the previous page.', parameters: obj() },
+        { name: 'send_report', description: 'Send a problem report about the app to the Neutrix team.', parameters: obj({ message: { type: 'STRING' } }, ['message']) },
+        { name: 'set_theme', description: 'Dark or light look.', parameters: obj({ mode: { type: 'STRING', enum: ['dark', 'light'] } }, ['mode']) },
+        { name: 'set_language', description: 'Website language.', parameters: obj({ language: { type: 'STRING', enum: ['English', 'Malayalam'] } }, ['language']) },
+        { name: 'set_text_size', description: 'Make the website text bigger, smaller or normal.', parameters: obj({ size: { type: 'STRING', enum: ['bigger', 'smaller', 'normal'] } }, ['size']) },
+        { name: 'show_conversation', description: 'Open (true) or hide (false) your own conversation panel ("extend / unextend yourself").', parameters: obj({ open: { type: 'BOOLEAN' } }, ['open']) },
+        { name: 'stop_listening', description: 'Turn the microphone off (when the user says stop listening / mute / go to sleep).', parameters: obj() }
+    ] }];
+
+    const b64 = buf => { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+    const unb64 = str => { const bin = atob(str); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+    const MIC_WORKLET = `class NxMic extends AudioWorkletProcessor {
+        constructor() { super(); this.buf = []; this.step = sampleRate / 16000; this.acc = 0; }
+        process(inputs) {
+            const ch = inputs[0] && inputs[0][0];
+            if (ch) for (let i = 0; i < ch.length; i++) { this.acc += 1; if (this.acc >= this.step) { this.acc -= this.step; this.buf.push(ch[i]); } }
+            if (this.buf.length >= 1600) {
+                const out = new Int16Array(this.buf.length); let sum = 0;
+                for (let i = 0; i < this.buf.length; i++) { const v = Math.max(-1, Math.min(1, this.buf[i])); sum += v * v; out[i] = v < 0 ? v * 0x8000 : v * 0x7fff; }
+                this.port.postMessage({ pcm: out.buffer, rms: Math.sqrt(sum / this.buf.length) }, [out.buffer]);
+                this.buf = [];
+            }
+            return true;
+        }
+    }
+    registerProcessor('nx-mic', NxMic);`;
+
+    // Turn the Live conversation on. Returns false if it can't (then the old way is used).
+    async function liveStart() {
+        if (LV.on || LV.connecting) return true;
+        if (!navigator.onLine || Date.now() < LV.failedUntil || !window.WebSocket || !window.AudioWorkletNode || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) return false;
+        LV.connecting = true;
+        setMode('thinking');
+        try {
+            const res = await fetch(API().replace(/\/api\/assistant$/, '/api/assistant/live'), { method: 'POST' });
+            if (!res.ok) throw new Error('live pass ' + res.status);
+            const pass = await res.json();
+            if (!pass.token || !(pass.models || []).length) throw new Error('no live model');
+            // Microphone (echo cancellation so it doesn't hear itself)
+            LV.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+            if (!prefs.mic) { liveStop(); return true; }
+            LV.ctxOut = LV.ctxOut || new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+            LV.ctxIn = new (window.AudioContext || window.webkitAudioContext)();
+            const url = URL.createObjectURL(new Blob([MIC_WORKLET], { type: 'application/javascript' }));
+            await LV.ctxIn.audioWorklet.addModule(url);
+            URL.revokeObjectURL(url);
+            LV.srcNode = LV.ctxIn.createMediaStreamSource(LV.stream);
+            LV.node = new AudioWorkletNode(LV.ctxIn, 'nx-mic');
+            LV.node.port.onmessage = e => liveMicChunk(e.data);
+            LV.srcNode.connect(LV.node);
+            if (LV.ctxIn.state === 'suspended') LV.ctxIn.resume().catch(() => {});
+            if (LV.ctxOut.state === 'suspended') LV.ctxOut.resume().catch(() => {});
+            // Connect: try the models this key can use, best first
+            for (const model of pass.models) {
+                if (await liveConnect(pass, model)) { LV.connecting = false; return true; }
+            }
+            throw new Error('no live model accepted the connection');
+        } catch (e) {
+            console.warn('[assistant] Gemini Live not available, using the standard voice mode', e);
+            const denied = e && /NotAllowed|Permission/i.test(e.name + ' ' + e.message);
+            liveStop();
+            LV.connecting = false;
+            if (denied) { micBlocked(t('micDenied')); return true; }
+            LV.failedUntil = Date.now() + 5 * 60 * 1000;
+            setMode('ready');
+            return false;
+        }
+    }
+    function liveConnect(pass, model) {
+        return new Promise(resolve => {
+            let settled = false;
+            const done = ok => { if (!settled) { settled = true; clearTimeout(timer); resolve(ok); } };
+            const ws = new WebSocket(LIVE_URL + '?access_token=' + encodeURIComponent(pass.token));
+            const timer = setTimeout(() => { try { ws.close(); } catch (e) {} done(false); }, 9000);
+            LV.ws = ws;
+            LV.model = model;
+            ws.onopen = () => {
+                const handle = sessionStorage.getItem('nxLiveHandle');
+                const setup = {
+                    model: 'models/' + model,
+                    generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: pass.voice || 'Aoede' } } } },
+                    systemInstruction: { parts: [{ text: pass.instructions + `\nNow: the user is on ${here()} ("${document.title}"). Website language: ${lang()}. Signed in: ${localStorage.getItem('neutrix_authenticated') === 'true'}. Device: ${isApp ? 'Android app' : (innerWidth <= 720 ? 'phone' : 'computer')}.` }] },
+                    tools: LIVE_TOOLS,
+                    inputAudioTranscription: {},
+                    outputAudioTranscription: {},
+                    contextWindowCompression: { slidingWindow: {} },
+                    sessionResumption: handle ? { handle } : {}
+                };
+                if (/native-audio/.test(model)) setup.proactivity = { proactiveAudio: true };      // lets it ignore talk that isn't for it
+                ws.send(JSON.stringify({ setup }));
+            };
+            ws.onmessage = async ev => {
+                let msg;
+                try { msg = JSON.parse(typeof ev.data === 'string' ? ev.data : await ev.data.text()); } catch (e) { return; }
+                if (msg.setupComplete) {
+                    LV.on = true; LV.ready = true; LV.retries = 0;
+                    done(true);
+                    liveReady();
+                    return;
+                }
+                liveMessage(msg);
+            };
+            ws.onerror = () => done(false);
+            ws.onclose = ev => {
+                const wasReady = LV.ready && LV.ws === ws;
+                if (LV.ws === ws) { LV.ready = false; LV.ws = null; }
+                if (!settled) { console.warn('[assistant] Live closed during setup', model, ev.code, ev.reason); done(false); return; }
+                if (wasReady && prefs.mic && !leaving) {             // dropped (or Google asked to reconnect): carry on with the same conversation
+                    LV.on = false;
+                    if (LV.retries++ < 4) setTimeout(() => { liveStopAudio(); liveStart().then(ok => { if (!ok) maybeListen(300); }); }, 800);
+                    else { liveStop(); maybeListen(300); }
+                }
+            };
+        });
+    }
+    function liveReady() {
+        setMode('listening');
+        paint();
+        live.textContent = t('micOn');
+        if (LV.ctxOut && LV.ctxOut.state === 'suspended') {
+            add('note', t('tapToHear'));
+            const wake = () => { LV.ctxOut && LV.ctxOut.resume().catch(() => {}); LV.ctxIn && LV.ctxIn.resume().catch(() => {}); };
+            document.addEventListener('pointerdown', wake, { once: true, capture: true });
+            document.addEventListener('keydown', wake, { once: true, capture: true });
+        }
+        // A task that opened this page carries on here
+        const cont = sessionStorage.getItem('nxLiveContinue');
+        if (cont) {
+            sessionStorage.removeItem('nxLiveContinue');
+            liveSend({ clientContent: { turns: [{ role: 'user', parts: [{ text: `(System note, not the user: the page ${here()} has opened. If you were in the middle of doing something for the user, call get_page and carry on. Otherwise say nothing.)` }] }], turnComplete: true } });
+        }
+    }
+    function liveSend(o) { try { if (LV.ws && LV.ws.readyState === 1) LV.ws.send(JSON.stringify(o)); } catch (e) {} }
+    function liveSendText(text) {
+        LV.userMsg = state.history[state.history.length - 1] || null;     // already shown by userSays
+        liveSend({ clientContent: { turns: [{ role: 'user', parts: [{ text: 'Neutrix, ' + text }] }], turnComplete: true } });
+        setMode('thinking');
+    }
+    function liveMicChunk({ pcm, rms }) {
+        if (!LV.ready || !prefs.mic) return;
+        if ((LV.speaking || speaking) && rms < 0.06) return;      // while it talks, only clear (loud) speech can interrupt it
+        liveSend({ realtimeInput: { audio: { data: b64(pcm), mimeType: 'audio/pcm;rate=16000' } } });
+    }
+    function livePlay(data) {
+        const ctx = LV.ctxOut;
+        if (!ctx) return;
+        const u = unb64(data);
+        const pcm = new Int16Array(u.buffer, u.byteOffset, Math.floor(u.byteLength / 2));
+        const buf = ctx.createBuffer(1, pcm.length, 24000);
+        const ch = buf.getChannelData(0);
+        for (let i = 0; i < pcm.length; i++) ch[i] = pcm[i] / 32768;
+        const src = ctx.createBufferSource();
+        src.buffer = buf; src.connect(ctx.destination);
+        LV.playAt = Math.max(LV.playAt, ctx.currentTime + 0.04);
+        src.start(LV.playAt);
+        LV.playAt += buf.duration;
+        LV.sources.push(src);
+        LV.speaking = true;
+        setMode('speaking');
+        src.onended = () => {
+            LV.sources = LV.sources.filter(x => x !== src);
+            if (!LV.sources.length) { LV.speaking = false; if (LV.ready) setMode('listening'); }
+        };
+    }
+    function liveStopAudio() {
+        LV.sources.forEach(x => { try { x.stop(); } catch (e) {} });
+        LV.sources = []; LV.playAt = 0; LV.speaking = false;
+    }
+    // Words of the conversation, shown in the panel as they come
+    function liveWords(role, piece) {
+        if (!piece) return;
+        if (role === 'user') {
+            LV.userText += piece;
+            return;                                         // shown only if the AI answers (room talk stays private)
+        }
+        if (!LV.aiMsg) {
+            const said = LV.userText.trim();
+            if (said && !(LV.userMsg && LV.userMsg.role === 'user')) { add('user', said); }
+            LV.userMsg = null;
+            LV.userText = '';
+            state.history.push({ role: 'ai', text: '' });
+            LV.aiMsg = state.history[state.history.length - 1];
+        }
+        LV.aiMsg.text += piece;
+        LV.aiMsg.text = LV.aiMsg.text.replace(/\s+/g, ' ');
+        save();
+        renderLog();
+        if (dock.classList.contains('collapsed')) dock.querySelector('.nxa-handle').classList.add('new');
+    }
+    async function liveMessage(msg) {
+        const sc = msg.serverContent;
+        if (sc) {
+            if (sc.interrupted) liveStopAudio();
+            if (sc.inputTranscription) liveWords('user', sc.inputTranscription.text);
+            if (sc.outputTranscription) liveWords('ai', sc.outputTranscription.text);
+            ((sc.modelTurn && sc.modelTurn.parts) || []).forEach(p => { if (p.inlineData && p.inlineData.data) livePlay(p.inlineData.data); });
+            if (sc.turnComplete) {
+                if (LV.aiMsg) live.textContent = LV.aiMsg.text;
+                LV.aiMsg = null; LV.userText = ''; LV.userMsg = null;
+                if (!LV.speaking && LV.ready) setMode('listening');
+            }
+        }
+        if (msg.toolCall && msg.toolCall.functionCalls) {
+            const said = LV.userText.trim();
+            if (said) { add('user', said); LV.userText = ''; }
+            setMode('working');
+            const responses = [];
+            for (const fc of msg.toolCall.functionCalls) {
+                let result;
+                try { result = await liveTool(fc.name, fc.args || {}); }
+                catch (e) { result = { error: String(e && e.message || e) }; }
+                responses.push({ id: fc.id, name: fc.name, response: typeof result === 'object' ? result : { result } });
+            }
+            liveSend({ toolResponse: { functionResponses: responses } });
+            if (LV.navigateTo) {                             // open the page after the AI has had a moment to say so
+                const go = LV.navigateTo; LV.navigateTo = null;
+                for (let i = 0; i < 25 && !LV.speaking; i++) await sleep(100);
+                for (let i = 0; i < 40 && LV.speaking; i++) await sleep(100);
+                if (go === '__back') history.back(); else location.href = go;
+            } else setTimeout(hideCursor, 1500);
+        }
+        if (msg.sessionResumptionUpdate && msg.sessionResumptionUpdate.newHandle) {
+            try { sessionStorage.setItem('nxLiveHandle', msg.sessionResumptionUpdate.newHandle); } catch (e) {}
+        }
+        if (msg.goAway) console.log('[assistant] Live: reconnecting soon');
+    }
+    const idOf = el => { const e = [...elMap.entries()].find(([, x]) => x === el); return e ? e[0] : null; };
+    async function liveTool(name, a) {
+        stopFlag = false;
+        const one = async action => (await run([action])) || 'done';
+        const has = id => elMap.has(Number(id)) && document.contains(elMap.get(Number(id)));
+        const stale = { error: 'That number is not on the screen any more. Call get_page again.' };
+        switch (name) {
+            case 'get_page': {
+                const s = snapshot();
+                return { page: s.url, title: s.title, scroll: s.scroll, visible_text: s.text, things_you_can_use: s.elements.join('\n') };
+            }
+            case 'click': {
+                if (!has(a.id)) return stale;
+                const el = elMap.get(Number(a.id));
+                if (RISKY.test(labelOf(el)) && !a.confirmed) return { error: `"${labelOf(el)}" can't be undone: ask the user "Should I ...?" first, then call click again with confirmed=true if they say yes.` };
+                const r = await one({ do: 'click', id: Number(a.id) });
+                if (leaving) { sessionStorage.setItem('nxLiveContinue', '1'); return { result: r, note: 'A new page is opening; you will continue there.' }; }
+                return { result: r };
+            }
+            case 'type_text': if (!has(a.id)) return stale; return { result: await one({ do: 'type', id: Number(a.id), text: String(a.text || '') }) };
+            case 'select_option': if (!has(a.id)) return stale; return { result: await one({ do: 'select', id: Number(a.id), text: String(a.option || '') }) };
+            case 'set_checkbox': if (!has(a.id)) return stale; return { result: await one({ do: 'check', id: Number(a.id), on: !!a.on }) };
+            case 'scroll_to': if (!has(a.id)) return stale; return { result: await one({ do: 'scroll', id: Number(a.id) }) };
+            case 'scroll_page': {
+                const dir = ['up', 'down', 'top', 'bottom'].includes(a.direction) ? a.direction : 'down';
+                const r = await scrollPage(dir, a.amount === 'a_bit' ? 0.35 : a.amount === 'a_lot' ? 2.5 : 0.8);
+                return { result: scrollWords(dir, r), percent_down_the_page: r.percent, at_top: r.atTop, at_bottom: r.atBottom };
+            }
+            case 'open_page': {
+                const page = String(a.page || '').replace(/^\/+/, '');
+                if (!PAGES.includes(page)) return { error: 'Unknown page. Use one of: ' + PAGES.join(', ') };
+                if (here() === page) return { result: 'Already on that page.' };
+                sessionStorage.setItem('nxLiveContinue', '1');
+                LV.navigateTo = page;
+                return { result: `Opening ${page}. The conversation continues on the new page.` };
+            }
+            case 'go_back': sessionStorage.setItem('nxLiveContinue', '1'); LV.navigateTo = '__back'; return { result: 'Going back.' };
+            case 'send_report': return { result: await sendReport(String(a.message || '').trim() || 'Problem reported by voice', true) };
+            case 'set_theme': {
+                const wantDark = a.mode === 'dark', isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const tb = document.getElementById('themeToggle');
+                if (wantDark !== isDark && tb) tb.click();
+                return { result: (wantDark ? 'Dark' : 'Light') + ' mode on.' };
+            }
+            case 'set_language': {
+                const wantMl = a.language === 'Malayalam', lb = document.getElementById('langToggle');
+                if (lb && wantMl !== (lang() === 'Malayalam')) lb.click();
+                return { result: 'Website language: ' + (wantMl ? 'Malayalam' : 'English') };
+            }
+            case 'set_text_size': setZoom(a.size === 'normal' ? 1 : (prefs.zoom || 1) + (a.size === 'smaller' ? -0.15 : 0.15)); return { result: 'Text size changed.' };
+            case 'show_conversation': setExpanded(!!a.open); return { result: a.open ? 'Panel open.' : 'Panel hidden.' };
+            case 'stop_listening': setTimeout(() => { if (prefs.mic) toggleMic(); }, 2500); return { result: 'Microphone will turn off after you speak.' };
+        }
+        return { error: 'Unknown tool ' + name };
+    }
+    function liveStop() {
+        LV.on = false; LV.ready = false; LV.connecting = false;
+        try { if (LV.ws) LV.ws.close(); } catch (e) {}
+        LV.ws = null;
+        liveStopAudio();
+        try { if (LV.node) LV.node.disconnect(); if (LV.srcNode) LV.srcNode.disconnect(); } catch (e) {}
+        try { if (LV.stream) LV.stream.getTracks().forEach(tr => tr.stop()); } catch (e) {}
+        try { if (LV.ctxIn) LV.ctxIn.close(); } catch (e) {}
+        LV.node = LV.srcNode = LV.stream = LV.ctxIn = null;
+        if (dock && dock.dataset.mode !== 'ready') setMode('ready');
+    }
+    window.addEventListener('pagehide', () => { try { if (LV.ws) LV.ws.close(); } catch (e) {} });
 
     // ---------- start ----------
     function start() {
@@ -1169,8 +1549,8 @@
             document.documentElement.classList.add('nxa-open');
             paint();
         }
-        // The mic stays on across pages until the user turns it off
-        if (prefs.mic) maybeListen(1200);
+        // The mic stays on across pages until the user turns it off (Gemini Live if possible, else the old way)
+        if (prefs.mic) setTimeout(() => liveStart().then(ok => { if (!ok) maybeListen(200); }), 600);
         // Continue a task that opened this page
         if (state.open && state.pending) {
             const p = state.pending;

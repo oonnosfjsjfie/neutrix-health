@@ -3,7 +3,7 @@ import re
 import json
 import uvicorn
 from pathlib import Path
-from fastapi.responses import RedirectResponse, Response, FileResponse
+from fastapi.responses import RedirectResponse, Response, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
 from pydantic import BaseModel
@@ -223,6 +223,20 @@ def assistant_voice(req: VoiceRequest):
                      headers={"Cache-Control": "public, max-age=604800"})
     except Exception as e:
         return _Resp(content=str(e)[:200], status_code=503, media_type="text/plain")
+
+
+@app.post("/api/assistant/live")
+def assistant_live(origin: str = Header(default=""), referer: str = Header(default="")):
+    # A short-lived pass for Gemini Live (real-time voice). The API key itself never leaves the server.
+    # Only handed to pages of this website / the app (stops other sites using the key).
+    src = origin or referer
+    if src and not any(h in src for h in ("neutrix-health.onrender.com", "localhost", "127.0.0.1", "capacitor://", "https://localhost")):
+        return JSONResponse({"error": "not allowed"}, status_code=403)
+    from services.live import start
+    try:
+        return start()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:300]}, status_code=503)
 
 
 @app.post("/api/assistant/voice/stream")
