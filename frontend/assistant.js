@@ -75,13 +75,13 @@
     .nxa-btn.nxa-ab.mic::after { position: absolute; top: 3px; right: 3px; margin: 0; }
     .nxa-btn.nxa-ab { position: relative; }
     @keyframes nxaBlink { 50% { opacity: .35; } }
-    .nxa-btn.floating { position: fixed; top: calc(12px + env(safe-area-inset-top)); right: 14px; z-index: 5200; }
+    .nxa-btn.floating { position: fixed; top: calc(12px + env(safe-area-inset-top)); right: 14px; z-index: 2147483001; }
     @media (max-width: 720px) { .nxa-btn:not(.floating):not(.nxa-ab) .nxa-lbl { display: none; } .nxa-btn:not(.floating) { padding: 8px 10px; } }
     .nx-appbar button.nxa-btn { background: linear-gradient(135deg, #6d28d9, #2563eb 55%, #0891b2); color: #fff; }
     .nxa-btn.nxa-ab { padding: 0; width: 40px; height: 40px; justify-content: center; border-radius: 50%; margin-right: 4px; }
     .nxa-btn.nxa-ab .nxa-lbl { display: none; }
 
-    #nxa-dock { position: fixed; z-index: 5100; right: 16px; bottom: 16px; width: min(350px, calc(100vw - 32px)); max-height: min(54vh, 460px);
+    #nxa-dock { position: fixed; z-index: 2147483000; right: 16px; bottom: 16px; width: min(350px, calc(100vw - 32px)); max-height: min(54vh, 460px);
         display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; color: var(--text-primary, #111);
         background: var(--card-bg, #fff); border: 1px solid var(--border-color, rgba(0,0,0,.12));
         box-shadow: 0 18px 50px rgba(15, 23, 42, .28); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -93,7 +93,7 @@
         html.nxa-open body { padding-bottom: 76px !important; }
         html.nxa-open.nxa-exp body { padding-bottom: 40vh !important; }
     }
-    html.nx-app-ui #nxa-dock { bottom: calc(64px + env(safe-area-inset-bottom)); max-height: 38vh; padding-bottom: 0; }
+    html.nx-app-ui #nxa-dock { bottom: calc(72px + env(safe-area-inset-bottom)); max-height: 38vh; padding-bottom: 0; }
     html.nx-app-ui.nxa-open body { padding-bottom: 76px !important; }
     html.nx-app-ui.nxa-open.nxa-exp body { padding-bottom: 40vh !important; }
     html.nxa-open .chat-fab, html.nxa-open .chat-panel { display: none !important; }
@@ -694,6 +694,17 @@
             if (el.tagName === 'LABEL') { const c = el.control; return !!c && ['radio', 'checkbox'].includes(c.type) && !visible(c) && visible(el); }
             return visible(el);
         });
+        // Also things that are clickable only by script (cards, tiles, icons): shown with a hand pointer
+        const picked = new Set(all);
+        let extra = 0;
+        for (const el of document.body.querySelectorAll('div, span, li, img, svg, td, tr, section, article, p, h2, h3, h4, figure')) {
+            if (extra >= 60) break;
+            if (picked.has(el) || el.closest(sel) || el.closest('#nxa-dock, #nxa-cursor, .nxa-btn')) continue;
+            if (getComputedStyle(el).cursor !== 'pointer') continue;
+            if (el.parentElement && getComputedStyle(el.parentElement).cursor === 'pointer') continue;
+            if (!visible(el) || !labelOf(el)) continue;
+            all.push(el); picked.add(el); extra++;
+        }
         const vh = innerHeight;
         const inView = el => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < vh; };
         all.sort((a, b) => (inView(b) - inView(a)));
@@ -936,7 +947,7 @@
 
     // ---------- Instant commands: done right here, no waiting for the AI ----------
     const NAV = [
-        ['summary.html', /\b(ai summary|upload( my)? (reports?|discharge|bills?|documents?|files?)|scan( my)? (reports?|documents?)|discharge summary|summari[sz]e( my)? reports?)\b/],
+        ['summary.html', /\b(ai summary|upload( my)?( \w+)? (reports?|discharge|bills?|documents?|files?|results?|papers?|prescriptions?)|scan( my)? (reports?|documents?)|discharge summary|summari[sz]e( my)? reports?)\b/],
         ['report.html', /\b(summary result|report result|my summary)\b/],
         ['schedule.html', /\b(medicine schedule|med schedule|schedule|medicine times?|pill times?|reminders?|time ?table)\b/],
         ['medplan.html', /\b(medicine plan|med ?plan|my medicines?|medicines?|medications?|tablets?|pills?)\b/],
@@ -996,12 +1007,63 @@
         document.body.style.zoom = prefs.zoom === 1 ? '' : String(prefs.zoom);
     }
 
+    // Sending a problem report (same as the Report button): types it into the form so it can be seen, then sends
+    let awaitingReport = false;
+    async function sendReport(what) {
+        awaitingReport = false;
+        stopFlag = false;
+        if (!(window.NxFeedback && NxFeedback.send)) { await reply("Sorry, reporting isn't available on this page."); return; }
+        let box = document.querySelector('.nx-fb-modal #nxFbText');
+        if (!box && NxFeedback.openReport) { NxFeedback.openReport(); await sleep(150); box = document.querySelector('.nx-fb-modal #nxFbText'); }
+        const btn = box && box.closest('.nx-fb-modal').querySelector('[data-a="send"]');
+        if (box && btn) {
+            snapshot();
+            const id = [...elMap.entries()].find(([, el]) => el === box);
+            if (id) await run([{ do: 'type', id: id[0], text: what }]);
+            if (box.value.trim() !== what.trim()) { box.value = what; box.dispatchEvent(new Event('input', { bubbles: true })); }
+            const sid = [...elMap.entries()].find(([, el]) => el === btn);
+            add('ai', 'Sending your report…');
+            if (sid) { await moveTo(btn); ripple(); unmark(btn); }
+            btn.click();
+            // wait for the form to say it was sent (or failed)
+            for (let i = 0; i < 40; i++) {
+                await sleep(250);
+                const msg = document.querySelector('.nx-fb-modal .nx-fb-msg');
+                if (!document.querySelector('.nx-fb-modal') || (msg && /ok/.test(msg.className))) { setTimeout(hideCursor, 800); await reply('Sent. Thanks, boss, the team will look at it.'); return; }
+                if (msg && /err/.test(msg.className) && msg.textContent) { hideCursor(); await reply("I couldn't send it: " + msg.textContent); return; }
+            }
+            hideCursor();
+            await reply("It's taking a while to send. Check the form, or try again in a moment.");
+            return;
+        }
+        try { await NxFeedback.send('report', 0, what); await reply('Sent. Thanks, boss, the team will look at it.'); }
+        catch (e) { await reply("I couldn't send the report. Please check you're signed in and online."); }
+    }
+
     // Returns true when the command was handled here
-    async function quick(cmd) {
+    async function quick(cmd, raw) {
+        if (awaitingReport) {
+            if (!document.querySelector('.nx-fb-modal')) awaitingReport = false;            // form was closed
+            else if (/^(cancel|never ?mind|forget it|no|stop|close( it)?)$/.test(cmd)) { awaitingReport = false; document.querySelectorAll('.nx-fb-modal').forEach(x => x.remove()); await reply('Okay, cancelled.'); return true; }
+            else { await sendReport(raw || cmd); return true; }
+        }
         const c = cmd.replace(/^(can|could|would) (you|u) (please )?/, '').replace(/^(hey|ok|okay|yo) /, '');
-        // Report a problem with the app / rate it
-        if (/\b(report|complain|feedback|bug|issue with (the )?(app|site|website))\b/.test(c) && !/\b(upload|my report|medical|lab|summary|result|discharge|scan|progress)\b/.test(c)) {
-            if (window.NxFeedback && NxFeedback.openReport) { NxFeedback.openReport(); await reply("Report form's open. Tell me what went wrong and I'll type it in for you."); return true; }
+        // Report a problem with the app: "report that the mic doesn't work" sends it at once;
+        // "I want to report" opens the form and the next thing the user says is typed in and sent
+        if (/\b(report|complain|complaint|feedback|bug)\b/.test(c) && !/\b(upload|my reports?\b|medical|lab|summary|result|discharge|scan|progress)\b/.test(c)) {
+            const src = (raw || cmd).replace(/^\s*(?:hey |ok |okay )?(?:neutrix|neutrics|nutrix)[\s,.!:-]*/i, '').replace(/[.!?]+$/, '');
+            const m2 = /\b(?:report|complain(?: about)?|complaint|feedback|bug)\b(?:\s+(?:that|about|saying|this|:|-))?\s+(.{4,})$/i.exec(src);
+            let what = m2 ? m2[1].trim() : '';
+            if (/^(a |an |the |some )?(problem|issue|bug|error|something|complaint|feedback)s?( (with|on|in|about) (the |this )?(app|site|website|neutrix|page))?$/.test(what) || /^(a |an )?(problem|issue|bug)$/.test(what)) what = '';
+            if (what) { await sendReport(what); return true; }
+            if (window.NxFeedback && NxFeedback.openReport) {
+                document.querySelectorAll('.nx-fb-modal').forEach(x => x.remove());
+                NxFeedback.openReport();
+                awaitingReport = true;
+                wakeUntil = Date.now() + 20000;          // no need to say "Neutrix" again for the answer
+                await reply('Sure. What went wrong? Just say it and I’ll send it.');
+                return true;
+            }
         }
         if (/\b(rate|rating|review)\b.*\b(app|neutrix|website|site|you)\b|^rate( us)?$/.test(c) && window.NxFeedback && NxFeedback.openRating) {
             NxFeedback.openRating(); await reply('Rating form is open.'); return true;
@@ -1069,10 +1131,11 @@
         if (new RegExp(`^(extend|expand|un ?collapse|unfold|open( up)?|show|maximi[sz]e|enlarge|make ${WHO} (big|bigger|large)|bigger)( ${WHO})?( up)?$`).test(cmd) || /^(വലുതാക്കൂ|തുറക്കൂ)/.test(cmd)) {
             add('user', text); setExpanded(true); return;
         }
-        if (/^(stop|cancel|be quiet|shut up|നിർത്ത്|നിർത്തൂ)\.?$/i.test(text.trim())) { add('user', text); stopAll(); add('ai', t('stopped')); return; }
+        if (!awaitingReport && /^(stop|cancel|be quiet|shut up|നിർത്ത്|നിർത്തൂ)\.?$/i.test(text.trim())) { add('user', text); stopAll(); add('ai', t('stopped')); return; }
         if (busy) stopFlag = true;
         add('user', text);
-        quick(cmd).then(done => { if (!done) ask(text, '', 0); }).catch(() => ask(text, '', 0));
+        if (!busy) stopFlag = false;
+        quick(cmd, text.trim()).then(done => { if (!done) ask(text, '', 0); }).catch(e => { console.warn('[assistant]', e); ask(text, '', 0); });
     }
     function stopAll(silent) {
         stopFlag = true;
