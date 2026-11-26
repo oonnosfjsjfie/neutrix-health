@@ -27,7 +27,7 @@ def client():
     global _client
     if _client is None:
         key = (os.getenv("NEUTRIX_ASSISTANT_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
-        _client = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=20_000))
+        _client = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=20_000, api_version="v1beta"))
     return _client
 
 
@@ -76,7 +76,8 @@ def speak(text: str, voice: str = "") -> bytes:
             errors.append(f"{model}: {str(e)[:120]}")
             print(f"[voice] {model}: {str(e)[:160]}")
             continue
-    raise RuntimeError(" | ".join(errors) or str(last))
+    ver = getattr(genai, "__version__", "?")
+    raise RuntimeError(f"[sdk {ver}] tried {models}: " + (" | ".join(errors) or str(last)))
 
 
 _found = None
