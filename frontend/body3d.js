@@ -144,6 +144,41 @@
         return list.map((p, i) => (i === 0 || i === list.length - 1) ? p : new THREE.Vector3(p.x + rnd() * amt, p.y + rnd() * amt * 0.6, p.z + rnd() * amt));
     };
 
+    // The spine's natural S-curve: neck curves forward, upper back backward, lower back forward (z: + is the front)
+    const spineZ = y => y > 1.47 ? -0.035 - (1.6 - y) * 0.15
+        : y > 1.12 ? -0.055 - Math.sin((1.47 - y) / 0.35 * Math.PI) * 0.03
+        : y > 0.93 ? -0.055 + Math.sin((1.12 - y) / 0.19 * Math.PI) * 0.015
+        : -0.06 - (0.93 - y) * 0.4;
+    // A tube along a path whose thickness changes (stomach, aorta, colon, bronchi...)
+    function varTube(points, radii, segs, radial) {
+        const c = new THREE.CatmullRomCurve3(pts(points));
+        segs = segs || 48; radial = radial || 12;
+        const frames = c.computeFrenetFrames(segs, false);
+        const pos = [], idx = [];
+        const rAt = t => { const k = t * (radii.length - 1), i = Math.min(radii.length - 2, Math.floor(k)); if (radii.length === 1) return radii[0]; const f = k - i; return radii[i] * (1 - f) + radii[i + 1] * f; };
+        for (let i = 0; i <= segs; i++) {
+            const t = i / segs, p = c.getPointAt(t), r = rAt(t), N = frames.normals[i], B = frames.binormals[i];
+            for (let j = 0; j <= radial; j++) {
+                const a = j / radial * Math.PI * 2, cs = Math.cos(a), sn = Math.sin(a);
+                pos.push(p.x + r * (cs * N.x + sn * B.x), p.y + r * (cs * N.y + sn * B.y), p.z + r * (cs * N.z + sn * B.z));
+            }
+        }
+        for (let i = 0; i < segs; i++) for (let j = 0; j < radial; j++) {
+            const a = i * (radial + 1) + j, b = a + radial + 1;
+            idx.push(a, b, a + 1, b, b + 1, a + 1);
+        }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+        return g;
+    }
+    // Reshape a geometry point by point
+    function deform(geo, fn) {
+        const p = geo.attributes.position, v = new THREE.Vector3();
+        for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); fn(v); p.setXYZ(i, v.x, v.y, v.z); }
+        geo.computeVertexNormals();
+        return geo;
+    }
+
     class Body3D {
         constructor(box, opts) {
             this.box = box;
@@ -241,7 +276,7 @@
         // ----- nervous system: brain + spinal cord + nerves to arms, legs and ribs -----
         buildNerves() {
             const paths = [];
-            const spine = curve([[0, 1.57, -0.02], [0, 1.45, -0.055], [0, 1.25, -0.07], [0, 1.05, -0.065], [0, 0.9, -0.05]], 60);
+            const spine = curve([1.58, 1.5, 1.4, 1.3, 1.2, 1.1, 1.0, 0.92].map(y => [0, y, spineZ(y) + 0.002]), 70);   // spinal cord inside the spine
             paths.push(spine);
             for (const s of [-1, 1]) {
                 const arm = jitter(curve([[0, 1.45, -0.05], [s * 0.1, 1.44, -0.02], [s * 0.18, 1.41, 0], [s * 0.23, 1.15, 0.005], [s * 0.25, 1.0, 0.01], [s * 0.265, 0.88, 0.015]], 50), 0.008, 3 + s);
@@ -284,69 +319,157 @@
             }
             this.root.add(this.nerves);
         }
-        // ----- blood vessels: aorta and main arteries -----
+        // ----- blood vessels: arteries (red) and the main veins (blue), along their real routes -----
         buildVessels() {
-            const v = [];
-            v.push(curve([[0.02, 1.3, 0.03], [0.04, 1.36, 0.02], [0.02, 1.38, -0.02], [-0.01, 1.3, -0.04], [-0.01, 1.1, -0.04], [0, 0.92, -0.02]], 40));
+            const A = [], V = [];
+            // aorta: out of the heart, arch up and to the left, then down in front of the spine, splitting at the navel
+            A.push(curve([[0.012, 1.31, 0.035], [0.008, 1.385, 0.02], [0.025, 1.405, -0.015], [0.03, 1.37, -0.05], [0.022, 1.25, spineZ(1.25) + 0.035], [0.012, 1.1, spineZ(1.1) + 0.035], [0.005, 1.0, spineZ(1.0) + 0.035]], 60));
             for (const s of [-1, 1]) {
-                v.push(curve([[0.01, 1.37, 0], [s * 0.05, 1.45, 0.01], [s * 0.04, 1.58, 0.03], [s * 0.04, 1.68, 0.02]], 25));
-                v.push(jitter(curve([[0.02, 1.37, 0], [s * 0.15, 1.39, 0.02], [s * 0.21, 1.25, 0.02], [s * 0.245, 1.0, 0.025], [s * 0.26, 0.86, 0.03]], 45), 0.006, 11 + s));
-                v.push(jitter(curve([[0, 0.92, -0.02], [s * 0.07, 0.84, 0.02], [s * 0.08, 0.62, 0.025], [s * 0.088, 0.45, 0.02], [s * 0.088, 0.25, 0.012], [s * 0.09, 0.06, 0.04]], 50), 0.006, 13 + s));
+                // carotid arteries up the neck to the head
+                A.push(curve([[s > 0 ? 0.02 : 0.005, 1.4, 0.0], [s * 0.022, 1.48, 0.02], [s * 0.028, 1.56, 0.025], [s * 0.03, 1.64, 0.02]], 30));
+                // subclavian → brachial (upper arm, where blood pressure is taken) → radial (wrist pulse)
+                A.push(jitter(curve([[s * 0.02, 1.4, 0.0], [s * 0.09, 1.43, 0.0], [s * 0.17, 1.4, 0.01], [s * 0.215, 1.25, 0.03], [s * 0.24, 1.12, 0.03], [s * 0.255, 0.99, 0.03], [s * 0.265, 0.88, 0.03]], 50), 0.003, 11 + s));
+                // common iliac → femoral → popliteal (behind the knee) → tibial
+                A.push(jitter(curve([[0.005, 1.0, spineZ(1.0) + 0.035], [s * 0.04, 0.95, 0.0], [s * 0.07, 0.86, 0.03], [s * 0.08, 0.68, 0.03], [s * 0.088, 0.5, -0.02], [s * 0.088, 0.3, 0.0], [s * 0.09, 0.08, 0.03]], 60), 0.003, 13 + s));
+                // renal arteries to the kidneys
+                A.push(curve([[0.008, 1.06, spineZ(1.06) + 0.035], [s * 0.04, 1.06, -0.04]], 6));
+            }
+            // veins: superior and inferior vena cava (right side of the spine), jugulars, femorals
+            V.push(curve([[-0.022, 1.42, 0.02], [-0.022, 1.36, 0.025], [-0.018, 1.3, 0.03]], 16));
+            V.push(curve([[-0.015, 1.25, 0.0], [-0.022, 1.15, spineZ(1.15) + 0.04], [-0.02, 1.0, spineZ(1.0) + 0.04]], 30));
+            for (const s of [-1, 1]) {
+                V.push(curve([[s * 0.03, 1.66, 0.0], [s * 0.035, 1.55, 0.03], [s * 0.03, 1.45, 0.03], [-0.02, 1.42, 0.02]], 26));
+                V.push(jitter(curve([[-0.02, 1.0, spineZ(1.0) + 0.04], [s * 0.05, 0.94, 0.0], [s * 0.08, 0.86, 0.025], [s * 0.075, 0.68, 0.025], [s * 0.085, 0.5, -0.02], [s * 0.085, 0.3, -0.005], [s * 0.085, 0.08, 0.02]], 60), 0.003, 17 + s));
+                V.push(jitter(curve([[s * 0.17, 1.4, 0.0], [s * 0.205, 1.25, 0.04], [s * 0.235, 1.12, 0.035], [s * 0.25, 0.99, 0.035], [s * 0.26, 0.88, 0.035]], 40), 0.003, 19 + s));
             }
             this.vesselMat = new THREE.LineBasicMaterial({ color: 0xff5566, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+            this.veinMat = new THREE.LineBasicMaterial({ color: 0x5b8cff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
             this.vessels = new THREE.Group();
-            v.forEach(p => this.vessels.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), this.vesselMat)));
+            A.forEach(p => this.vessels.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), this.vesselMat)));
+            V.forEach(p => this.vessels.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), this.veinMat)));
             this.root.add(this.vessels);
         }
-        // ----- organs -----
+        // ----- organs, shaped and placed like the real ones (x: + is the patient's LEFT, z: + is the front) -----
         buildOrgans() {
             const O = {};
-            const mk = (geo, color, x, y, z, sx, sy, sz, rz, rx) => {
-                const mat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.25, transparent: true, opacity: 0, shininess: 60, depthWrite: false });
+            const mk = (geo, color, x, y, z, sx, sy, sz, rz, rx, ry) => {
+                const mat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.25, transparent: true, opacity: 0, shininess: 70, depthWrite: false, side: THREE.DoubleSide });
                 const m = new THREE.Mesh(geo, mat);
-                m.position.set(x, y, z); m.scale.set(sx || 1, sy || 1, sz || 1); m.rotation.set(rx || 0, 0, rz || 0);
+                m.position.set(x || 0, y || 0, z || 0); m.scale.set(sx || 1, sy || 1, sz || 1); m.rotation.set(rx || 0, ry || 0, rz || 0);
                 m.userData.baseScale = m.scale.clone(); m.userData.color = new THREE.Color(color);
                 return m;
             };
-            const sph = (r, w, h) => new THREE.SphereGeometry(r, w || 24, h || 18);
-            O.brain = [mk(sph(0.08), 0xf4a7b9, 0, 1.68, 0.005, 1.0, 0.84, 1.12),                     // cerebrum
-                       mk(sph(0.035), 0xe58aa2, 0, 1.6, -0.06, 1.3, 0.8, 1.0),                         // cerebellum (back, below)
-                       mk(new THREE.CapsuleGeometry(0.014, 0.05, 4, 10), 0xe58aa2, 0, 1.57, -0.035)];  // brainstem
-            O.eyes = [-1, 1].map(s => mk(sph(0.011, 14, 10), 0xdff6ff, s * 0.034, 1.64, 0.088));
-            O.thyroid = [-1, 1].map(s => mk(sph(0.016, 14, 10), 0xc58cff, s * 0.016, 1.5, 0.035, 1, 1.4, 0.8));
-            // right lung (patient's right = -x) is bigger (3 lobes); the left one leaves room for the heart
-            O.lungs = [mk(sph(0.07), 0xff9fb3, -0.078, 1.3, -0.01, 1.02, 1.78, 0.98), mk(sph(0.07), 0xff9fb3, 0.08, 1.31, -0.015, 0.86, 1.7, 0.95),
-                       mk(new THREE.CapsuleGeometry(0.011, 0.14, 4, 10), 0xd8e9f2, 0, 1.47, 0.02),                      // windpipe
-                       mk(new THREE.CapsuleGeometry(0.008, 0.06, 4, 8), 0xd8e9f2, -0.03, 1.375, 0.01, 1, 1, 1, 0.75),   // bronchi
-                       mk(new THREE.CapsuleGeometry(0.008, 0.06, 4, 8), 0xd8e9f2, 0.03, 1.375, 0.01, 1, 1, 1, -0.75)];
-            O.heart = [mk(sph(0.05), 0xff4d5e, 0.025, 1.27, 0.045, 1.0, 1.2, 0.95, -0.45)];
-            O.liver = [mk(sph(0.09), 0xb8455a, -0.06, 1.165, 0.025, 1.3, 0.55, 0.85, 0.22),          // under the right ribs
-                       mk(sph(0.016), 0x6fbf5a, -0.05, 1.12, 0.07, 1, 1.4, 1)];                        // gallbladder
-            O.stomach = [mk(sph(0.05), 0xffa86b, 0.065, 1.14, 0.04, 1.15, 0.85, 0.75, -0.5),
-                         mk(sph(0.028), 0x9a5cc6, 0.115, 1.15, -0.04, 0.8, 1.3, 0.8, -0.3)];             // spleen (left, behind)
-            O.pancreas = [mk(new THREE.CapsuleGeometry(0.013, 0.1, 4, 10), 0xffd36b, 0.015, 1.08, 0.005, 1, 1, 1, Math.PI / 2 - 0.25)];
-            // the left kidney sits a little higher than the right (the liver pushes the right one down)
-            O.kidneys = [-1, 1].map(s => mk(sph(0.03), 0xc23b52, s * 0.065, s > 0 ? 1.075 : 1.055, -0.045, 0.85, 1.5, 0.8, s * 0.2));
-            const colon = new THREE.CatmullRomCurve3(pts([[-0.075, 0.9, 0.04], [-0.085, 0.98, 0.04], [-0.08, 1.05, 0.045], [-0.04, 1.07, 0.06], [0.04, 1.065, 0.06],
-                [0.085, 1.05, 0.045], [0.09, 0.98, 0.04], [0.08, 0.91, 0.04], [0.03, 0.88, 0.05], [0.0, 0.86, 0.03]]));
-            O.intestines = [mk(new THREE.TorusKnotGeometry(0.042, 0.011, 140, 10, 3, 7), 0xffb3a0, 0, 0.965, 0.045, 1.25, 0.85, 0.8),   // small intestine
-                            mk(new THREE.TubeGeometry(colon, 90, 0.014, 10, false), 0xe9967a, 0, 0, 0)];                                    // large intestine frame
-            O.bladder = [mk(sph(0.032), 0xffe37a, 0, 0.875, 0.045)];
-            O.reproductive = [mk(sph(0.024), 0xff8fd1, 0, 0.845, 0.02, 1.3, 0.8, 1)];
-            const vert = []; for (let i = 0; i < 24; i++) { const y = 0.92 + i * 0.027; vert.push(mk(new THREE.BoxGeometry(0.028, 0.013, 0.022), 0x9fd8ff, 0, y, -0.072 - Math.sin(i / 23 * Math.PI) * 0.012)); }
+            const sph = (r, w, h) => new THREE.SphereGeometry(r, w || 32, h || 24);
+
+            // BRAIN: two wrinkled hemispheres with a gap between them, cerebellum at the back below, brainstem
+            const hemi = s => deform(sph(0.08, 48, 36), v => {
+                const n = 1 + 0.035 * Math.sin(v.x * 140) * Math.sin(v.y * 120) * Math.sin(v.z * 130);   // folds (gyri)
+                v.multiplyScalar(n);
+                if (s * v.x < 0) v.x *= 0.08;                                                        // flat inner side (the two halves meet in the middle)
+                if (v.y < -0.02 && v.z > 0.02) v.y = -0.02 + (v.y + 0.02) * 0.6;                        // flatter base at the front
+            });
+            O.brain = [mk(hemi(-1), 0xf4a7b9, -0.006, 1.685, 0.008, 0.9, 0.82, 1.12), mk(hemi(1), 0xf4a7b9, 0.006, 1.685, 0.008, 0.9, 0.82, 1.12),
+                       mk(deform(sph(0.035), v => { v.multiplyScalar(1 + 0.05 * Math.sin(v.y * 400)); }), 0xe58aa2, 0, 1.605, -0.058, 1.35, 0.72, 0.9),
+                       mk(new THREE.CapsuleGeometry(0.013, 0.05, 4, 12), 0xe58aa2, 0, 1.57, -0.03, 1, 1, 1, 0, -0.25)];
+            O.eyes = [-1, 1].map(s => mk(sph(0.012, 16, 12), 0xdff6ff, s * 0.033, 1.64, 0.087));
+            // THYROID: butterfly — two lobes joined by an isthmus, in front of the windpipe
+            O.thyroid = [mk(sph(0.012), 0xc58cff, -0.016, 1.5, 0.035, 0.8, 1.6, 0.8, 0.2), mk(sph(0.012), 0xc58cff, 0.016, 1.5, 0.035, 0.8, 1.6, 0.8, -0.2),
+                         mk(new THREE.CapsuleGeometry(0.005, 0.02, 4, 8), 0xc58cff, 0, 1.49, 0.042, 1, 1, 1, Math.PI / 2)];
+            // LUNGS: cone-shaped, flat on the inner side, the left one smaller with a notch for the heart; windpipe and bronchi; diaphragm below
+            const lung = s => deform(sph(0.07, 40, 30), v => {
+                if (s * v.x < 0) v.x *= 0.45;                                                       // flat inner (mediastinal) side
+                if (v.y > 0) { const k = 1 - (v.y / 0.07) * 0.45; v.x *= k; v.z *= k; }               // narrow tip at the top
+                if (v.y < -0.045) v.y = -0.045 + (v.y + 0.045) * 0.35;                                 // wide, flat base on the diaphragm
+                if (s > 0 && v.x < 0.01 && v.y < 0.0 && v.z > 0.0) v.x = Math.max(v.x, 0.01) + (v.x - 0.01) * 0.15;   // cardiac notch (left lung)
+            });
+            O.lungs = [mk(lung(-1), 0xff9fb3, -0.075, 1.3, -0.01, 1.05, 1.75, 1.0), mk(lung(1), 0xff9fb3, 0.077, 1.305, -0.015, 0.9, 1.68, 0.95),
+                       mk(varTube([[0, 1.55, 0.03], [0, 1.47, 0.028], [0, 1.39, 0.02]], [0.0095, 0.009]), 0xd8e9f2),                        // windpipe (trachea)
+                       mk(varTube([[0, 1.39, 0.02], [-0.03, 1.36, 0.012], [-0.05, 1.33, 0.0]], [0.007, 0.005]), 0xd8e9f2),                  // right bronchus (wider, steeper)
+                       mk(varTube([[0, 1.39, 0.02], [0.035, 1.37, 0.012], [0.055, 1.345, 0.0]], [0.0065, 0.0045]), 0xd8e9f2),             // left bronchus
+                       mk(new THREE.SphereGeometry(0.16, 40, 12, 0, Math.PI * 2, 0, Math.PI * 0.32), 0xff7a8a, 0, 1.075, -0.005, 1.0, 0.5, 0.68)];   // diaphragm dome
+            O.lungs[O.lungs.length - 1].userData.quietPart = true;
+            // HEART: cone-shaped, left of centre behind the breastbone, the tip (apex) pointing down, left and forward
+            const heartGeo = deform(sph(0.052, 40, 30), v => {
+                if (v.y < 0) { const k = 1 + (v.y / 0.052) * 0.6; v.x *= k; v.z *= k; v.x += -v.y * 0.35; v.z += -v.y * 0.25; }   // taper to the apex
+                if (v.y > 0.03) v.y = 0.03 + (v.y - 0.03) * 0.5;                                                                  // flatter base on top
+            });
+            const heart = mk(heartGeo, 0xff4d5e, 0.018, 1.27, 0.045, 1.05, 1.15, 0.95, 0.35);
+            // coronary arteries on the heart's surface (this is where a "blocked heart artery" is)
+            const lad = mk(varTube([[0.01, 1.305, 0.09], [0.03, 1.27, 0.095], [0.05, 1.23, 0.085], [0.07, 1.2, 0.065]], [0.0045, 0.0025]), 0xff1f3a);
+            const rca = mk(varTube([[-0.005, 1.305, 0.085], [-0.03, 1.285, 0.07], [-0.042, 1.25, 0.04], [-0.035, 1.22, 0.0]], [0.0045, 0.0025]), 0xff1f3a);
+            const lcx = mk(varTube([[0.015, 1.305, 0.075], [0.05, 1.29, 0.05], [0.065, 1.26, 0.01]], [0.004, 0.0025]), 0xff1f3a);
+            const aorta = mk(varTube([[0.012, 1.3, 0.04], [0.008, 1.38, 0.02], [0.025, 1.405, -0.015], [0.03, 1.37, -0.05], [0.025, 1.3, spineZ(1.3) + 0.035]], [0.012, 0.011, 0.01]), 0xff6b7a);
+            const pulm = mk(varTube([[0.03, 1.31, 0.065], [0.04, 1.355, 0.04], [0.045, 1.37, 0.01]], [0.01, 0.008]), 0x8aa8ff);
+            const svc = mk(varTube([[-0.024, 1.42, 0.02], [-0.022, 1.3, 0.03]], [0.008, 0.009]), 0x6f8fff);
+            O.heart = [heart, lad, rca, lcx, aorta, pulm, svc];
+            // LIVER: big wedge under the right ribs, thick on the right, thin to the left; gallbladder underneath
+            const liverGeo = deform(sph(0.09, 40, 30), v => {
+                const f = 0.45 + 0.55 * Math.min(1, Math.max(0, (0.09 - v.x) / 0.18));                // thicker on the right (-x)
+                v.y *= f; v.z *= 0.6 + 0.4 * f;
+                if (v.y < -0.01) v.y = -0.01 + (v.y + 0.01) * 0.4;                                     // flat underside
+                if (v.y > 0.02) v.y = 0.02 + (v.y - 0.02) * 0.85;                                      // dome under the diaphragm
+            });
+            O.liver = [mk(liverGeo, 0xb8455a, -0.04, 1.16, 0.025, 1.35, 0.75, 0.9, 0.15), mk(sph(0.015), 0x6fbf5a, -0.045, 1.115, 0.07, 0.9, 1.5, 0.9, 0.4)];
+            // FOOD PIPE + STOMACH: the oesophagus runs down behind the windpipe and joins a J-shaped stomach on the left; spleen behind it
+            const esoph = mk(varTube([[0, 1.56, 0.01], [0.002, 1.4, spineZ(1.4) + 0.05], [0.008, 1.25, spineZ(1.25) + 0.055], [0.025, 1.17, 0.0]], [0.006, 0.006, 0.007]), 0xffc09a);
+            const stomach = mk(varTube([[0.025, 1.17, 0.0], [0.065, 1.195, 0.015], [0.088, 1.16, 0.04], [0.08, 1.11, 0.06], [0.045, 1.085, 0.065], [0.012, 1.1, 0.055], [-0.008, 1.11, 0.04]],
+                [0.016, 0.034, 0.038, 0.034, 0.024, 0.014, 0.009], 64, 18), 0xffa86b);
+            O.stomach = [esoph, stomach, mk(deform(sph(0.03), v => { if (v.x < 0) v.x *= 0.5; }), 0x9a5cc6, 0.112, 1.16, -0.045, 0.8, 1.35, 0.85, -0.35)];
+            // PANCREAS: head tucked in the C-loop of the duodenum, body behind the stomach, tail to the spleen
+            O.pancreas = [mk(varTube([[-0.025, 1.05, 0.005], [0.0, 1.065, 0.0], [0.04, 1.075, -0.01], [0.08, 1.095, -0.025], [0.1, 1.11, -0.035]], [0.018, 0.014, 0.011, 0.009, 0.006]), 0xffd36b)];
+            // KIDNEYS: bean-shaped (dent on the inner side), the left a little higher; adrenal glands on top; ureters down to the bladder
+            const kidney = s => deform(sph(0.03, 36, 26), v => { if (s * v.x < 0 && Math.abs(v.y) < 0.014) v.x *= 0.45; });
+            O.kidneys = [];
+            for (const s of [-1, 1]) {
+                const y = s > 0 ? 1.075 : 1.055;
+                O.kidneys.push(mk(kidney(s), 0xc23b52, s * 0.064, y, -0.045, 0.82, 1.45, 0.7, s * 0.25));
+                O.kidneys.push(mk(new THREE.ConeGeometry(0.012, 0.02, 12), 0xffcf6b, s * 0.06, y + 0.05, -0.045, 1, 1, 0.7));
+                O.kidneys.push(mk(varTube([[s * 0.055, y - 0.03, -0.04], [s * 0.05, 0.98, -0.03], [s * 0.035, 0.9, 0.01], [s * 0.012, 0.88, 0.035]], [0.0025, 0.0025]), 0xffe9a8));
+            }
+            // INTESTINES: duodenum C-loop, coiled small intestine in the middle, the large intestine framing it, appendix low on the right
+            const duo = mk(varTube([[-0.008, 1.11, 0.04], [-0.035, 1.1, 0.025], [-0.045, 1.065, 0.015], [-0.035, 1.03, 0.01], [-0.005, 1.025, 0.005], [0.025, 1.04, 0.0]], [0.01, 0.009]), 0xffb3a0);
+            const small = mk(new THREE.TorusKnotGeometry(0.04, 0.0105, 220, 10, 4, 9), 0xffb3a0, 0, 0.965, 0.045, 1.2, 0.85, 0.75);
+            const colonPath = [[-0.06, 0.92, 0.04], [-0.078, 0.97, 0.04], [-0.08, 1.03, 0.045], [-0.06, 1.065, 0.06], [-0.02, 1.07, 0.068], [0.03, 1.07, 0.068], [0.07, 1.075, 0.055],
+                [0.085, 1.04, 0.045], [0.085, 0.97, 0.04], [0.07, 0.915, 0.04], [0.03, 0.895, 0.05], [0.005, 0.875, 0.03], [0.0, 0.85, 0.0]];
+            const colon = mk(varTube(colonPath, [0.016, 0.016, 0.014, 0.013, 0.011, 0.01], 120, 12), 0xe9967a);
+            const appendix = mk(varTube([[-0.062, 0.925, 0.04], [-0.06, 0.895, 0.045], [-0.05, 0.875, 0.05]], [0.004, 0.0025]), 0xe9967a);
+            O.intestines = [duo, small, colon, appendix];
+            O.bladder = [mk(deform(sph(0.032), v => { if (v.y > 0.01) v.y = 0.01 + (v.y - 0.01) * 0.6; }), 0xffe37a, 0, 0.875, 0.045)];
+            O.reproductive = [mk(sph(0.022), 0xff8fd1, 0, 0.85, 0.015, 1.3, 0.8, 1)];
+            // SPINE: 7 neck + 12 chest + 5 lower-back vertebrae and the sacrum, with the natural S-curve; discs between them
+            const vert = [];
+            const levels = [];
+            for (let i = 0; i < 7; i++) levels.push([1.565 - i * 0.0155, 0.016, 0.011]);                  // cervical
+            for (let i = 0; i < 12; i++) levels.push([1.452 - i * 0.026, 0.019 + i * 0.0006, 0.016]);    // thoracic
+            for (let i = 0; i < 5; i++) levels.push([1.118 - i * 0.033, 0.026, 0.02]);                    // lumbar
+            for (const [y, w, h] of levels) {
+                vert.push(mk(new THREE.CylinderGeometry(w * 0.85, w * 0.9, h * 0.7, 16), 0xe8f1fa, 0, y, spineZ(y)));
+                vert.push(mk(new THREE.BoxGeometry(0.006, h * 0.6, 0.02), 0xe8f1fa, 0, y, spineZ(y) - 0.022));       // spinous process (the bumps on your back)
+            }
+            vert.push(mk(new THREE.ConeGeometry(0.032, 0.09, 4), 0xe8f1fa, 0, 0.88, spineZ(0.88), 1.2, 1, 0.6, Math.PI));   // sacrum
             O.spine = vert;
+            // BONES & JOINTS: ribcage (12 pairs; 11-12 "floating"), breastbone, collarbones, shoulder blades, pelvis, main joints
             const joints = [];
-            for (const s of [-1, 1]) for (const [x, y, r] of [[0.175, 1.425, 0.03], [0.235, 1.135, 0.025], [0.262, 0.875, 0.02], [0.08, 0.86, 0.035], [0.09, 0.47, 0.035], [0.09, 0.08, 0.025]]) joints.push(mk(sph(r * 0.6, 14, 10), 0x9fd8ff, s * x, y, 0.0));
-            // ribcage: 10 pairs of ribs curving from the spine round to the front
-            for (let i = 0; i < 10; i++) {
-                const y = 1.43 - i * 0.033, w = 0.115 + Math.sin(Math.min(i, 7) / 7 * Math.PI * 0.6) * 0.04, drop = 0.03 + i * 0.004;
+            for (let i = 0; i < 12; i++) {
+                const y = 1.44 - i * 0.026, w = 0.1 + Math.sin(Math.min(i, 8) / 8 * Math.PI * 0.55) * 0.055, drop = 0.03 + i * 0.006;
+                const front = i < 7 ? 0.085 : i < 10 ? 0.07 : 0.03;                                            // true, false and floating ribs
                 for (const s of [-1, 1]) {
-                    const rib = new THREE.CatmullRomCurve3(pts([[0, y, -0.07], [s * w * 0.75, y - 0.005, -0.06], [s * w, y - drop * 0.6, 0.0], [s * w * 0.75, y - drop, 0.065], [s * 0.025, y - drop * 1.25, 0.085]]));
-                    joints.push(mk(new THREE.TubeGeometry(rib, 24, 0.004, 5, false), 0x9fd8ff, 0, 0, 0));
+                    const pts_ = [[0, y, spineZ(y) - 0.005], [s * w * 0.7, y - 0.004, spineZ(y) + 0.005], [s * w, y - drop * 0.6, 0.0], [s * w * 0.8, y - drop, front * 0.75]];
+                    if (i < 10) pts_.push([s * (i < 7 ? 0.02 : 0.05), y - drop * 1.3, front]);
+                    joints.push(mk(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts(pts_)), 24, 0.0038, 5, false), 0x9fd8ff));
                 }
             }
-            joints.push(mk(new THREE.BoxGeometry(0.022, 0.15, 0.01), 0x9fd8ff, 0, 1.33, 0.085));          // breastbone
-            joints.push(mk(new THREE.TorusGeometry(0.085, 0.018, 8, 30, Math.PI), 0x9fd8ff, 0, 0.9, 0, 1.25, 0.7, 1, Math.PI, 0));   // pelvis
+            joints.push(mk(varTube([[0, 1.465, 0.07], [0, 1.4, 0.088], [0, 1.31, 0.09], [0, 1.26, 0.082]], [0.012, 0.009, 0.005]), 0x9fd8ff));     // breastbone
+            for (const s of [-1, 1]) {
+                joints.push(mk(varTube([[s * 0.015, 1.465, 0.06], [s * 0.08, 1.47, 0.045], [s * 0.15, 1.45, 0.0]], [0.005, 0.005]), 0x9fd8ff));     // collarbone
+                joints.push(mk(new THREE.ConeGeometry(0.05, 0.11, 3), 0x9fd8ff, s * 0.1, 1.36, -0.08, 1, 1, 0.15, Math.PI));                    // shoulder blade
+                for (const [x, y, z, r] of [[0.175, 1.425, 0, 0.022], [0.235, 1.135, 0.01, 0.016], [0.262, 0.875, 0.02, 0.012], [0.085, 0.86, 0, 0.024], [0.09, 0.47, 0.01, 0.024], [0.09, 0.08, 0, 0.016]])
+                    joints.push(mk(sph(r, 14, 10), 0x9fd8ff, s * x, y, z));
+                joints.push(mk(new THREE.TorusGeometry(0.06, 0.016, 8, 24, Math.PI * 1.2), 0x9fd8ff, s * 0.055, 0.92, -0.01, 1, 0.9, 0.7, s > 0 ? -0.6 : Math.PI + 0.6 - Math.PI * 1.2 + Math.PI, Math.PI / 2 - 0.4));   // hip bones
+                joints.push(mk(varTube([[s * 0.085, 0.86, 0.0], [s * 0.088, 0.66, 0.0], [s * 0.09, 0.49, 0.005]], [0.012, 0.01]), 0x9fd8ff));       // thigh bone (femur)
+                joints.push(mk(varTube([[s * 0.09, 0.455, 0.008], [s * 0.09, 0.27, 0.0], [s * 0.09, 0.09, -0.005]], [0.01, 0.008]), 0x9fd8ff));      // shin bone (tibia)
+                joints.push(mk(varTube([[s * 0.18, 1.42, 0.0], [s * 0.215, 1.28, 0.005], [s * 0.235, 1.14, 0.01]], [0.009, 0.008]), 0x9fd8ff));       // upper-arm bone (humerus)
+            }
             O.bones_joints = joints;
             O.skin = [];
             O.blood_vessels = [];
@@ -355,7 +478,6 @@
             this.order = ['brain', 'eyes', 'thyroid', 'lungs', 'heart', 'liver', 'stomach', 'pancreas', 'kidneys', 'intestines', 'bladder', 'reproductive', 'spine', 'bones_joints'];
             this.order.forEach(k => O[k].forEach(m => { m.userData.area = k; this.organGroup.add(m); }));
             this.root.add(this.organGroup);
-            // red glow shells for problem areas (filled in setAreas)
             this.glowGroup = new THREE.Group(); this.root.add(this.glowGroup);
         }
         buildScan() {
@@ -455,6 +577,7 @@
             const dt = Math.min(0.05, now - (this.last || now)); this.last = now;
             // intro timeline
             const pNerve = ease(span(t, 0.1, 1.9)), pShell = ease(span(t, 1.2, 2.7));
+            const pVein = ease(span(t, 1.8, 3.0));
             this.redLevel = (this.redLevel || 0) + ((this.areasOn ? 1 : 0) - (this.redLevel || 0)) * 0.12;   // fades when dismissed
             const pRed = ease(span(t, 3.9, 4.7)) * this.redLevel;
             this.nerveLines.forEach(l => l.line.geometry.setDrawRange(0, Math.floor(l.n * pNerve)));
@@ -470,6 +593,7 @@
             this.vessels.visible = this.layers.vessels;
             const vesselRed = this.areaKeys && this.areaKeys.has('blood_vessels');
             this.vesselMat.opacity = (vesselRed ? 0.55 + 0.4 * Math.sin(now * 4) * pRed : 0.28) * ease(span(t, 1.8, 3.0));
+            this.veinMat.opacity = 0.24 * pVein;
             this.vesselMat.color.set(vesselRed && pRed > 0 ? RED : 0xff6677);
             // organs pop in one by one
             this.organGroup.visible = this.layers.organs;
@@ -479,7 +603,7 @@
                 this.organs[k].forEach(m => {
                     m.scale.copy(m.userData.baseScale).multiplyScalar(Math.max(0.001, back(p)));
                     const quiet = (k === 'spine' || k === 'bones_joints' || k === 'eyes') && !(this.areaKeys && this.areaKeys.has(k));
-                    m.material.opacity = (quiet ? 0.35 : 0.72) * ease(p);
+                    m.material.opacity = (m.userData.quietPart ? 0.14 : quiet ? 0.32 : 0.74) * ease(p);
                     if (bad) { m.material.color.lerpColors(m.userData.color, new THREE.Color(RED), pRed); m.material.emissive.copy(m.material.color); m.material.emissiveIntensity = 0.25 + pRed * (0.25 + 0.45 * Math.sin(now * 5)); }
                     else { m.material.color.copy(m.userData.color); m.material.emissive.copy(m.userData.color); m.material.emissiveIntensity = this.selected ? 0.12 : 0.25; }
                 });
