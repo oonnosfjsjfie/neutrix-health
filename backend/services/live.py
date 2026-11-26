@@ -69,6 +69,10 @@ WAKE WORD
 - Ignore people talking to each other, TV, background noise: stay completely silent then.
 - "Amma" (Malayalam for mum) is NOT your name: if someone calls "Amma", it isn't for you.
 
+YOUR VOICE
+- Speak like a young woman with a beautiful, smooth, warm voice: calm, confident, charming and softly smiling,
+  gently expressive, at a relaxed natural pace — never flat or robotic.
+
 HOW TO TALK
 - Short and simple by default: one or two sentences, everyday words, the real answer first (the medicines, the
   dates, the numbers — people may not be able to see the screen). Give a full explanation only if asked.
@@ -118,7 +122,7 @@ def start():
             return {
                 "token": token.name,
                 "models": models[:4],
-                "voice": os.getenv("NEUTRIX_VOICE", "Aoede"),
+                "voice": os.getenv("NEUTRIX_VOICE", "Despina"),
                 "instructions": instructions(),
             }
         except Exception as e:

@@ -5,7 +5,7 @@ The browser's built-in voices sound robotic, so the assistant's replies are spok
 voice instead: a warm, friendly woman's voice that sounds like a real conversation.
 Returns a WAV file. If it fails (quota, slow), the page falls back to the device's own voice.
 
-Voice: NEUTRIX_VOICE env var (default "Aoede"; other female voices: Kore, Leda, Zephyr, Sulafat,
+Voice: NEUTRIX_VOICE env var (default "Despina", smooth and warm; other female voices: Kore, Leda, Zephyr, Sulafat,
 Callirrhoe, Despina, Achernar, Vindemiatrix). Key: NEUTRIX_ASSISTANT_API_KEY or GEMINI_API_KEY.
 """
 import io
@@ -16,8 +16,9 @@ from google import genai
 from google.genai import types
 
 TTS_MODELS = ["gemini-2.5-flash-preview-tts", "gemini-2.5-flash-tts", "gemini-3.1-flash-tts-preview", "gemini-2.5-pro-preview-tts"]
-STYLE = ("Read this aloud as a warm, friendly young woman having a relaxed, natural conversation: "
-         "a smooth, human, expressive tone, not robotic, at a comfortable pace. Text: ")
+STYLE = ("Say this as Emma: a young woman with a beautiful, smooth, warm voice — calm, confident and charming, "
+         "softly smiling, gently expressive, relaxed natural pace, like a real person in a friendly conversation. "
+         "Never robotic. Text: ")
 
 _clients = {}
 _working_model = None
@@ -55,7 +56,7 @@ def speak(text: str, voice: str = "") -> bytes:
     text = (text or "").strip()[:1500]
     if not text:
         raise ValueError("empty")
-    voice = voice or os.getenv("NEUTRIX_VOICE", "Aoede")
+    voice = voice or os.getenv("NEUTRIX_VOICE", "Despina")
     config = types.GenerateContentConfig(
         response_modalities=["AUDIO"],
         speech_config=types.SpeechConfig(
@@ -113,7 +114,7 @@ def stream(text: str, voice: str = ""):
     text = (text or "").strip()[:1500]
     if not text:
         raise ValueError("empty")
-    voice = voice or os.getenv("NEUTRIX_VOICE", "Aoede")
+    voice = voice or os.getenv("NEUTRIX_VOICE", "Despina")
     config = types.GenerateContentConfig(
         response_modalities=["AUDIO"],
         speech_config=types.SpeechConfig(

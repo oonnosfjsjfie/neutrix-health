@@ -444,7 +444,8 @@
     if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
     // Natural, human-sounding woman's voice (Gemini voice from our server). Saved on the device after the first
     // time, so repeated phrases play at once. If it isn't available, the device's own voice is used.
-    const VOICE_CACHE = 'nx-voice-v1';
+    const VOICE_CACHE = 'nx-voice-v2';      // v2: Emma's new voice (old saved phrases are not used)
+    try { caches.delete('nx-voice-v1'); } catch (e) {}       // free the space used by the old voice
     let curAudio = null, speakId = 0, naturalDownUntil = 0, curAbort = null, curSources = [];
     const hashText = str => { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
     const voiceKey = text => new Request(location.origin + '/__nxvoice/' + hashText(text) + '-' + text.length);
@@ -1318,7 +1319,7 @@
                 const handle = sessionStorage.getItem('nxLiveHandle');
                 const setup = {
                     model: 'models/' + model,
-                    generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: pass.voice || 'Aoede' } } } },
+                    generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: pass.voice || 'Despina' } } } },
                     systemInstruction: { parts: [{ text: pass.instructions + `\nNow: the user is on ${here()} ("${document.title}"). Website language: ${lang()}. Signed in: ${localStorage.getItem('neutrix_authenticated') === 'true'}. Device: ${isApp ? 'Android app' : (innerWidth <= 720 ? 'phone' : 'computer')}.` }] },
                     tools: LIVE_TOOLS,
                     inputAudioTranscription: {},
