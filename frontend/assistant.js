@@ -27,9 +27,9 @@
     // ---------- words on screen ----------
     const T = {
         English: {
-            btn: 'Assistant', open: 'Open Neutrix Assistant', title: 'Neutrix Assistant', close: 'Close assistant',
-            hello: "Neutrix online. Talk or type, boss. I can open any page, fill things in, read the screen to you, or just chat.",
-            placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. Say “Hey Neutrix” and then what you need.', wakeHint: 'Say “Hey Neutrix”…', tapToHear: 'Tap anywhere on the page so I can talk to you.', micOff: 'Mic off.',
+            btn: 'Emma', open: 'Open Emma, your Neutrix assistant', title: 'Emma · Neutrix Assistant', close: 'Close assistant',
+            hello: "Hi, I'm Emma. Talk or type, boss. I can open any page, fill things in, read the screen to you, or just chat.",
+            placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. Say “Hey Emma” and then what you need.', wakeHint: 'Say “Hey Emma”…', tapToHear: 'Tap anywhere on the page so I can talk to you.', micOff: 'Mic off.',
             listening: 'Listening…', thinking: 'Thinking…', speaking: 'Speaking…', working: 'Working on the page…', ready: 'Ready',
             detail: 'Detailed', voice: 'Voice', yes: 'Yes, do it', no: 'No', stop: 'Stop',
             stopped: 'Okay, I stopped.', cancelled: "Okay, I won't do that.", noMic: "Your browser can't use the microphone here. Please type instead.",
@@ -38,9 +38,9 @@
             chips: ['What can you do?', 'Open my medicine schedule', 'Read this page to me', 'Make the text bigger']
         },
         Malayalam: {
-            btn: 'അസിസ്റ്റന്റ്', open: 'Neutrix അസിസ്റ്റന്റ് തുറക്കുക', title: 'Neutrix അസിസ്റ്റന്റ്', close: 'അടയ്ക്കുക',
-            hello: 'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ Neutrix അസിസ്റ്റന്റ് ആണ്. സംസാരിക്കുകയോ ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം. ലളിതമായി വിശദീകരിക്കാം, അല്ലെങ്കിൽ ഈ വെബ്സൈറ്റിൽ കാര്യങ്ങൾ ചെയ്തു തരാം.',
-            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', expand: 'സംഭാഷണം കാണിക്കുക', collapse: 'സംഭാഷണം മറയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ. “Hey Neutrix” എന്ന് പറഞ്ഞ ശേഷം സംസാരിക്കുക.', wakeHint: '“Hey Neutrix” എന്ന് പറയൂ…', tapToHear: 'ഞാൻ സംസാരിക്കാൻ പേജിൽ എവിടെയെങ്കിലും ടാപ്പ് ചെയ്യുക.', micOff: 'മൈക്ക് ഓഫ്.',
+            btn: 'എമ്മ', open: 'എമ്മയെ തുറക്കുക', title: 'എമ്മ · Neutrix അസിസ്റ്റന്റ്', close: 'അടയ്ക്കുക',
+            hello: 'നമസ്കാരം! ഞാൻ എമ്മ, നിങ്ങളുടെ Neutrix അസിസ്റ്റന്റ്. സംസാരിക്കുകയോ ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം. ലളിതമായി വിശദീകരിക്കാം, അല്ലെങ്കിൽ ഈ വെബ്സൈറ്റിൽ കാര്യങ്ങൾ ചെയ്തു തരാം.',
+            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', expand: 'സംഭാഷണം കാണിക്കുക', collapse: 'സംഭാഷണം മറയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ. “Hey Emma” എന്ന് പറഞ്ഞ ശേഷം സംസാരിക്കുക.', wakeHint: '“Hey Emma” എന്ന് പറയൂ…', tapToHear: 'ഞാൻ സംസാരിക്കാൻ പേജിൽ എവിടെയെങ്കിലും ടാപ്പ് ചെയ്യുക.', micOff: 'മൈക്ക് ഓഫ്.',
             listening: 'കേൾക്കുന്നു…', thinking: 'ആലോചിക്കുന്നു…', speaking: 'സംസാരിക്കുന്നു…', working: 'പേജിൽ ചെയ്യുന്നു…', ready: 'തയ്യാർ',
             detail: 'വിശദമായി', voice: 'ശബ്ദം', yes: 'അതെ, ചെയ്യൂ', no: 'വേണ്ട', stop: 'നിർത്തുക',
             stopped: 'ശരി, നിർത്തി.', cancelled: 'ശരി, അത് ചെയ്യുന്നില്ല.', noMic: 'ഇവിടെ മൈക്ക് ഉപയോഗിക്കാൻ കഴിയില്ല. ടൈപ്പ് ചെയ്യുക.',
@@ -266,7 +266,7 @@
 
         cursor = document.createElement('div');
         cursor.id = 'nxa-cursor';
-        cursor.innerHTML = ICON.cursor + '<span class="tag">Neutrix</span>';
+        cursor.innerHTML = ICON.cursor + '<span class="tag">Emma</span>';
         document.body.appendChild(cursor);
         if (state.cursor) setCursor(state.cursor.x, state.cursor.y, true);
 
@@ -561,9 +561,9 @@
         voiceStop();
     }
 
-    // ---------- wake word: with the mic on, only speech that starts with "Hey Neutrix" / "Neutrix" is for me ----------
+    // ---------- wake word: with the mic on, only speech that starts with "Hey Emma" / "Emma" is for me ----------
     // (After the name, or right after I answer, there are a few seconds to talk without saying it again.)
-    const WAKE = /^(?:.{0,12}?\b)?(?:hey|hi|hello|ok|okay|yo|a)?[\s,]*(neutrix|neutrics|neutrex|nutrix|nutrics|neotrix|new ?trix|new ?tricks|neo ?tricks|nu ?tricks|neutric|ന്യൂട്രിക്സ്)\b[\s,.!?:-]*/i;
+    const WAKE = /^(?:.{0,12}?\b)?(?:hey|hi|hello|ok|okay|yo|a)?[\s,]*(emma|emmah|ema|emmaa|എമ്മ|एम्मा)\b[\s,.!?:-]*/i;
     let wakeUntil = 0;
     const awake = () => Date.now() < wakeUntil || !!askBox;
     function wakeFilter(text) {
@@ -611,7 +611,7 @@
             input.value = '';
             if (text) {
                 failCount = 0;
-                const cmd = wakeFilter(text);              // only "Hey Neutrix ..." / "Neutrix ..." is for me
+                const cmd = wakeFilter(text);              // only "Hey Emma ..." / "Emma ..." is for me
                 if (cmd === '') { wakeUntil = Date.now() + 9000; heardName(); }
                 else if (cmd) { wakeUntil = Date.now() + 9000; userSays(cmd); }
             }
@@ -1095,7 +1095,7 @@
         // Report a problem with the app: "report that the mic doesn't work" sends it at once;
         // "I want to report" opens the form and the next thing the user says is typed in and sent
         if (/\b(report|complain|complaint|feedback|bug)\b/.test(c) && !/\b(upload|my reports?\b|medical|lab|summary|result|discharge|scan|progress)\b/.test(c)) {
-            const src = (raw || cmd).replace(/^\s*(?:hey |ok |okay )?(?:neutrix|neutrics|nutrix)[\s,.!:-]*/i, '').replace(/[.!?]+$/, '');
+            const src = (raw || cmd).replace(/^\s*(?:hey |ok |okay )?(?:emma|ema|neutrix)[\s,.!:-]*/i, '').replace(/[.!?]+$/, '');
             const m2 = /\b(?:report|complain(?: about)?|complaint|feedback|bug)\b(?:\s+(?:that|about|saying|this|:|-))?\s+(.{4,})$/i.exec(src);
             let what = m2 ? m2[1].trim() : '';
             if (/^(a |an |the |some )?(problem|issue|bug|error|something|complaint|feedback)s?( (with|on|in|about) (the |this )?(app|site|website|neutrix|page))?$/.test(what) || /^(a |an )?(problem|issue|bug)$/.test(what)) what = '';
@@ -1104,7 +1104,7 @@
                 document.querySelectorAll('.nx-fb-modal').forEach(x => x.remove());
                 NxFeedback.openReport();
                 awaitingReport = true;
-                wakeUntil = Date.now() + 20000;          // no need to say "Neutrix" again for the answer
+                wakeUntil = Date.now() + 20000;          // no need to say "Emma" again for the answer
                 await reply('Sure. What went wrong? Just say it and I’ll send it.');
                 return true;
             }
@@ -1187,8 +1187,8 @@
             if (yes || no) { add('user', text); confirmFirst.answer(yes); return; }
             askBox = null;
         }
-        const cmd = text.trim().toLowerCase().replace(/[.!?,]+/g, '').replace(/-/g, ' ').replace(/\s+/g, ' ').replace(/^(please|hey neutrix|neutrix|ok|okay)\s+/, '').replace(/\s+please$/, '');
-        const WHO = '(?:(?:the|my|this) )?(yourself|urself|you|neutrix assistant|neutrix|assistant|panel|chat|window|it)';
+        const cmd = text.trim().toLowerCase().replace(/[.!?,]+/g, '').replace(/-/g, ' ').replace(/\s+/g, ' ').replace(/^(please|hey emma|emma|hey neutrix|neutrix|ok|okay)\s+/, '').replace(/\s+please$/, '');
+        const WHO = '(?:(?:the|my|this) )?(yourself|urself|you|emma|neutrix assistant|neutrix|assistant|panel|chat|window|it)';
         if (new RegExp(`^(un ?extend|un ?expand|collapse|minimi[sz]e|shrink|hide|fold|close up|go small|get small|make ${WHO} small(er)?|smaller)( ${WHO})?( down)?$`).test(cmd) || /^(ചെറുതാക്കൂ|ചുരുക്കൂ)/.test(cmd)) {
             add('user', text); setExpanded(false); return;
         }
@@ -1373,7 +1373,7 @@
     function liveSend(o) { try { if (LV.ws && LV.ws.readyState === 1) LV.ws.send(JSON.stringify(o)); } catch (e) {} }
     function liveSendText(text) {
         LV.userMsg = state.history[state.history.length - 1] || null;     // already shown by userSays
-        liveSend({ clientContent: { turns: [{ role: 'user', parts: [{ text: 'Neutrix, ' + text }] }], turnComplete: true } });
+        liveSend({ clientContent: { turns: [{ role: 'user', parts: [{ text: 'Emma, ' + text }] }], turnComplete: true } });
         setMode('thinking');
     }
     function liveMicChunk({ pcm, rms }) {
