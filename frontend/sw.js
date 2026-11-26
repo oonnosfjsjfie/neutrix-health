@@ -8,7 +8,7 @@
 //   when the internet comes back.
 // - Never cached: the AI (/api/...), sign-in and the database (Firebase) — they need the internet.
 // =====================================================
-const VERSION = 'neutrix-v20';
+const VERSION = 'neutrix-v21';
 const CACHE = VERSION;
 
 // Saved on the first visit, so every page works offline even if it was never opened before
@@ -21,7 +21,7 @@ const FILES = [
     'common.js', 'issue-scope.js', 'neutrix-cloud.js', 'firebase-config.js', 'account-menu.js', 'feedback.js', 'chat.js',
     'nx-charts.js', 'visuals.js', 'camera-capture.js', 'calendar-reminders.js', 'checkup-calendar.js', 'ai-sections.js',
     'summary.js', 'report.js', 'schedule.js', 'checkups.js', 'improvements.js', 'exercise.js', 'exercise-pose.js',
-    'issues.js', 'profile.js', 'signin.js', 'home.js', 'tracker&briefing.js', 'pwa.js', 'native-app.js', 'app-shell.js', 'assistant.js', 'body3d.js', 'body3d.css',
+    'issues.js', 'profile.js', 'signin.js', 'home.js', 'tracker&briefing.js', 'pwa.js', 'native-app.js', 'app-shell.js', 'assistant.js', 'body3d.js', 'body3d.css', 'assets/body/body.bin',
     'style.css', 'skin.css', 'pages.css', 'theme.css', 'home.css', 'bobby-pages.css', 'tracker&briefing.css',
     'manifest.webmanifest', 'assets/favicon.png', 'assets/neutrix-icon.png', 'assets/neutrix-logo.png',
     'assets/app/icon-192.png', 'assets/app/icon-512.png'

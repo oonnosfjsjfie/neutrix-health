@@ -132,3 +132,4 @@
 [data-theme="dark"] .nxb-side::-webkit-scrollbar { width: 8px; }
 [data-theme="dark"] .nxb-side::-webkit-scrollbar-track { background: transparent; }
 [data-theme="dark"] .nxb-side::-webkit-scrollbar-thumb { background: #3a414d; border-radius: 8px; }
+.nxb-credit { position: absolute; left: 12px; bottom: 8px; z-index: 3; font-size: 10px; line-height: 1.3; color: rgba(160, 220, 255, .55); pointer-events: none; max-width: 70%; }

@@ -118,6 +118,22 @@
         }
     }
 
+    // ---------- the real anatomy (BodyParts3D, simplified for the web: assets/body/body.bin) ----------
+    let modelPromise = null;
+    function loadModel() {
+        modelPromise = modelPromise || (async () => {
+            try {
+                const buf = await (await fetch('assets/body/body.bin')).arrayBuffer();
+                const dv = new DataView(buf);
+                if (String.fromCharCode(...new Uint8Array(buf, 0, 4)) !== 'NXB2') return null;
+                const mlen = dv.getUint32(4, true), plen = dv.getUint32(8, true), ilen = dv.getUint32(12, true);
+                const meta = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 16, mlen)));
+                return { meta, pos: new Int16Array(buf, 16 + mlen, plen / 2), idx: new Uint16Array(buf, 16 + mlen + plen, ilen / 2) };
+            } catch (e) { console.warn('[body3d] real anatomy model not available, using the drawn one', e); return null; }
+        })();
+        return modelPromise;
+    }
+
     // =====================================================================
     // The 3D scene
     // =====================================================================
@@ -206,7 +222,10 @@
             const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(1, 2, 3); this.scene.add(key);
             const rim = new THREE.PointLight(0x38d8ff, 3, 6); rim.position.set(-1.5, 1.4, -1.5); this.scene.add(rim);
             this.root = new THREE.Group(); this.scene.add(this.root);
-            this.buildFloor(); this.buildShell(); this.buildNerves(); this.buildVessels(); this.buildOrgans(); this.buildScan();
+            this.buildFloor();
+            if (this.opts.model) this.buildReal(this.opts.model);
+            else { this.buildShell(); this.buildNerves(); this.buildVessels(); this.buildOrgans(); }
+            this.buildScan();
             this.labelBox = document.createElement('div'); this.labelBox.className = 'nxb-labels'; this.box.appendChild(this.labelBox);
             this.bindInput();
             this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(this.box);
@@ -480,6 +499,133 @@
             this.root.add(this.organGroup);
             this.glowGroup = new THREE.Group(); this.root.add(this.glowGroup);
         }
+        // ----- the real anatomy: skin, organs and bones from BodyParts3D; nerves and limb vessels along the real bones -----
+        buildReal(M) {
+            const meta = M.meta, sc = meta.posScale, L = meta.landmarks;
+            const geoOf = p => {
+                const raw = M.pos.subarray(p.v[0] * 3, (p.v[0] + p.v[1]) * 3), pos = new Float32Array(raw.length);
+                for (let i = 0; i < raw.length; i++) pos[i] = raw[i] * sc;
+                const g = new THREE.BufferGeometry();
+                g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                g.setIndex(new THREE.BufferAttribute(M.idx.subarray(p.i[0], p.i[0] + p.i[1]), 1));
+                g.computeVertexNormals(); g.computeBoundingBox();
+                return g;
+            };
+            const V = a => new THREE.Vector3(a[0], a[1], a[2]);
+            // skin → see-through glowing body + surface dots
+            this.shellMat = holoMaterial(CYAN, 1);
+            this.shell = new THREE.Group();
+            this.dotsMat = new THREE.PointsMaterial({ color: CYAN, size: 0.005, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+            const O = { brain: [], eyes: [], thyroid: [], heart: [], lungs: [], liver: [], stomach: [], pancreas: [], kidneys: [], intestines: [], bladder: [], reproductive: [], spine: [], bones_joints: [], blood_vessels: [], skin: [] };
+            const box = {};
+            for (const p of meta.parts) {
+                const g = geoOf(p);
+                if (p.area === 'skin') {
+                    this.shell.add(new THREE.Mesh(g, this.shellMat));
+                    const src = g.attributes.position.array, d = [];
+                    for (let i = 0; i < src.length; i += 9) d.push(src[i], src[i + 1], src[i + 2]);
+                    const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.Float32BufferAttribute(d, 3));
+                    this.shell.add(new THREE.Points(dg, this.dotsMat));
+                    continue;
+                }
+                const mat = new THREE.MeshPhongMaterial({ color: p.color, emissive: p.color, emissiveIntensity: 0.25, transparent: true, opacity: 0, shininess: 70, depthWrite: false, side: THREE.DoubleSide });
+                const m = new THREE.Mesh(g, mat);
+                m.userData.baseScale = new THREE.Vector3(1, 1, 1); m.userData.color = new THREE.Color(p.color);
+                if (p.name === 'diaphragm') m.userData.quietPart = true;
+                // grow from the organ's own centre during the intro
+                const c = g.boundingBox.getCenter(new THREE.Vector3());
+                g.translate(-c.x, -c.y, -c.z); m.position.copy(c);
+                (O[p.area] = O[p.area] || []).push(m);
+                const b = (box[p.area] = box[p.area] || new THREE.Box3()); b.union(g.boundingBox.clone().translate(c));
+                if (p.name === 'lungs') this.lungBox = g.boundingBox.clone().translate(c);
+                if (p.name === 'brain') this.brainBox = g.boundingBox.clone().translate(c);
+            }
+            this.root.add(this.shell);
+            this.organs = O;
+            this.organGroup = new THREE.Group();
+            this.order = ['brain', 'eyes', 'lungs', 'heart', 'blood_vessels', 'liver', 'stomach', 'pancreas', 'kidneys', 'intestines', 'bladder', 'reproductive', 'spine', 'bones_joints'];
+            this.order.forEach(k => (O[k] || []).forEach(m => { m.userData.area = k; this.organGroup.add(m); }));
+            this.root.add(this.organGroup);
+            this.glowGroup = new THREE.Group(); this.root.add(this.glowGroup);
+            // where each area's red marker goes
+            this.centers = {};
+            for (const [k, c] of Object.entries(meta.centers)) this.centers[k] = V(c);
+            const lh = L.left_humerus;                                   // blood pressure: the brachial artery in the upper arm
+            this.centers.blood_vessels = V(lh[0]).lerp(V(lh[1]), 0.55).add(new THREE.Vector3(0.01, 0, 0.05));
+            this.centers.skin = new THREE.Vector3(-0.11, 1.05, 0.12);
+            this.centers.bones_joints = V(L.left_femur[1]).add(new THREE.Vector3(0, 0, 0.05));     // the knee
+            this.credit = meta.credit;
+
+            // nerves: spinal cord inside the spine, nerves to arms, legs and ribs along the real bones
+            const paths = [];
+            const cord = L.spine.slice().sort((a, b) => b[1] - a[1]).map(p => [p[0], p[1], p[2]]);
+            const bb = this.brainBox || new THREE.Box3(new THREE.Vector3(-0.07, 1.6, -0.08), new THREE.Vector3(0.07, 1.75, 0.08));
+            const bc = bb.getCenter(new THREE.Vector3()), bs = bb.getSize(new THREE.Vector3());
+            cord.unshift([0, bc.y - bs.y * 0.3, bc.z - bs.z * 0.15]);
+            paths.push(curve(cord, 80));
+            const cordAt = y => { let best = cord[0]; for (const p of cord) if (Math.abs(p[1] - y) < Math.abs(best[1] - y)) best = p; return best; };
+            for (const side of ['left', 'right']) {
+                const s = side === 'left' ? 1 : -1;
+                const hum = L[side + '_humerus'], rad = L[side + '_radius'] || L[side + '_ulna'], fem = L[side + '_femur'], tib = L[side + '_tibia'];
+                const wrist = V(rad[1]), dir = wrist.clone().sub(V(rad[0])).normalize();
+                const arm = [cordAt(hum[0][1] + 0.03), [s * 0.08, hum[0][1] + 0.01, hum[0][2] + 0.01], hum[0], V(hum[0]).lerp(V(hum[1]), 0.5).toArray(), hum[1], V(rad[0]).lerp(V(rad[1]), 0.5).toArray(), rad[1]];
+                paths.push(jitter(curve(arm, 60), 0.006, 3 + s));
+                for (let f = -1.5; f <= 1.5; f++) {
+                    const tip = wrist.clone().add(dir.clone().multiplyScalar(0.085)).add(new THREE.Vector3(s * f * 0.008, 0, f * 0.006));
+                    paths.push(curve([rad[1], wrist.clone().add(dir.clone().multiplyScalar(0.04)).toArray(), tip.toArray()], 10));
+                }
+                const ankle = V(tib[1]);
+                const leg = [cordAt(0.95), [s * 0.04, fem[0][1] - 0.01, fem[0][2] - 0.01], fem[0], V(fem[0]).lerp(V(fem[1]), 0.5).toArray(), fem[1], V(tib[0]).lerp(V(tib[1]), 0.5).toArray(), tib[1]];
+                paths.push(jitter(curve(leg, 70), 0.006, 7 + s));
+                for (let f = -1; f <= 1; f++) paths.push(curve([tib[1], [ankle.x + s * f * 0.01, 0.03, ankle.z + 0.06], [ankle.x + s * f * 0.018, 0.015, ankle.z + 0.15]], 10));
+                // nerves between the ribs
+                const lb = this.lungBox || new THREE.Box3(new THREE.Vector3(-0.13, 1.15, -0.06), new THREE.Vector3(0.13, 1.45, 0.08));
+                for (let i = 0; i < 7; i++) {
+                    const y = lb.max.y - 0.02 - i * (lb.max.y - lb.min.y) / 8, c0 = cordAt(y), w = Math.max(Math.abs(lb.min.x), lb.max.x) * (0.95 + 0.08 * Math.sin(i / 6 * Math.PI));
+                    paths.push(curve([c0, [s * w * 0.7, y - 0.01, c0[2] + 0.01], [s * w, y - 0.03, (lb.min.z + lb.max.z) / 2], [s * w * 0.6, y - 0.05, lb.max.z + 0.01]], 18));
+                }
+            }
+            this.nerves = new THREE.Group();
+            this.nerveLines = paths.map(p => {
+                const geo = new THREE.BufferGeometry().setFromPoints(p); geo.setDrawRange(0, 0);
+                const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: NERVE, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+                this.nerves.add(line); return { line, n: p.length, pts: p };
+            });
+            const b = []; let sd = 7; const rnd = () => ((sd = (sd * 9301 + 49297) % 233280) / 233280);
+            for (let i = 0; i < 1100; i++) {
+                const u = rnd() * Math.PI * 2, v = Math.acos(2 * rnd() - 1), r = Math.cbrt(rnd());
+                b.push(bc.x + Math.sin(v) * Math.cos(u) * bs.x * 0.46 * r, bc.y + Math.cos(v) * bs.y * 0.42 * r, bc.z + Math.sin(v) * Math.sin(u) * bs.z * 0.46 * r);
+            }
+            const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(b, 3));
+            this.brainDotsMat = new THREE.PointsMaterial({ color: NERVE, size: 0.006, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+            this.nerves.add(new THREE.Points(bg, this.brainDotsMat));
+            this.impulses = [];
+            const impMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
+            for (let i = 0; i < 10; i++) {
+                const m = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 6), impMat);
+                const path = this.nerveLines[[0, 1, 6, 9, 15, 0, 1, 6, 9, 15][i] % this.nerveLines.length].pts;
+                this.impulses.push({ m, path, off: i / 10 }); this.nerves.add(m);
+            }
+            this.root.add(this.nerves);
+
+            // arteries (red) and veins (blue) of the arms and legs, along the bones (the aorta and venae cavae are real meshes)
+            const A = [], Vn = [];
+            const off = (p, dx, dz) => [p[0] + dx, p[1], p[2] + dz];
+            for (const side of ['left', 'right']) {
+                const s = side === 'left' ? 1 : -1;
+                const hum = L[side + '_humerus'], rad = L[side + '_radius'] || L[side + '_ulna'], fem = L[side + '_femur'], tib = L[side + '_tibia'];
+                A.push(jitter(curve([[s * 0.03, 1.4, 0.01], [s * 0.1, hum[0][1] + 0.005, hum[0][2] + 0.02], off(hum[0], 0, 0.025), off(hum[1], s * 0.005, 0.03), off(rad[1], 0, 0.02)], 50), 0.003, 11 + s));
+                Vn.push(jitter(curve([[s * 0.035, 1.41, 0.0], off(hum[0], -s * 0.01, 0.035), off(hum[1], -s * 0.012, 0.035), off(rad[1], -s * 0.01, 0.025)], 45), 0.003, 19 + s));
+                A.push(jitter(curve([[s * 0.02, 0.98, 0.0], off(fem[0], -s * 0.01, 0.03), off(V(fem[0]).lerp(V(fem[1]), 0.5).toArray(), -s * 0.01, 0.025), off(fem[1], 0, -0.02), off(tib[1], 0, 0.0), [tib[1][0], 0.03, tib[1][2] + 0.08]], 60), 0.003, 13 + s));
+                Vn.push(jitter(curve([[s * 0.02, 0.98, -0.01], off(fem[0], -s * 0.02, 0.035), off(fem[1], -s * 0.01, -0.025), off(tib[1], s * 0.005, 0.01)], 55), 0.003, 17 + s));
+            }
+            this.vesselMat = new THREE.LineBasicMaterial({ color: 0xff5566, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+            this.veinMat = new THREE.LineBasicMaterial({ color: 0x5b8cff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+            this.vessels = new THREE.Group();
+            A.forEach(p => this.vessels.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), this.vesselMat)));
+            Vn.forEach(p => this.vessels.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), this.veinMat)));
+            this.root.add(this.vessels);
+        }
         buildScan() {
             const g = new THREE.Mesh(new THREE.RingGeometry(0.0, 0.34, 64), new THREE.MeshBasicMaterial({ color: CYAN, transparent: true, opacity: 0.0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
             g.rotation.x = -Math.PI / 2; this.scanDisc = g;
@@ -489,17 +635,19 @@
         }
         // ----- which areas are red -----
         setAreas(areas) {
-            this.areas = (areas || []).filter(a => this.organs[a.key] || a.key === 'skin' || a.key === 'blood_vessels');
+            this.areas = (areas || []).filter(a => this.organs[a.key] || a.key === 'skin' || a.key === 'blood_vessels' || a.key === 'thyroid');
             this.glowGroup.clear();
             this.labels.forEach(l => l.el.remove()); this.labels = [];
             this.areaKeys = new Set(this.areas.map(a => a.key));
             for (const a of this.areas) {
                 const meshes = this.organs[a.key] || [];
                 const center = new THREE.Vector3();
-                if (meshes.length) { meshes.forEach(m => center.add(m.position)); center.divideScalar(meshes.length); }
+                if (this.centers && this.centers[a.key]) center.copy(this.centers[a.key]);
+                else if (meshes.length) { meshes.forEach(m => center.add(m.position)); center.divideScalar(meshes.length); }
                 else if (a.key === 'blood_vessels') center.set(0.22, 1.23, 0.045);   // upper-arm artery (where blood pressure is measured)
+                else if (a.key === 'thyroid') center.set(0, 1.5, 0.05);
                 else center.set(-0.12, 1.02, 0.1);                                     // skin of the belly
-                const glows = meshes.slice(0, 8).map(m => {
+                const glows = meshes.slice(0, 8).filter(m => !m.userData.quietPart).map(m => {
                     const g = new THREE.Mesh(m.geometry, holoMaterial(RED, 1.6));
                     g.position.copy(m.position); g.rotation.copy(m.rotation); g.scale.copy(m.userData.baseScale).multiplyScalar(1.45);
                     g.userData.area = a.key; this.glowGroup.add(g); return g;
@@ -578,6 +726,7 @@
             // intro timeline
             const pNerve = ease(span(t, 0.1, 1.9)), pShell = ease(span(t, 1.2, 2.7));
             const pVein = ease(span(t, 1.8, 3.0));
+            if (!this.veinMat) this.veinMat = { opacity: 0 };
             this.redLevel = (this.redLevel || 0) + ((this.areasOn ? 1 : 0) - (this.redLevel || 0)) * 0.12;   // fades when dismissed
             const pRed = ease(span(t, 3.9, 4.7)) * this.redLevel;
             this.nerveLines.forEach(l => l.line.geometry.setDrawRange(0, Math.floor(l.n * pNerve)));
@@ -600,7 +749,7 @@
             this.order.forEach((k, i) => {
                 const p = span(t, 2.3 + i * 0.1, 2.3 + i * 0.1 + 0.45);
                 const bad = this.areaKeys && this.areaKeys.has(k) && pRed > 0;
-                this.organs[k].forEach(m => {
+                (this.organs[k] || []).forEach(m => {
                     m.scale.copy(m.userData.baseScale).multiplyScalar(Math.max(0.001, back(p)));
                     const quiet = (k === 'spine' || k === 'bones_joints' || k === 'eyes') && !(this.areaKeys && this.areaKeys.has(k));
                     m.material.opacity = (m.userData.quietPart ? 0.14 : quiet ? 0.32 : 0.74) * ease(p);
@@ -688,7 +837,8 @@
         box.tabIndex = 0; box.setAttribute('role', 'link'); box.setAttribute('aria-label', tx('tap'));
         try { await loadThree(); } catch (e) { box.classList.add('nxb-nogl'); h.el.innerHTML += `<div class="nxb-found show">3D not available offline yet</div>`; box.addEventListener('click', go); return; }
         let body;
-        try { body = new Body3D(box, { mode: 'mini', onClick: go }); } catch (e) { box.classList.add('nxb-nogl'); box.addEventListener('click', go); return; }
+        const model = await loadModel();
+        try { body = new Body3D(box, { mode: 'mini', onClick: go, model }); } catch (e) { box.classList.add('nxb-nogl'); box.addEventListener('click', go); return; }
         box.appendChild(tap); box.appendChild(h.el);
         body.onTick = t => h.tick(t);
         const map = await getBodyMap();
@@ -723,8 +873,9 @@
         };
         side.innerHTML = `<button type="button" class="nxb-x nxb-side-x" aria-label="${esc(tx('close'))}">×</button><div class="nxb-side-title">${esc(tx('overview'))}</div><p class="nxb-overview">${esc(tx('loading'))}</p>
             <div class="nxb-list"></div><div class="nxb-info hidden" aria-live="polite"></div><p class="nxb-disclaimer">${esc(tx('disclaimer'))}</p>`;
+        loadModel().then(m => { if (m) view.insertAdjacentHTML('beforeend', `<div class="nxb-credit">3D anatomy: BodyParts3D © The Database Center for Life Science (CC BY-SA 2.1 JP)</div>`); });
         let body;
-        try { await loadThree(); body = new Body3D(view, { mode: 'full', onPick: key => showInfo(key) }); }
+        try { await loadThree(); body = new Body3D(view, { mode: 'full', onPick: key => showInfo(key), model: await loadModel() }); }
         catch (e) { view.classList.add('nxb-nogl'); view.insertAdjacentHTML('beforeend', '<div class="nxb-found show">3D view needs WebGL / internet the first time.</div>'); }
         if (body) { view.appendChild(h.el); view.appendChild(hint); view.appendChild(tools); body.onTick = t => h.tick(t); }
         tools.addEventListener('click', e => {
