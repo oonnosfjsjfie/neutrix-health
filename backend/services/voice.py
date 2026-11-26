@@ -5,7 +5,7 @@ The browser's built-in voices sound robotic, so the assistant's replies are spok
 voice instead: a warm, friendly woman's voice that sounds like a real conversation.
 Returns a WAV file. If it fails (quota, slow), the page falls back to the device's own voice.
 
-Voice: NEUTRIX_VOICE env var (default "Despina", smooth and warm; other female voices: Kore, Leda, Zephyr, Sulafat,
+Voice: NEUTRIX_VOICE env var (default "Leda", youthful; other female voices: Kore, Leda, Zephyr, Sulafat,
 Callirrhoe, Despina, Achernar, Vindemiatrix). Key: NEUTRIX_ASSISTANT_API_KEY or GEMINI_API_KEY.
 """
 import io
@@ -57,7 +57,7 @@ def speak(text: str, voice: str = "") -> bytes:
     text = (text or "").strip()[:1500]
     if not text:
         raise ValueError("empty")
-    voice = voice or os.getenv("NEUTRIX_VOICE", "Despina")
+    voice = voice or os.getenv("NEUTRIX_VOICE", "Leda")
     config = types.GenerateContentConfig(
         response_modalities=["AUDIO"],
         speech_config=types.SpeechConfig(
@@ -115,7 +115,7 @@ def stream(text: str, voice: str = ""):
     text = (text or "").strip()[:1500]
     if not text:
         raise ValueError("empty")
-    voice = voice or os.getenv("NEUTRIX_VOICE", "Despina")
+    voice = voice or os.getenv("NEUTRIX_VOICE", "Leda")
     config = types.GenerateContentConfig(
         response_modalities=["AUDIO"],
         speech_config=types.SpeechConfig(

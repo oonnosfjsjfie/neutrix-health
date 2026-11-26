@@ -123,7 +123,7 @@ def start():
             return {
                 "token": token.name,
                 "models": models[:4],
-                "voice": os.getenv("NEUTRIX_VOICE", "Despina"),
+                "voice": os.getenv("NEUTRIX_VOICE", "Leda"),
                 "instructions": instructions(),
             }
         except Exception as e:
