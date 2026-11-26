@@ -20,8 +20,10 @@ from google.genai import types
 from services.ai_engine import MODELS, is_quota_error, QUOTA_MESSAGE, BUSY_MESSAGE
 
 # Fastest model first: the assistant must answer in about a second
-FAST_MODELS = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"] + \
-    [m for m in MODELS if m not in ("gemini-3.1-flash-lite", "gemini-3.5-flash")]
+FAST_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"] + \
+    [m for m in MODELS if m not in ("gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-3-flash-preview")]
+# Models Google says are gone are dropped for the rest of the run
+_gone = set()
 
 _clients = {}
 
@@ -73,6 +75,8 @@ They talk to you by voice or text. You can also USE THE WEBSITE FOR THEM, like a
 HOW TO TALK
 - Default: simple, short, friendly. 1-2 short sentences (max ~30 words), everyday words, no jargon. Your "say" text is read aloud.
 - When you do something, confirm it in a few words ("Done. Your schedule's on screen."). Act first, talk little.
+- "say" must contain the actual answer (the medicines, the dates, the numbers), spoken naturally, because many
+  users can't see the screen. "show" is only for extra detail.
 - Start "say" with a very short first sentence (2-6 words, e.g. "Sure thing!" or "Got it, boss."): it is spoken first, fast.
 - Your words are spoken aloud by a warm woman's voice, so write the way a friendly woman really talks in conversation:
   natural spoken English, contractions ("I'll", "you're"), relaxed and human ("Sure!", "Got it.", "Okay, so..."),
@@ -179,7 +183,7 @@ def _config(model: str, fast: bool = True):
         try:   # little or no "thinking" = much faster answers
             if "2.5" in model:
                 return types.GenerateContentConfig(**base, thinking_config=types.ThinkingConfig(thinking_budget=0))
-            return types.GenerateContentConfig(**base, thinking_config=types.ThinkingConfig(thinking_level="low"))
+            return types.GenerateContentConfig(**base, thinking_config=types.ThinkingConfig(thinking_level="minimal"))
         except Exception:
             pass
     return types.GenerateContentConfig(**base)
@@ -216,8 +220,9 @@ def assistant_turn(req: dict) -> dict:
     started = time.time()
     keys = _keys()
     now = time.time()
-    attempts = [(m, k) for k in keys for m in FAST_MODELS if _cooldown.get((m, k), 0) < now] or \
-               [(m, k) for k in keys for m in FAST_MODELS]
+    models = [m for m in FAST_MODELS if m not in _gone] or FAST_MODELS
+    attempts = [(m, k) for k in keys for m in models if _cooldown.get((m, k), 0) < now] or \
+               [(m, k) for k in keys for m in models]
     errors = []
     pool = ThreadPoolExecutor(max_workers=3)
     running = {}
@@ -241,6 +246,8 @@ def assistant_turn(req: dict) -> dict:
                     errors.append(msg)
                     if is_quota_error(msg):
                         _cooldown[(m, k)] = time.time() + 60
+                    elif "404" in msg or "NOT_FOUND" in msg or "no longer available" in msg:
+                        _gone.add(m)
                     print(f"[assistant] {tag}: {msg[:140]} ({time.time() - started:.1f}s)")
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
