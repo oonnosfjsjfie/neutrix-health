@@ -15,7 +15,7 @@ import time
 from google import genai
 from google.genai import types
 
-from services.assistant import PAGES
+from services.assistant import PAGES, FEATURES
 
 _clients = {}
 _models = None
@@ -98,11 +98,13 @@ USING THE WEBSITE (you have tools)
 
 Website pages (for open_page):
 {pages}
+
+{features}
 """
 
 
 def instructions():
-    return INSTRUCTIONS.replace("{pages}", "\n".join(f"- {k}: {v}" for k, v in PAGES.items()))
+    return INSTRUCTIONS.replace("{pages}", "\n".join(f"- {k}: {v}" for k, v in PAGES.items())).replace("{features}", FEATURES)
 
 
 def start():

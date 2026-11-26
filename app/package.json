@@ -1,6 +1,6 @@
 {
   "name": "neutrix-health-app",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "Neutrix Health Android app (Capacitor). Opens the live Neutrix website in its own app window, works offline, syncs with the website.",
   "scripts": {

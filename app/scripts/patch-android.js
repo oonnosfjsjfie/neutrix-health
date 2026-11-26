@@ -1,6 +1,6 @@
 // Applies Neutrix's settings to the Android project that `npx cap add android` generates.
 // Run from the app/ folder (GitHub Actions does this on every build).
-//  - camera permission (photos of reports, exercise coach)
+//  - camera permission (photos of reports, exercise coach), microphone for Emma
 //  - version number from the build number
 //  - signing with the Neutrix key from GitHub secrets (or the debug key if the secrets are missing)
 //  - Google sign-in, only when google-services.json is present
@@ -20,6 +20,8 @@ const perms = [
     '<uses-feature android:name="android.hardware.camera" android:required="false" />',
     // Neutrix Assistant: talk to it (speech recognition) and it talks back (text to speech)
     '<uses-permission android:name="android.permission.RECORD_AUDIO" />',
+    // Emma's real-time voice (Gemini Live) records and plays audio inside the app window
+    '<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />',
     '<queries><intent><action android:name="android.speech.RecognitionService" /></intent><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>'
 ];
 perms.forEach(p => { if (!manifest.includes(p)) manifest = manifest.replace('</manifest>', `    ${p}\n</manifest>`); });

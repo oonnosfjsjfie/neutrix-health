@@ -873,7 +873,29 @@
         };
         side.innerHTML = `<button type="button" class="nxb-x nxb-side-x" aria-label="${esc(tx('close'))}">×</button><div class="nxb-side-title">${esc(tx('overview'))}</div><p class="nxb-overview">${esc(tx('loading'))}</p>
             <div class="nxb-list"></div><div class="nxb-info hidden" aria-live="polite"></div><p class="nxb-disclaimer">${esc(tx('disclaimer'))}</p>`;
-        loadModel().then(m => { if (m) view.insertAdjacentHTML('beforeend', `<div class="nxb-credit">3D anatomy: BodyParts3D © The Database Center for Life Science (CC BY-SA 2.1 JP)</div>`); });
+        loadModel().then(m => {
+            if (!m) return;
+            const ml = lang() === 'Malayalam';
+            const A = ml ? {
+                btn: 'ⓘ ഈ മോഡൽ ഏകദേശം 80% മെഡിക്കലായി കൃത്യം',
+                rows: [['~90%', 'അവയവങ്ങൾ, അസ്ഥികൂടം, നട്ടെല്ല്, പ്രധാന രക്തക്കുഴലുകൾ — യഥാർത്ഥ മനുഷ്യ ശരീരത്തിന്റെ CT സ്കാനിൽ നിന്ന്'],
+                       ['~50–60%', 'ഞരമ്പുകളും കൈകാലുകളിലെ രക്തക്കുഴലുകളും — യഥാർത്ഥ എല്ലുകൾക്കൊപ്പം വരച്ചത്, ലളിതമാക്കിയത്'],
+                       ['—', 'തൈറോയ്ഡ്, പേശികൾ, ചെറിയ രക്തക്കുഴലുകൾ ഇല്ല. ഒരു മുതിർന്ന പുരുഷ ശരീരം മാത്രം. ചുവന്ന അടയാളം ഭാഗം കാണിക്കുന്നു, കൃത്യ സ്ഥലം അല്ല.']],
+                foot: 'രോഗികൾക്ക് മനസ്സിലാക്കാൻ — ഡോക്ടർമാർക്കുള്ള ഉപകരണം അല്ല.'
+            } : {
+                btn: 'ⓘ This model is about 80% medically accurate',
+                rows: [['~90%', 'Organs, skeleton, spine and main blood vessels — real anatomy from CT scans of a human body'],
+                       ['~50–60%', 'Nerves and the arm and leg blood vessels — drawn along the real bones, simplified'],
+                       ['—', 'Not shown: thyroid, muscles, small vessels. One adult male body for everyone. Red markers show the area, not the exact spot.']],
+                foot: 'Made to help patients understand their report — not a tool for diagnosis.'
+            };
+            view.insertAdjacentHTML('beforeend', `<div class="nxb-credit"><button type="button" class="nxb-acc-btn" aria-expanded="false">${esc(A.btn)}</button>
+                <div class="nxb-acc hidden">${A.rows.map(r => `<div class="nxb-acc-row"><b>${esc(r[0])}</b><span>${esc(r[1])}</span></div>`).join('')}<p>${esc(A.foot)}</p></div>
+                <small>3D anatomy: BodyParts3D © The Database Center for Life Science (CC BY-SA 2.1 JP)</small></div>`);
+            const btn = view.querySelector('.nxb-acc-btn'), box = view.querySelector('.nxb-acc');
+            btn.addEventListener('click', e => { e.stopPropagation(); const open = box.classList.toggle('hidden') === false; btn.setAttribute('aria-expanded', open); });
+            ['pointerdown', 'mousedown', 'touchstart', 'wheel'].forEach(ev => view.querySelector('.nxb-credit').addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+        });
         let body;
         try { await loadThree(); body = new Body3D(view, { mode: 'full', onPick: key => showInfo(key), model: await loadModel() }); }
         catch (e) { view.classList.add('nxb-nogl'); view.insertAdjacentHTML('beforeend', '<div class="nxb-found show">3D view needs WebGL / internet the first time.</div>'); }

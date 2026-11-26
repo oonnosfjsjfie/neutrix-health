@@ -67,6 +67,25 @@ PAGES = {
     "get-app.html": "Download the Android app",
 }
 
+
+# What Emma knows about newer features (shared with the live voice assistant)
+FEATURES = """About the 3D View (body3d.html) and the 3D body on the Reports page:
+- Opening it plays a scan: the nervous system forms, then the body, then the organs, then the problem areas from
+  the user's report light up red. The Reports page shows a small version; tapping it opens the full 3D View.
+- Tap a red area (or its label) to see a simple card: what happened there, what may have caused it, what the
+  report says to do, and a Listen button. The card only appears after a red area is tapped.
+- Buttons on the right: layers Nerves / Organs / Body / Blood vessels (turn each on or off), "Hide problem areas"
+  (shows the plain body with no red areas or cards; press "Show problem areas" to bring them back), "Replay scan",
+  "Reset view". Drag to turn the body, scroll or pinch to zoom.
+- High blood pressure is marked on the upper-arm artery (where blood pressure is measured).
+- The body is real anatomy from BodyParts3D (Database Center for Life Science, Japan), made from CT scans of a real
+  human body. About 80% medically accurate overall: organs, skeleton, spine and main blood vessels about 90%;
+  nerves and arm/leg blood vessels about 50-60% (drawn along the real bones, simplified). Not shown: thyroid
+  (marker only), muscles, small vessels. One adult male body for everyone. Red markers show the area, not the
+  exact spot. It helps patients understand their report; it is not a medical scan or a tool for diagnosis.
+  The "About this model" note (ⓘ button at the bottom left of the 3D View) shows this too.
+"""
+
 SYSTEM = """You are "Emma", the AI assistant built into the Neutrix Health website: think of a film-style AI butler
 (Jarvis / Friday): calm, quick, confident, warm, with a light touch of dry wit. Call the user "boss" now and then
 (not in every reply). Never long-winded. You are still kind and patient: many users are ill or elderly.
@@ -129,6 +148,8 @@ when you are only talking. Keep each turn to at most 4 steps.
 Website pages (use with "go"):
 {pages}
 
+{features}
+
 ANSWER ONLY WITH JSON:
 {"say": "short spoken reply", "show": "optional longer Markdown text, or empty", "actions": [], "continue": false, "confirm": false}
 """
@@ -144,7 +165,7 @@ def _prompt(req: dict) -> str:
         role = "User" if m.get("role") == "user" else "Assistant"
         hist.append(f"{role}: {str(m.get('text', ''))[:1200]}")
     parts = [
-        SYSTEM.replace("{pages}", pages),
+        SYSTEM.replace("{pages}", pages).replace("{features}", FEATURES),
         f"\nLanguage setting: {req.get('language') or 'English'}. detail_mode: {bool(req.get('detail'))}.",
         f"Signed in: {bool(req.get('signed_in'))}. Device: {req.get('device') or 'web'}.",
         "\nCONVERSATION SO FAR:\n" + ("\n".join(hist) if hist else "(new conversation)"),
