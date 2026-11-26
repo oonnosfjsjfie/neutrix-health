@@ -6,7 +6,25 @@
 // - Shows a "Try again" button if the AI fails
 // =====================================================
 
-window.loadAiSection = function ({ storeKey, url, field, el, loadingKey, record, refreshBtn, render }) {
+window.loadAiSection = function ({ storeKey, url, field, el, loadingKey, record, refreshBtn, render, historyHost, historyTitle, onChange }) {
+    // Older versions are never thrown away: they are kept in NxHist (history.js) and listed in historyHost
+    let viewing = null;     // id of an older version being looked at (null = current)
+    const H = window.NxHist;
+    function keepOld(item) {
+        if (H && item && item.content) H.archive(storeKey, item, { madeAt: item.madeAt || '', version: item.version || '' });
+    }
+    function renderHistory() {
+        if (!H || !historyHost) return;
+        const old = H.list(storeKey).reverse();
+        const items = [];
+        if (current) items.push({ id: 'current', current: true, title: H.tx('current'), date: current.madeAt ? H.tx('made', { when: H.when(current.madeAt) }) : '' });
+        old.forEach(e => items.push({ id: e.id, title: H.tx('older'), date: H.tx('replaced', { when: H.when(e.replacedAt) }), sub: e.madeAt ? H.tx('made', { when: H.when(e.madeAt) }) : '' }));
+        H.bar(historyHost, { title: historyTitle || '', items, selected: viewing || 'current', onPick: id => {
+            viewing = id === 'current' ? null : id;
+            show(); renderHistory();
+            if (window.innerWidth <= 1024) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } });
+    }
     // render(el, markdown) lets a page draw the text its own way
     function paint(markdown) {
         if (render) render(el, markdown);
@@ -35,6 +53,16 @@ window.loadAiSection = function ({ storeKey, url, field, el, loadingKey, record,
     }
 
     async function show() {
+        if (viewing && H) {
+            const e = H.list(storeKey).find(x => x.id === viewing);
+            if (e) {
+                const map = (e.data && e.data.content) || {};
+                el.innerHTML = renderMarkdown(map[neutrixLang] || map.English || map.Malayalam || '');
+                el.prepend(H.oldBanner(e.replacedAt, () => { viewing = null; show(); renderHistory(); }));
+                return;
+            }
+            viewing = null;
+        }
         if (!current) return;
         const lang = neutrixLang;
         const map = current.content;
@@ -89,9 +117,11 @@ window.loadAiSection = function ({ storeKey, url, field, el, loadingKey, record,
                 return;
             }
 
-            current = { createdAt: record.createdAt, version: reportVersion(record), content: { [lang]: data[field] } };
+            current = { createdAt: record.createdAt, version: reportVersion(record), madeAt: new Date().toISOString(), content: { [lang]: data[field] } };
             storeSet(storeKey, current);
-            show();
+            viewing = null;
+            show(); renderHistory();
+            if (onChange) onChange(current);
         } catch (err) {
             showError(err.name === 'AbortError' ? t('askTimeout') : t('actionError', { msg: err.message }));
         } finally {
@@ -110,17 +140,22 @@ window.loadAiSection = function ({ storeKey, url, field, el, loadingKey, record,
         }
         current = saved;
         show();
+        renderHistory();
     } else {
+        // Made from older reports: keep it in the history, then make the new one
+        if (saved && saved.createdAt === record.createdAt) keepOld(saved);
+        renderHistory();
         generate();
     }
 
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
+            keepOld(current);
             try { localStorage.removeItem(storeKey); } catch (e) {}
-            current = null;
+            current = null; viewing = null;
             generate();
         });
     }
 
-    document.addEventListener('neutrix:langchange', () => { if (!busy) show(); });
+    document.addEventListener('neutrix:langchange', () => { if (!busy) show(); renderHistory(); });
 };

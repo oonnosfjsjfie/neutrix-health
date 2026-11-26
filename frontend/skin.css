@@ -546,3 +546,59 @@ body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
 [data-theme="dark"] ::-webkit-scrollbar-track { background: #0b0d10; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #353b45; border-radius: 10px; border: 2px solid #0b0d10; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4a525e; }
+
+/* ---------- Medical history (history.js): kept versions, medicine changes, past check-ups, sent messages ---------- */
+.nxh-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border-color); }
+.nxh-side .history-list { max-height: 320px; }
+.nxh-old { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 14px; padding: 10px 12px;
+    border: 1px solid #b45309; background: rgba(180, 83, 9, .10); border-radius: var(--radius-md); font-size: 14px; color: var(--text-primary); }
+.nxh-old .btn-secondary { margin: 0; padding: 6px 12px; font-size: 13px; }
+.nxh-what { border: 1px solid var(--text-primary); border-left-width: 4px; border-radius: var(--radius-md); padding: 12px 14px; margin: 6px 0 16px; background: var(--pill-bg); }
+.nxh-what-title { font-weight: 700; margin-bottom: 6px; }
+.nxh-changes { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.nxh-changes li { line-height: 1.45; }
+.nxh-tag { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; padding: 2px 7px; border-radius: 999px; margin-right: 4px; vertical-align: 1px; }
+.nxh-add .nxh-tag { background: #dcfce7; color: #166534; }
+.nxh-chg .nxh-tag { background: #fef3c7; color: #92400e; }
+.nxh-stop .nxh-tag { background: #fee2e2; color: #991b1b; }
+.nxh-muted { color: var(--text-muted); font-size: 13px; }
+.nxh-timeline { list-style: none; margin: 8px 0 0; padding: 0 0 0 18px; border-left: 2px solid var(--border-color); display: grid; gap: 16px; }
+.nxh-timeline > li { position: relative; }
+.nxh-timeline > li::before { content: ""; position: absolute; left: -25px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--text-primary); border: 2px solid var(--card-bg); }
+.nxh-when { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+.nxh-h3 { margin: 22px 0 8px; font-size: 16px; }
+.nxh-past { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.nxh-past li { padding: 9px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); opacity: .85; }
+.nxh-note { margin-top: 14px; }
+/* past check-ups */
+.ck-past-title { margin-top: 22px; }
+.ck-attend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.ck-att-tag { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--pill-bg); color: var(--text-primary); }
+.ck-att-tag.went { background: #dcfce7; color: #166534; }
+.ck-att-tag.missed { background: #fee2e2; color: #991b1b; }
+.ck-att-btn { margin: 0 !important; padding: 5px 11px !important; font-size: 12.5px !important; width: auto !important; }
+.ck-att-btn.on { background: var(--text-primary) !important; color: var(--card-bg) !important; }
+.ck-older { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+/* Ask Doctor: sent messages */
+.nxh-sent { margin-top: 20px; }
+.bb-include { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 14px; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.bb-include input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
+.nxh-sent-item { border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-bottom: 8px; background: var(--card-bg); }
+.nxh-sent-item summary { cursor: pointer; padding: 10px 12px; display: grid; gap: 2px; list-style: none; }
+.nxh-sent-item summary::-webkit-details-marker { display: none; }
+.nxh-sent-item summary b::before { content: "▸ "; }
+.nxh-sent-item[open] summary b::before { content: "▾ "; }
+.nxh-sent-concern { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nxh-sent-text { white-space: pre-wrap; word-break: break-word; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; margin: 0 12px 10px; padding: 10px; border-radius: 8px; background: var(--pill-bg); max-height: 340px; overflow: auto; }
+.nxh-sent-item .btn-secondary { margin: 0 12px 12px; width: auto; }
+/* My Improvements: test results over time */
+.lt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 8px; }
+.lt-card { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; background: var(--card-bg); }
+.lt-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.lt-trend { font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 999px; background: var(--pill-bg); }
+.lt-trend.good { background: #dcfce7; color: #166534; } .lt-trend.bad { background: #fee2e2; color: #991b1b; } .lt-trend.chg { background: #fef3c7; color: #92400e; }
+.lt-vals { display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: 13px; margin-bottom: 4px; }
+.lt-arrow { color: var(--text-muted); }
+.lt-card .nxc { margin: 8px 0 0; padding: 6px; border: 0; }
+.lt-card .nxc figcaption { display: none; }
+.lt-single { margin-top: 14px; } .lt-single-t { font-weight: 700; margin-bottom: 4px; } .lt-single ul { margin: 0; padding-left: 18px; line-height: 1.6; }

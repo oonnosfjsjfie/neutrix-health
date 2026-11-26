@@ -14,12 +14,12 @@
     <script src="firebase-config.js?v=20261030c"></script>
     <script src="neutrix-cloud.js?v=20261125a"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261030c"></script>
+    <script src="issue-scope.js?v=20261126h"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Ask Doctor</title>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css?v=20261126b">
+    <link rel="stylesheet" href="skin.css?v=20261126h">
     <link rel="stylesheet" href="bobby-pages.css">
 </head>
 <body data-page="briefing" data-title-key="briefPageTitle">
@@ -97,8 +97,20 @@
                     <textarea class="modern-textarea" id="questions" rows="3" data-bt-ph="ph4" placeholder="List any queries about care adjustments, dosages, or side effects..."></textarea>
                 </div>
 
+                <label class="bb-include"><input type="checkbox" id="briefIncludeReports" checked> <span data-bt="includeReports">Add details from my reports (latest report, current medicines, recent medicine changes, next check-up)</span></label>
                 <button id="createBriefBtn" type="submit" class="btn-primary action-btn" data-bt="createBtn">Create Doctor Message</button>
             </form>
+            <!-- Every message sent to the doctor is kept here, like a sent-mail folder -->
+            <div id="sentLog" class="patient-card nxh-sent">
+                <div class="card-header">
+                    <div>
+                        <h2 data-bt="sentTitle">Messages sent to your doctor</h2>
+                        <p class="subtitle" data-bt="sentSub">Every message you sent, newest first.</p>
+                    </div>
+                    <span class="form-status" id="sentCount">0</span>
+                </div>
+                <div id="sentList"></div>
+            </div>
         </section>
 
         <aside class="ehr-card chart-card">
@@ -129,10 +141,11 @@
 
     </main>
 
-    <script src="common.js?v=20261126a"></script>
+    <script src="common.js?v=20261126h"></script>
     <script src="account-menu.js?v=20261030e"></script>
     <script src="feedback.js?v=20261030c"></script>
     <script src="tracker&briefing.js"></script>
+    <script src="history.js?v=20261126a"></script>
     <script>
         // ---------- Bobby's English / Malayalam text ----------
         const BT = {
@@ -166,6 +179,10 @@
                 tip2: 'Press "Create Doctor Message" and check the message.',
                 tip3: 'Type your doctor\'s email and press "Send to Doctor".',
                 toTracker: '📈 Recovery Tracker',
+                includeReports: 'Add details from my reports (latest report, current medicines, recent medicine changes, next check-up)',
+                sentTitle: 'Messages sent to your doctor', sentSub: 'Every message you sent, newest first.',
+                sentNone: 'No messages sent yet. Messages you send to your doctor are kept here.',
+                sentTo: 'To {to}', useAgain: 'Use this message again',
                 urgentTitle: '🚨 Emergency?',
                 urgentText: 'Do not wait for an email reply. Call your doctor or go to the nearest hospital.',
                 disc: '<em>Neutrix prepares communication for the doctor. It does not diagnose, prescribe, or replace medical advice.</em>'
@@ -200,6 +217,10 @@
                 tip2: '"ഡോക്ടർ സന്ദേശം തയ്യാറാക്കുക" അമർത്തി സന്ദേശം പരിശോധിക്കുക.',
                 tip3: 'ഡോക്ടറുടെ ഇമെയിൽ നൽകി "ഡോക്ടർക്ക് അയക്കുക" അമർത്തുക.',
                 toTracker: '📈 റിക്കവറി ട്രാക്കർ',
+                includeReports: 'എന്റെ റിപ്പോർട്ടുകളിൽ നിന്നുള്ള വിവരങ്ങൾ ചേർക്കുക (അവസാന റിപ്പോർട്ട്, ഇപ്പോഴത്തെ മരുന്നുകൾ, മരുന്ന് മാറ്റങ്ങൾ, അടുത്ത പരിശോധന)',
+                sentTitle: 'ഡോക്ടർക്ക് അയച്ച സന്ദേശങ്ങൾ', sentSub: 'നിങ്ങൾ അയച്ച എല്ലാ സന്ദേശങ്ങളും, പുതിയത് ആദ്യം.',
+                sentNone: 'ഇതുവരെ സന്ദേശങ്ങൾ അയച്ചിട്ടില്ല. ഡോക്ടർക്ക് അയക്കുന്ന സന്ദേശങ്ങൾ ഇവിടെ സൂക്ഷിക്കും.',
+                sentTo: '{to}-ന്', useAgain: 'ഈ സന്ദേശം വീണ്ടും ഉപയോഗിക്കുക',
                 urgentTitle: '🚨 അടിയന്തരാവസ്ഥ?',
                 urgentText: 'ഇമെയിൽ മറുപടിക്കായി കാത്തിരിക്കരുത്. ഡോക്ടറെ വിളിക്കുക അല്ലെങ്കിൽ അടുത്തുള്ള ആശുപത്രിയിൽ പോകുക.',
                 disc: '<em>ന്യൂട്രിക്സ് ഡോക്ടർക്കുള്ള സന്ദേശം തയ്യാറാക്കുക മാത്രം ചെയ്യുന്നു. ഇത് രോഗനിർണയം നടത്തുകയോ മരുന്ന് നിർദ്ദേശിക്കുകയോ ഡോക്ടറുടെ ഉപദേശത്തിന് പകരമാവുകയോ ചെയ്യുന്നില്ല.</em>'
@@ -214,10 +235,86 @@
         }
         document.addEventListener('neutrix:langchange', applyBobbyText);
         applyBobbyText();
+        // ---------- Facts from the reports for the doctor (always English) ----------
+        function reportFacts() {
+            const out = [];
+            const record = loadReport();
+            if (!record) return out;
+            const fmt = iso => { try { return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
+            const ev = window.NxHist ? NxHist.reportEvents() : [];
+            if (ev.length) {
+                const last = ev[ev.length - 1];
+                out.push(`- Reports uploaded: ${ev.length}. Latest: ${fmt(last.at)}${last.files ? ' (' + last.files + ')' : ''}`);
+            }
+            const schedule = storeGet('neutrixSchedule');
+            if (schedule && schedule.reportId === record.createdAt && window.NxHist) {
+                const today = dayKey(new Date());
+                const en = g => [g.strength, g.dose, ['morning', 'afternoon', 'evening', 'night', 'unclear'].filter(x => g.slots.has(x)).join(', ')].filter(Boolean).join(', ');
+                const meds = [...NxHist.group(dosesForDay(schedule, today)).values()];
+                if (meds.length) out.push('- Current medicines:', ...meds.map(g => `    • ${g.name}: ${en(g)}`));
+                const tl = NxHist.medTimeline(schedule);
+                const ch = tl[0] && !tl[0].first ? tl[0] : null;
+                if (ch && ch.added.length + ch.changed.length + ch.stopped.length) {
+                    out.push(`- Medicine changes from the report of ${fmt(ch.from)}:`,
+                        ...ch.added.map(g => `    • New: ${g.name} (${en(g)})`),
+                        ...ch.changed.map(c => `    • Changed: ${c.after.name}: ${en(c.before)} -> ${en(c.after)}`),
+                        ...ch.stopped.map(g => `    • Stopped: ${g.name}`));
+                }
+            }
+            const ck = storeGet('neutrixCheckups');
+            const md = ck && ck.content && (ck.content.English || '');
+            if (md) {
+                const today = dayKey(new Date());
+                const next = md.split('\n').filter(l => /^###\s/.test(l)).map(l => {
+                    const h = l.replace(/^###\s*(📅\s*)?/, '').replace(/\*\*/g, '').trim();
+                    const m = h.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+                    return m ? { iso: `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`, h } : null;
+                }).filter(x => x && x.iso >= today).sort((a, b) => a.iso.localeCompare(b.iso))[0];
+                if (next) out.push(`- Next check-up: ${next.h}`);
+            }
+            return out;
+        }
+
+        // ---------- Sent messages (kept like a sent-mail folder) ----------
+        function renderSent() {
+            const sent = (storeGet('neutrixBriefLog') || []).slice().reverse();
+            const list = document.getElementById('sentList');
+            document.getElementById('sentCount').textContent = sent.length;
+            list.innerHTML = '';
+            if (!sent.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = bt('sentNone'); list.appendChild(p); return; }
+            sent.forEach(m => {
+                const d = document.createElement('details');
+                d.className = 'nxh-sent-item';
+                const sum = document.createElement('summary');
+                const when = new Date(m.at).toLocaleString(localeFor(), { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+                const first = ((m.text || '').split('MAIN CONCERN:')[1] || '').trim().split('\n')[0] || '';
+                sum.innerHTML = `<b></b><span class="nxh-muted"></span><span class="nxh-sent-concern"></span>`;
+                sum.children[0].textContent = when;
+                sum.children[1].textContent = bt('sentTo').replace('{to}', m.to || '');
+                sum.children[2].textContent = first;
+                const pre = document.createElement('pre');
+                pre.className = 'nxh-sent-text';
+                pre.textContent = m.text || '';
+                const again = document.createElement('button');
+                again.type = 'button'; again.className = 'btn-secondary';
+                again.textContent = bt('useAgain');
+                again.addEventListener('click', () => {
+                    document.getElementById('copyMessageArea').value = m.text || '';
+                    if (m.to) document.getElementById('theemail').value = m.to;
+                    document.getElementById('emailStatus').classList.add('hidden');
+                    document.getElementById('briefOutput').classList.remove('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                d.append(sum, pre, again);
+                list.appendChild(d);
+            });
+        }
+        renderSent();
+        document.addEventListener('neutrix:langchange', renderSent);
 
         // ---------- Build the doctor message (always in English, for the doctor) ----------
         const issue = window.neutrixActiveIssue || {};
-        const patientName = localStorage.getItem('neutrix_patient_name') || '';
+        const patientName = localStorage.getItem('neutrix_patient_name') || (() => { try { return JSON.parse(localStorage.getItem('neutrix_hospital_profile') || '{}').patientName || ''; } catch (e) { return ''; } })();
 
         document.getElementById('briefForm').addEventListener('submit', function (e) {
             e.preventDefault();
@@ -246,7 +343,13 @@
                 `MEDICINES TAKEN AS ADVISED: ${meds}`,
                 '',
                 `QUESTIONS FOR THE DOCTOR:\n${questions}`,
-                '',
+                ''
+            );
+            if (document.getElementById('briefIncludeReports').checked) {
+                const facts = reportFacts();
+                if (facts.length) lines.push('FROM MY MEDICAL REPORTS (prepared by the Neutrix app from my uploaded reports):', ...facts, '');
+            }
+            lines.push(
                 'Thank you for your time.',
                 patientName ? `Regards,\n${patientName}` : 'Regards'
             );
@@ -292,8 +395,9 @@
                     try { localStorage.setItem('neutrixDoctorEmail', to); } catch (e) {}
                     // Keep a short record of what was sent (used in the doctor progress report)
                     const sent = storeGet('neutrixBriefLog') || [];
-                    sent.push({ at: new Date().toISOString(), to, text: body.slice(0, 1500) });
-                    storeSet('neutrixBriefLog', sent.slice(-30));
+                    sent.push({ at: new Date().toISOString(), to, subject: emailSubject(), text: body.slice(0, 12000) });
+                    storeSet('neutrixBriefLog', sent.slice(-200));
+                    renderSent();
                 }
             } catch (err) {
                 showEmailStatus('error', '⚠️ ' + bt('serverDown'));

@@ -242,6 +242,20 @@ def body_map_route(req: BodyMapRequest):
         return JSONResponse({"error": str(e)[:300]}, status_code=503)
 
 
+class LabTrendsRequest(BaseModel):
+    report: str
+
+
+@app.post("/api/lab-trends")
+def lab_trends_route(req: LabTrendsRequest):
+    # My Improvements: every numeric test result in the reports with its date (copied, never calculated)
+    from services.lab_trends import lab_trends
+    try:
+        return lab_trends(req.report)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:300]}, status_code=503)
+
+
 @app.post("/api/assistant/live")
 def assistant_live(origin: str = Header(default=""), referer: str = Header(default="")):
     # A short-lived pass for Gemini Live (real-time voice). The API key itself never leaves the server.

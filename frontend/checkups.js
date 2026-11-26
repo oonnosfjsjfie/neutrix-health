@@ -4,7 +4,59 @@
 // and its bullet points are shown when "Know more" is clicked.
 // =====================================================
 
-function renderCheckups(el, markdown) {
+
+// ---------- Past check-ups: did the patient go? (saved per issue) ----------
+const CK_TEXT = {
+    English: { upcomingTitle: 'Upcoming check-ups', pastTitle: 'Past check-ups', noUpcoming: 'No upcoming check-ups in your reports.',
+        pastHint: 'Mark each one so your doctor can see which visits happened.', went: '✓ I went', missed: '✗ Missed',
+        didYouGo: 'Did you go?', wentTag: 'Done', missedTag: 'Missed', older: 'From an earlier report' },
+    Malayalam: { upcomingTitle: 'വരാനിരിക്കുന്ന പരിശോധനകൾ', pastTitle: 'കഴിഞ്ഞ പരിശോധനകൾ', noUpcoming: 'റിപ്പോർട്ടുകളിൽ വരാനിരിക്കുന്ന പരിശോധനകളില്ല.',
+        pastHint: 'ഏതൊക്കെ നടന്നു എന്ന് ഡോക്ടർക്ക് കാണാൻ ഓരോന്നും അടയാളപ്പെടുത്തുക.', went: '✓ പോയി', missed: '✗ പോയില്ല',
+        didYouGo: 'നിങ്ങൾ പോയോ?', wentTag: 'പോയി', missedTag: 'പോയില്ല', older: 'പഴയ റിപ്പോർട്ടിൽ നിന്ന്' }
+};
+function ckText(k) { return (CK_TEXT[neutrixLang] || CK_TEXT.English)[k] ?? CK_TEXT.English[k]; }
+function ckNorm(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9ഀ-ൿ]+/g, ' ').trim().slice(0, 60); }
+function headingInfo(item) {
+    const heading = item.heading.replace(/^📅\s*/, '').replace(/\*\*/g, '').trim();
+    const parts = heading.split(/\s+[—–]\s+/);
+    const datePart = parts.length > 1 ? parts.slice(0, -1).join(' — ') : heading;
+    const titlePart = parts.length > 1 ? parts[parts.length - 1] : '';
+    const m = datePart.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+    const iso = m ? `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}` : '';
+    return { datePart, titlePart, iso };
+}
+function attendance(key) {
+    const box = document.createElement('div');
+    box.className = 'ck-attend';
+    function paint() {
+        const all = storeGet('neutrixCheckupStatus') || {};
+        const st = all[key] && all[key].status;
+        box.innerHTML = '';
+        const tag = document.createElement('span');
+        tag.className = 'ck-att-tag ' + (st || 'ask');
+        tag.textContent = st === 'went' ? '✓ ' + ckText('wentTag') : st === 'missed' ? '✗ ' + ckText('missedTag') : ckText('didYouGo');
+        box.appendChild(tag);
+        [['went', 'went'], ['missed', 'missed']].forEach(([val, label]) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn-secondary ck-att-btn' + (st === val ? ' on' : '');
+            b.textContent = ckText(label);
+            b.setAttribute('aria-pressed', st === val);
+            b.addEventListener('click', () => {
+                const cur = storeGet('neutrixCheckupStatus') || {};
+                if (cur[key] && cur[key].status === val) delete cur[key];
+                else cur[key] = { status: val, at: new Date().toISOString() };
+                storeSet('neutrixCheckupStatus', cur);
+                paint();
+            });
+            box.appendChild(b);
+        });
+    }
+    paint();
+    return box;
+}
+
+function parseCheckupItems(markdown) {
     const lines = (markdown || '').split('\n');
     const intro = [];
     const items = [];
@@ -30,6 +82,11 @@ function renderCheckups(el, markdown) {
         }
     });
 
+    return { intro, items, after };
+}
+
+function renderCheckups(el, markdown) {
+    const { intro, items, after } = parseCheckupItems(markdown);
     // Nothing to turn into cards: show the text as it is
     if (items.length === 0) {
         el.innerHTML = renderMarkdown(markdown);
@@ -49,13 +106,12 @@ function renderCheckups(el, markdown) {
 
     const title = document.createElement('div');
     title.className = 'section-title';
-    title.textContent = t('checkupDates');
+    title.textContent = ckText('upcomingTitle');
     el.appendChild(title);
 
-    const list = document.createElement('div');
-    list.className = 'ck-list';
-
-    items.forEach(item => {
+    const todayKey = dayKey(new Date());
+    const upcoming = [], past = [];
+    function makeCard(item, older) {
         // e.g. "📅 Approx. 26-11-2026 (6 weeks after discharge on 15-10-2026) — Repeat Lipid Profile"
         const heading = item.heading.replace(/^📅\s*/, '').replace(/\*\*/g, '').trim();
         const parts = heading.split(/\s+[—–]\s+/);
@@ -138,8 +194,56 @@ function renderCheckups(el, markdown) {
 
         row.append(dateBox, main, more);
         card.append(row, details);
-        list.appendChild(card);
+        const iso = m ? `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}` : '';
+        const isPast = passed || (iso && iso < todayKey);
+        if (isPast) {
+            card.classList.add('passed');
+            const aiTag = main.querySelector('.ck-status');     // "Upcoming" written when the list was made is out of date now
+            if (aiTag) aiTag.remove();
+            if (older) {
+                const tag = document.createElement('div');
+                tag.className = 'ck-older';
+                tag.textContent = ckText('older');
+                main.appendChild(tag);
+            }
+            main.appendChild(attendance(iso + '|' + ckNorm(titlePart || datePart)));
+        }
+        (isPast ? past : upcoming).push({ iso, card });
+        return iso + '|' + ckNorm(titlePart || datePart);
+    }
+
+    const shown = new Set(items.map(item => makeCard(item, false)));
+    // Past check-ups from earlier versions (made from older reports) are kept, not lost
+    if (window.NxHist) NxHist.list('neutrixCheckups').forEach(e => {
+        const map = (e.data && e.data.content) || {};
+        const md = map[neutrixLang] || map.English || map.Malayalam || '';
+        parseCheckupItems(md).items.forEach(item => {
+            const info = headingInfo(item);
+            const key = info.iso + '|' + ckNorm(info.titlePart || info.datePart);
+            if (!info.iso || info.iso >= todayKey || shown.has(key)) return;
+            shown.add(key);
+            makeCard(item, true);
+        });
     });
+
+    upcoming.sort((x, y) => (x.iso || '9').localeCompare(y.iso || '9'));
+    past.sort((x, y) => (y.iso || '').localeCompare(x.iso || ''));
+    const list = document.createElement('div');
+    list.className = 'ck-list';
+    if (upcoming.length) upcoming.forEach(x => list.appendChild(x.card));
+    else { const p = document.createElement('p'); p.className = 'hint'; p.textContent = ckText('noUpcoming'); list.appendChild(p); }
+
+    if (past.length) {
+        const pt = document.createElement('div');
+        pt.className = 'section-title ck-past-title';
+        pt.textContent = ckText('pastTitle') + ` (${past.length})`;
+        list.appendChild(pt);
+        const ph = document.createElement('p');
+        ph.className = 'hint';
+        ph.textContent = ckText('pastHint');
+        list.appendChild(ph);
+        past.forEach(x => list.appendChild(x.card));
+    }
     el.appendChild(list);
     document.dispatchEvent(new Event('neutrix:checkups'));
 

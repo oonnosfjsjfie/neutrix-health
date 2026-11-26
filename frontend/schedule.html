@@ -14,12 +14,12 @@
     <script src="firebase-config.js?v=20261030c"></script>
     <script src="neutrix-cloud.js?v=20261125a"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261030c"></script>
+    <script src="issue-scope.js?v=20261126h"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | My Medicine Schedule</title>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css?v=20261126b">
+    <link rel="stylesheet" href="skin.css?v=20261126h">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <!-- PDF creation (works with Malayalam text too) -->
@@ -163,10 +163,11 @@
 
     </main>
 
-    <script src="common.js?v=20261126a"></script>
+    <script src="common.js?v=20261126h"></script>
     <script src="account-menu.js?v=20261030e"></script>
     <script src="feedback.js?v=20261030c"></script>
     <script src="calendar-reminders.js?v=20261030f"></script>
+    <script src="history.js?v=20261126a"></script>
     <script>
         // Make the daily schedule automatically.
         // - First visit: build it from the reports
@@ -181,118 +182,33 @@
             document.body.appendChild(script);
         }
 
-        function doseKey(d) {
-            return `${d.medicine}|${d.strength}|${d.dose}|${d.slot}|${d.duration}`.toLowerCase();
-        }
-
-        async function fetchDoses() {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 120000);
-            try {
-                const res = await fetch(`${API_BASE}/api/schedule`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        report_text: fullReportText(schedRecord),
-                        bill_text: schedRecord.billText || '',
-                        language: neutrixLang
-                    }),
-                    signal: controller.signal
-                });
-                if (!res.ok) throw new Error(`Server error ${res.status}`);
-                const data = await res.json();
-                if (data.ok === false) throw new Error(data.message);
-                return data.doses;
-            } catch (err) {
-                throw err.name === 'AbortError' ? new Error(t('askTimeout')) : err;
-            } finally {
-                clearTimeout(timer);
-            }
-        }
-
         function showLoading(key) {
             document.getElementById('schedLoading').classList.remove('hidden');
             document.getElementById('schedRetryBtn').classList.add('hidden');
             document.getElementById('schedLoadingText').textContent = t(key);
         }
 
-        // First visit: a new schedule
-        async function buildSchedule() {
-            showLoading('scheduleLoading');
-            try {
-                const doses = await fetchDoses();
-                const today = dayKey(new Date());
-                storeSet('neutrixSchedule', {
-                    reportId: schedRecord.createdAt,
-                    version: reportVersion(schedRecord),
-                    createdAt: new Date().toISOString(),
-                    startDate: today,
-                    versions: [{ from: today, doses: doses.map((d, i) => ({ ...d, id: 'v0d' + i })) }],
-                    ticks: {}
-                });
-                startSchedulePage();
-            } catch (err) {
+        // First visit: make the schedule. Reports changed: a new dated version is added (history.js),
+        // so earlier days keep the medicines that were taken then and the medicine history stays complete.
+        function syncAndStart() {
+            const saved = storeGet('neutrixSchedule');
+            const exists = saved && saved.reportId === schedRecord.createdAt && scheduleVersions(saved).some(v => v.doses.length);
+            const upToDate = exists && (saved.version || reportVersion(schedRecord, true)) === reportVersion(schedRecord);
+            if (upToDate) { startSchedulePage(); return; }
+            showLoading(exists ? 'schedUpdating' : 'scheduleLoading');
+            NxHist.syncSchedule(schedRecord).then(startSchedulePage).catch(err => {
+                if (exists) { startSchedulePage(); return; }       // couldn't update now: keep the current schedule, try again next time
                 document.getElementById('schedLoadingText').textContent = err.message;
                 document.getElementById('schedRetryBtn').classList.remove('hidden');
-            }
+            });
         }
 
-        // Reports changed: update the medicines from today onwards
-        async function updateSchedule(saved) {
-            showLoading('schedUpdating');
-            try {
-                const doses = await fetchDoses();
-                const versions = scheduleVersions(saved);
-                const today = dayKey(new Date());
-                const current = dosesForDay(saved, today);
-
-                const same = doses.length === current.length &&
-                    doses.map(doseKey).sort().join() === current.map(doseKey).sort().join();
-
-                if (!same) {
-                    const n = versions.length;
-                    const newDoses = doses.map((d, i) => ({ ...d, id: `v${n}d${i}` }));
-
-                    // Keep today's ticks for medicines that are still in the plan
-                    const todayTicks = (saved.ticks || {})[today] || {};
-                    const carried = {};
-                    newDoses.forEach(nd => {
-                        const old = current.find(od => od.medicine === nd.medicine && od.slot === nd.slot && todayTicks[od.id]);
-                        if (old) carried[nd.id] = todayTicks[old.id];
-                    });
-                    if (!saved.ticks) saved.ticks = {};
-                    saved.ticks[today] = carried;
-
-                    // A version that started today is replaced; otherwise a new one starts today
-                    const last = versions[versions.length - 1];
-                    if (last.from === today && versions.length > 1) versions[versions.length - 1] = { from: today, doses: newDoses };
-                    else if (last.from === today) last.doses = newDoses;
-                    else versions.push({ from: today, doses: newDoses });
-                }
-                saved.version = reportVersion(schedRecord);
-                storeSet('neutrixSchedule', saved);
-            } catch (err) {
-                // Couldn't update now: keep the current schedule and try again next time
-            }
-            startSchedulePage();
-        }
-
-        document.getElementById('schedRetryBtn').addEventListener('click', buildSchedule);
+        document.getElementById('schedRetryBtn').addEventListener('click', syncAndStart);
 
         if (!schedRecord) {
             document.getElementById('schedEmpty').classList.remove('hidden');
         } else {
-            const saved = storeGet('neutrixSchedule');
-            const sameIssueReports = saved && saved.reportId === schedRecord.createdAt &&
-                scheduleVersions(saved).some(v => v.doses.length);
-
-            if (!sameIssueReports) {
-                buildSchedule();
-            } else if ((saved.version || reportVersion(schedRecord, true)) !== reportVersion(schedRecord)) {
-                updateSchedule(saved);
-            } else {
-                startSchedulePage();
-            }
+            syncAndStart();
         }
     </script>
     <script src="visuals.js?v=20261030e"></script>

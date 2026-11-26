@@ -52,15 +52,15 @@ PAGES = {
     "index.html": "Dashboard for the chosen issue: shortcuts to every tool",
     "summary.html": "AI Summary: upload or photograph medical reports / discharge summaries and bills to get a simple summary",
     "report.html": "The summary result of uploaded reports",
-    "medplan.html": "Medicine Plan: what each medicine is for, when to take it",
+    "medplan.html": "Medicine Plan: what each medicine is for, when to take it, medicine changes between reports, past medicines, older plans",
     "schedule.html": "Medicine Schedule: daily times and ticks for medicines, calendar reminders",
-    "checkups.html": "Upcoming Check-ups: follow-up visits and tests",
-    "improvements.html": "My Improvements: compare an older and a newer lab report",
+    "checkups.html": "Check-ups: upcoming and past follow-up visits and tests (mark past ones went / missed)",
+    "improvements.html": "My Improvements: compare an older and a newer lab report; test results over time (charts)",
     "exercise.html": "Exercise: safe exercises with a camera coach",
     "tracking.html": "Recovery Tracker: log blood pressure, sugar, symptoms and daily notes",
-    "briefing.html": "Ask Doctor: prepare questions and a briefing for the doctor visit",
+    "briefing.html": "Ask Doctor: write and send a message to the doctor (can add report details); every sent message is kept",
     "progress.html": "Overall Progress Report",
-    "body3d.html": "3D View: an interactive 3D human body with the problem areas from the report marked in red; tap one to learn what happened there",
+    "body3d.html": "3D View: an interactive 3D human body with the problem areas from the report marked in red; tap one to learn what happened there; pick an earlier report and compare",
     "profile.html": "Patient Profile: name, age, contacts, doctor details",
     "home.html": "Neutrix website home page (about the product, team, get the Android app)",
     "signin.html": "Sign in / create account",
@@ -86,6 +86,25 @@ FEATURES = """About the 3D View (body3d.html) and the 3D body on the Reports pag
   Other or not set: a neutral body with no genitals). Change the gender on the Profile page. Red markers show the area, not the
   exact spot. It helps patients understand their report; it is not a medical scan or a tool for diagnosis.
   The "About this model" note (ⓘ button at the bottom left of the 3D View) shows this too.
+- If the issue has more than one report, a "Showing" picker at the top of the 3D View chooses which report to show,
+  and "Compare with the report before" marks areas that are new in red ("New in this report") and areas that were
+  only in the earlier report in green ("Not in this report": often means it got better; ask the doctor to be sure).
+
+Medical history (nothing is overwritten when a new report comes in; old versions are kept with their dates):
+- Medicines page (medplan.html): "Medicine changes": a "What changed after your report of <date>" card (New /
+  Changed with old -> new dose / Stopped), a timeline of every change, and "Past medicines" (dates taken, and
+  whether a newer report stopped it or the course finished). A "Plan history" list on the right shows every
+  older medicine plan; tap one to read it.
+- Check-ups: "Upcoming check-ups" and "Past check-ups". Past ones have "I went" / "Missed" buttons (saved), and
+  past check-ups from earlier reports are kept ("From an earlier report"). "Check-up list history" on the right.
+- Ask Doctor (briefing.html): a tick box adds details from the reports to the message (latest report, current
+  medicines, recent medicine changes, next check-up). "Messages sent to your doctor" keeps every sent message;
+  tap one to read it or "Use this message again".
+- Overall Progress Report: "Earlier progress reports" keeps every report made, so the user can see what the
+  doctor saw before.
+- Exercise: "Changes to your exercise list" shows exercises added or removed by newer reports.
+- My Improvements: "Your test results over time": each lab value from every report by date (e.g. HbA1c
+  9.2 -> 8.1) with a small chart and Better / Worse, copied exactly from the reports.
 """
 
 SYSTEM = """You are "Emma", the AI assistant built into the Neutrix Health website: think of a film-style AI butler

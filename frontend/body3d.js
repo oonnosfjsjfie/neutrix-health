@@ -28,7 +28,12 @@
             layers: 'Layers', nerves: 'Nerves', organs: 'Organs', skin: 'Body', vessels: 'Blood vessels', replay: 'Replay scan', reset: 'Reset view',
             hint: 'Drag to turn · scroll or pinch to zoom · tap a red area to learn more', pick: 'Tap a red area (or one below) to learn more.',
             dismiss: 'Hide problem areas', showAreas: 'Show problem areas',
-            loading: 'Reading your report…', aiOff: 'Simple match (AI not available right now)', disclaimer: 'A simple picture to help you understand your report — not a medical scan.'
+            loading: 'Reading your report…', aiOff: 'Simple match (AI not available right now)', disclaimer: 'A simple picture to help you understand your report — not a medical scan.',
+            showing: 'Showing', latestRep: 'Latest report', firstRep: 'First report', addedRep: 'Report added', laterRep: 'Later report',
+            compare: '⇄ Compare with the report before', compareOn: '⇄ Comparing with the report before',
+            newHere: 'New in this report', goneHere: 'Not in this report', stillHere: 'Also in the report before', gone: 'Earlier only',
+            goneNote: 'This was in your report of {when} but this report does not mention it. That often means it got better, but ask your doctor to be sure.',
+            loadingStage: 'Reading that report…'
         },
         Malayalam: {
             scan: 'NEUTRIX · ബോഡി സ്കാൻ', s1: 'നാഡീവ്യൂഹം', s2: 'ശരീരം', s3: 'അവയവങ്ങൾ', s4: 'റിപ്പോർട്ട് വായിക്കുന്നു',
@@ -38,7 +43,12 @@
             layers: 'ലെയറുകൾ', nerves: 'നാഡികൾ', organs: 'അവയവങ്ങൾ', skin: 'ശരീരം', vessels: 'രക്തക്കുഴലുകൾ', replay: 'വീണ്ടും സ്കാൻ', reset: 'റീസെറ്റ്',
             hint: 'തിരിക്കാൻ വലിക്കുക · സൂം ചെയ്യുക · ചുവന്ന ഭാഗം ടാപ്പ് ചെയ്യുക', pick: 'കൂടുതൽ അറിയാൻ ഒരു ചുവന്ന ഭാഗം ടാപ്പ് ചെയ്യുക.',
             dismiss: 'പ്രശ്ന ഭാഗങ്ങൾ മറയ്ക്കുക', showAreas: 'പ്രശ്ന ഭാഗങ്ങൾ കാണിക്കുക',
-            loading: 'റിപ്പോർട്ട് വായിക്കുന്നു…', aiOff: 'ലളിതമായ പൊരുത്തം (AI ഇപ്പോൾ ലഭ്യമല്ല)', disclaimer: 'റിപ്പോർട്ട് മനസ്സിലാക്കാനുള്ള ലളിതമായ ചിത്രം — മെഡിക്കൽ സ്കാൻ അല്ല.'
+            loading: 'റിപ്പോർട്ട് വായിക്കുന്നു…', aiOff: 'ലളിതമായ പൊരുത്തം (AI ഇപ്പോൾ ലഭ്യമല്ല)', disclaimer: 'റിപ്പോർട്ട് മനസ്സിലാക്കാനുള്ള ലളിതമായ ചിത്രം — മെഡിക്കൽ സ്കാൻ അല്ല.',
+            showing: 'കാണിക്കുന്നത്', latestRep: 'ഏറ്റവും പുതിയ റിപ്പോർട്ട്', firstRep: 'ആദ്യ റിപ്പോർട്ട്', addedRep: 'ചേർത്ത റിപ്പോർട്ട്', laterRep: 'പിന്നീടുള്ള റിപ്പോർട്ട്',
+            compare: '⇄ മുമ്പത്തെ റിപ്പോർട്ടുമായി താരതമ്യം', compareOn: '⇄ മുമ്പത്തെ റിപ്പോർട്ടുമായി താരതമ്യം ചെയ്യുന്നു',
+            newHere: 'ഈ റിപ്പോർട്ടിൽ പുതിയത്', goneHere: 'ഈ റിപ്പോർട്ടിൽ ഇല്ല', stillHere: 'മുമ്പത്തെ റിപ്പോർട്ടിലും ഉണ്ടായിരുന്നു', gone: 'മുമ്പ് മാത്രം',
+            goneNote: '{when}-ലെ റിപ്പോർട്ടിൽ ഇത് ഉണ്ടായിരുന്നു, പക്ഷേ ഈ റിപ്പോർട്ടിൽ പറയുന്നില്ല. പലപ്പോഴും ഇത് ഭേദമായി എന്നാണ് അർത്ഥം, ഉറപ്പിക്കാൻ ഡോക്ടറോട് ചോദിക്കുക.',
+            loadingStage: 'ആ റിപ്പോർട്ട് വായിക്കുന്നു…'
         }
     };
     const tx = k => (TXT[lang()][k] !== undefined ? TXT[lang()][k] : TXT.English[k]);
@@ -62,6 +72,25 @@
             const full = window.fullReportText ? fullReportText(r) : '';
             return (summary + '\n\n' + full).trim().slice(0, 12000);
         } catch (e) { return ''; }
+    }    // The reports of this issue in order, and the text the AI reads for each one (3D View report picker)
+    function reportStages() {
+        try {
+            const r = window.loadReport ? loadReport() : null;
+            if (!r || !window.summaryHistory) return [];
+            const st = [];
+            summaryHistory(r).forEach(e => { if (e.kind !== 'refresh' && e.createdAt) st.push({ at: e.createdAt, kind: e.kind === 'first' ? 'firstRep' : 'addedRep' }); });
+            (window.loadFollowups ? loadFollowups() : []).forEach(f => { if (f.createdAt) st.push({ at: f.createdAt, kind: 'laterRep' }); });
+            st.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+            return st;
+        } catch (e) { return []; }
+    }
+    function stageText(stage) {
+        const r = loadReport();
+        const sums = summaryHistory(r).filter(e => e.createdAt <= stage.at && e.summary && (e.summary.English || e.summary.Malayalam));
+        const base = sums.length ? (sums[sums.length - 1].summary.English || sums[sums.length - 1].summary.Malayalam) : (r.reportText || '');
+        const later = (window.loadFollowups ? loadFollowups() : []).filter(f => f.createdAt && f.createdAt <= stage.at)
+            .map(f => `===== LATER REPORT (added ${String(f.createdAt).slice(0, 10)}) =====\n${f.text || ''}`).join('\n\n');
+        return (base + '\n\n' + later).trim().slice(0, 12000);
     }
     const hash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + '-' + s.length; };
     const KEYWORDS = {
@@ -91,14 +120,14 @@
             if (areas.length >= 6) break;
         }
         return { overview: '', areas, simple: true };
-    }
-    async function getBodyMap() {
-        const text = reportText();
+    }    async function getBodyMap(textOverride) {
+        const text = textOverride || reportText();
         if (!text) return null;
         const key = hash(text + '|' + lang() + '|' + bodySex());
         let saved = null;
         try { saved = window.storeGet ? storeGet('neutrixBodyMap') : null; } catch (e) {}
         if (saved && saved.key === key && saved.data) return saved.data;
+        if (saved && saved.maps && saved.maps[key]) return saved.maps[key];
         try {
             const ctrl = new AbortController();
             const timer = setTimeout(() => ctrl.abort(), 45000);
@@ -108,12 +137,18 @@
             clearTimeout(timer);
             if (!res.ok) throw new Error('body map ' + res.status);
             const data = await res.json();
-            if (!data || !Array.isArray(data.areas)) throw new Error('bad body map');
-            try { if (window.storeSet) storeSet('neutrixBodyMap', { key, data, at: Date.now() }); } catch (e) {}
+            if (!data || !Array.isArray(data.areas)) throw new Error('bad body map');            try {
+                if (window.storeSet) {
+                    const cur = (window.storeGet && storeGet('neutrixBodyMap')) || {};
+                    const maps = cur.maps || {};
+                    maps[key] = data;                                   // maps of earlier reports too (3D View report picker)
+                    const keys = Object.keys(maps); while (keys.length > 8) delete maps[keys.shift()];
+                    storeSet('neutrixBodyMap', textOverride ? { ...cur, maps } : { key, data, at: Date.now(), maps });
+                }
+            } catch (e) {}
             return data;
         } catch (e) {
-            console.warn('[body3d] AI body map not available, using a simple word match', e);
-            if (saved && saved.data) return saved.data;    // an older map is better than none
+            console.warn('[body3d] AI body map not available, using a simple word match', e);            if (saved && saved.data && !textOverride) return saved.data;    // an older map is better than none
             return fallbackMap(text);
         }
     }
@@ -144,7 +179,7 @@
     // =====================================================================
     // The 3D scene
     // =====================================================================
-    const CYAN = 0x38d8ff, NERVE = 0xffe58a, RED = 0xff2a3d;
+    const CYAN = 0x38d8ff, NERVE = 0xffe58a, RED = 0xff2a3d, GREEN = 0x2ee59d;
     const ease = x => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3));
     const back = x => { if (x <= 0) return 0; if (x >= 1) return 1; const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
     const span = (t, a, b) => Math.max(0, Math.min(1, (t - a) / (b - a)));
@@ -606,7 +641,9 @@
             this.glowGroup = new THREE.Group(); this.root.add(this.glowGroup);
             // where each area's red marker goes
             this.centers = {};
-            for (const [k, c] of Object.entries(meta.centers)) this.centers[k] = V(c);
+            for (const [k, c] of Object.entries(meta.centers)) this.centers[k] = V(c);            // paired organs: put the marker on one of them (the middle point is the spine / heart, and labels would pile up)
+            if (box.kidneys && this.centers.kidneys) this.centers.kidneys.x = box.kidneys.max.x - 0.035;
+            if (this.lungBox) this.centers.lungs = new THREE.Vector3(this.lungBox.min.x + 0.055, (this.lungBox.min.y + this.lungBox.max.y) / 2 + 0.02, (this.lungBox.min.z + this.lungBox.max.z) / 2);
             if (sex === 'female') this.centers.reproductive = new THREE.Vector3(0, 0.905, -0.02);   // the uterus
             else if (sex === 'neutral') delete this.centers.reproductive;
             const lh = L.left_humerus;                                   // blood pressure: the brachial artery in the upper arm
@@ -696,8 +733,7 @@
         setAreas(areas) {
             this.areas = (areas || []).filter(a => this.organs[a.key] || a.key === 'skin' || a.key === 'blood_vessels' || a.key === 'thyroid');
             this.glowGroup.clear();
-            this.labels.forEach(l => l.el.remove()); this.labels = [];
-            this.areaKeys = new Set(this.areas.map(a => a.key));
+            this.labels.forEach(l => l.el.remove()); this.labels = [];            this.areaKeys = new Set(this.areas.filter(a => !a.gone).map(a => a.key));
             for (const a of this.areas) {
                 const meshes = this.organs[a.key] || [];
                 const center = new THREE.Vector3();
@@ -706,18 +742,16 @@
                 else if (a.key === 'blood_vessels') center.set(0.22, 1.23, 0.045);   // upper-arm artery (where blood pressure is measured)
                 else if (a.key === 'thyroid') center.set(0, 1.5, 0.05);
                 else center.set(-0.12, 1.02, 0.1);                                     // skin of the belly
-                const glows = meshes.slice(0, 8).filter(m => !m.userData.quietPart).map(m => {
-                    const g = new THREE.Mesh(m.geometry, holoMaterial(RED, 1.6));
+                const glows = meshes.slice(0, 8).filter(m => !m.userData.quietPart).map(m => {                    const g = new THREE.Mesh(m.geometry, holoMaterial(a.gone ? GREEN : RED, a.gone ? 0.8 : 1.6));
                     g.position.copy(m.position); g.rotation.copy(m.rotation); g.scale.copy(m.userData.baseScale).multiplyScalar(1.45);
                     g.userData.area = a.key; this.glowGroup.add(g); return g;
                 });
                 // a pulsing ring marker in front of the area
-                const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.036, 40), new THREE.MeshBasicMaterial({ color: RED, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.036, 40), new THREE.MeshBasicMaterial({ color: a.gone ? GREEN : RED, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
                 ring.position.copy(center); ring.userData.area = a.key; this.glowGroup.add(ring);
                 const el = document.createElement('button');
-                el.type = 'button';
-                el.className = 'nxb-label sev-' + (a.severity || 'medium');
-                el.innerHTML = `<span class="dot"></span><span class="txt">${esc(a.label || areaName(a.key))}</span>`;
+                el.type = 'button';                el.className = 'nxb-label sev-' + (a.gone ? 'gone' : (a.severity || 'medium')) + (a.isNew ? ' is-new' : '');
+                el.innerHTML = `<span class="dot"></span><span class="txt">${a.isNew ? `<i class="nxb-new">${esc(tx('newHere'))}</i> ` : ''}${esc(a.label || areaName(a.key))}</span>`;
                 el.addEventListener('click', e => { e.stopPropagation(); if (this.opts.mode === 'mini') { if (this.opts.onClick) this.opts.onClick(); } else this.pick(a.key); });
                 this.labelBox.appendChild(el);
                 this.labels.push({ el, pos: center.clone().add(new THREE.Vector3(0, 0, 0.12)), key: a.key, glows, ring });
@@ -819,8 +853,7 @@
             // red glows, rings and labels
             for (const l of this.labels) {
                 const sel = this.selected === l.key;
-                const pulse = 0.75 + 0.25 * Math.sin(now * 5);
-                l.glows.forEach(g => { g.material.uniforms.uOpacity.value = pRed * pulse * (sel ? 1.4 : 1); g.visible = this.layers.organs || this.organs[l.key].length === 0; });
+                const pulse = 0.75 + 0.25 * Math.sin(now * 5);                l.glows.forEach(g => { g.material.uniforms.uOpacity.value = pRed * pulse * (sel ? 1.4 : 1); g.visible = this.layers.organs || !(this.organs[l.key] || []).length; });
                 const rp = (now * 0.8 + l.pos.y) % 1;
                 l.ring.material.opacity = pRed * (1 - rp) * 0.9; l.ring.scale.setScalar(1 + rp * 2.2);
                 l.ring.lookAt(this.camera.position);
@@ -857,7 +890,19 @@
                 l.el.style.pointerEvents = pRed > 0.5 ? '' : 'none';
                 l.el.classList.toggle('sel', this.selected === l.key);
                 l.el.classList.toggle('left', x > r.width * (r.width < 480 ? 0.5 : 0.62));
+                l.sx = x; l.sy = y; l.front = front;
             }
+            // keep labels from sitting on top of each other: move the text (not the dot) down until it is clear
+            const placed = this.labels.filter(l => l.front).map(l => ({ y: l.sy, x0: l.sx - 9, x1: l.sx + 9, dot: l }));   // the dots too
+            this.labels.filter(l => l.front).sort((a, b) => a.sy - b.sy).forEach(l => {
+                const txt = l.el.querySelector('.txt'), w = (txt && txt.offsetWidth) || 120, h = ((txt && txt.offsetHeight) || 24) + 4;
+                const left = l.el.classList.contains('left');
+                const x0 = left ? l.sx - 16 - w : l.sx + 16, x1 = x0 + w;
+                let dy = 0;
+                for (let k = 0; k < 8 && placed.some(q => q.dot !== l && Math.abs(l.sy + dy - q.y) < h && x0 < q.x1 && x1 > q.x0); k++) dy += h;
+                placed.push({ y: l.sy + dy, x0, x1 });
+                if (l.dy !== dy) { l.dy = dy; l.el.style.setProperty('--dy', dy + 'px'); }
+            });
             if (this.onTick) this.onTick(t);
         }
         destroy() { this.running = false; cancelAnimationFrame(this.raf); this.ro.disconnect(); this.io.disconnect(); this.renderer.dispose(); this.box.innerHTML = ''; }
@@ -921,8 +966,21 @@
             <span class="nxb-sep"></span>
             <button type="button" class="nxb-chip nxb-dismiss" data-act="dismiss">◎ ${esc(tx('dismiss'))}</button>
             <button type="button" class="nxb-chip" data-act="replay">↻ ${esc(tx('replay'))}</button>
-            <button type="button" class="nxb-chip" data-act="reset">⌖ ${esc(tx('reset'))}</button>`;
-        view.appendChild(tools);
+            <button type="button" class="nxb-chip" data-act="reset">⌖ ${esc(tx('reset'))}</button>`;        view.appendChild(tools);
+        // Report picker: see the body for any of this issue's reports, and compare with the report before
+        const stages = reportStages();
+        let stageIdx = stages.length - 1, comparing = false, stageReq = 0;
+        const fmtDay = at => { try { return new Date(at).toLocaleDateString(ml() ? 'ml-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
+        let stageBar = null;
+        if (stages.length >= 2) {
+            stageBar = document.createElement('div');
+            stageBar.className = 'nxb-stagebar';
+            stageBar.innerHTML = `<label><span>${esc(tx('showing'))}</span><select class="nxb-stage" aria-label="${esc(tx('showing'))}">${stages.map((st, i) =>
+                `<option value="${i}"${i === stageIdx ? ' selected' : ''}>${esc(i === stages.length - 1 ? tx('latestRep') : tx(st.kind))} · ${esc(fmtDay(st.at))}</option>`).reverse().join('')}</select></label>
+                <button type="button" class="nxb-chip nxb-compare" aria-pressed="false">${esc(tx('compare'))}</button>`;
+            ['pointerdown', 'mousedown', 'touchstart', 'wheel'].forEach(ev => stageBar.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+            view.appendChild(stageBar);
+        }
         const page = view.closest('.nxb-page') || document.body;
         page.classList.add('no-side');                       // the explanations appear when a red area is tapped
         const closeSide = () => {
@@ -951,14 +1009,18 @@
             view.insertAdjacentHTML('beforeend', `<div class="nxb-credit"><button type="button" class="nxb-acc-btn" aria-expanded="false">${esc(A.btn)}</button>
                 <div class="nxb-acc hidden">${A.rows.map(r => `<div class="nxb-acc-row"><b>${esc(r[0])}</b><span>${esc(r[1])}</span></div>`).join('')}<p>${esc(A.foot)}</p></div>
                 <small>3D anatomy: BodyParts3D © The Database Center for Life Science (CC BY-SA 2.1 JP)</small></div>`);
+            view.insertAdjacentHTML('afterend', `<p class="nxb-credit-line">3D anatomy: BodyParts3D © The Database Center for Life Science (CC BY-SA 2.1 JP)</p>`);
             const btn = view.querySelector('.nxb-acc-btn'), box = view.querySelector('.nxb-acc');
             btn.addEventListener('click', e => { e.stopPropagation(); const open = box.classList.toggle('hidden') === false; btn.setAttribute('aria-expanded', open); });
             ['pointerdown', 'mousedown', 'touchstart', 'wheel'].forEach(ev => view.querySelector('.nxb-credit').addEventListener(ev, e => e.stopPropagation(), { passive: true }));
         });
         let body;
         try { await loadThree(); body = new Body3D(view, { mode: 'full', onPick: key => showInfo(key), model: await loadModel() }); }
-        catch (e) { view.classList.add('nxb-nogl'); view.insertAdjacentHTML('beforeend', '<div class="nxb-found show">3D view needs WebGL / internet the first time.</div>'); }
-        if (body) { view.appendChild(h.el); view.appendChild(hint); view.appendChild(tools); body.onTick = t => h.tick(t); }
+        catch (e) { view.classList.add('nxb-nogl'); view.insertAdjacentHTML('beforeend', '<div class="nxb-found show">3D view needs WebGL / internet the first time.</div>'); }        if (body) { view.appendChild(h.el); view.appendChild(hint); view.appendChild(tools); body.onTick = t => h.tick(t); }
+        if (stageBar) {                                   // phones: above the 3D box, so it doesn't cover the buttons
+            const placeBar = () => { const small = innerWidth <= 700; stageBar.classList.toggle('outside', small); if (small) view.before(stageBar); else view.appendChild(stageBar); };
+            placeBar(); addEventListener('resize', placeBar);
+        }
         tools.addEventListener('click', e => {
             const b = e.target.closest('button'); if (!b || !body) return;
             if (b.dataset.layer) { b.classList.toggle('on'); body.setLayer(b.dataset.layer, b.classList.contains('on')); }
@@ -973,14 +1035,39 @@
                 h.el.querySelector('.nxb-found').style.visibility = hide ? 'hidden' : '';
                 if (hide) { body.resetView(); closeSide(); }
             }
-        });
-        const map = await getBodyMap();
-        let areas = map ? map.areas : [];
-        if (!map) { side.querySelector('.nxb-overview').textContent = tx('noReport'); }
-        else side.querySelector('.nxb-overview').textContent = map.overview || tx('pick');
+        });        const map = await getBodyMap();
+        let areas = [];
         const list = side.querySelector('.nxb-list');
-        list.innerHTML = areas.map(a => `<button type="button" class="nxb-item sev-${esc(a.severity || 'medium')}" data-key="${esc(a.key)}">
-                <span class="nxb-dot"></span><span class="nxb-item-txt"><b>${esc(a.label || areaName(a.key))}</b><small>${esc(areaName(a.key))} · ${esc(tx(a.severity) || '')}</small></span><span class="nxb-go">›</span></button>`).join('');
+        function renderAreas(m, arr) {
+            areas = arr;
+            side.querySelector('.nxb-overview').textContent = !m ? tx('noReport') : (m.overview || tx('pick'));
+            list.innerHTML = areas.map(a => `<button type="button" class="nxb-item sev-${esc(a.gone ? 'gone' : (a.severity || 'medium'))}" data-key="${esc(a.key)}">
+                <span class="nxb-dot"></span><span class="nxb-item-txt"><b>${esc(a.label || areaName(a.key))}</b><small>${esc(areaName(a.key))} · ${esc(a.gone ? tx('goneHere') : a.isNew ? tx('newHere') + ' · ' + (tx(a.severity) || '') : (tx(a.severity) || ''))}</small></span><span class="nxb-go">›</span></button>`).join('');
+        }
+        renderAreas(map, map ? map.areas : []);
+        async function loadStage() {
+            const req = ++stageReq, i = stageIdx;
+            closeSide();
+            side.querySelector('.nxb-overview').textContent = tx('loadingStage');
+            const cur = i === stages.length - 1 ? map : await getBodyMap(stageText(stages[i]));
+            let out = (cur ? cur.areas : []).map(a => ({ ...a }));
+            if (comparing && i > 0) {
+                const prev = await getBodyMap(stageText(stages[i - 1]));
+                const prevAreas = prev ? prev.areas : [], prevKeys = new Set(prevAreas.map(a => a.key)), curKeys = new Set(out.map(a => a.key));
+                out.forEach(a => { a.isNew = !prevKeys.has(a.key); });
+                prevAreas.filter(a => !curKeys.has(a.key)).forEach(a => out.push({ ...a, gone: true, goneAt: stages[i - 1].at }));
+            }
+            if (req !== stageReq) return;
+            renderAreas(cur, out);
+            if (body) { body.setAreas(out); h.done(out.filter(a => !a.gone).length, cur && cur.simple); }
+        }
+        if (stageBar) {
+            const sel = stageBar.querySelector('.nxb-stage'), cmp = stageBar.querySelector('.nxb-compare');
+            const paintCmp = () => { cmp.disabled = stageIdx === 0; cmp.classList.toggle('on', comparing && stageIdx > 0); cmp.setAttribute('aria-pressed', comparing); cmp.textContent = comparing && stageIdx > 0 ? tx('compareOn') : tx('compare'); };
+            sel.addEventListener('change', () => { stageIdx = Number(sel.value); paintCmp(); loadStage(); });
+            cmp.addEventListener('click', () => { comparing = !comparing; paintCmp(); loadStage(); });
+            paintCmp();
+        }
         list.addEventListener('click', e => { const b = e.target.closest('.nxb-item'); if (b) { if (body) body.pick(b.dataset.key); else showInfo(b.dataset.key); } });
         side.querySelector('.nxb-side-x').addEventListener('click', () => { closeSide(); if (body) body.resetView(); });
         function showInfo(key) {
@@ -989,9 +1076,9 @@
             page.classList.remove('no-side');
             list.querySelectorAll('.nxb-item').forEach(x => x.classList.toggle('sel', x.dataset.key === key));
             const info = side.querySelector('.nxb-info');
-            info.innerHTML = `<div class="nxb-info-head sev-${esc(a.severity || 'medium')}"><span class="nxb-dot"></span><div><div class="nxb-info-title">${esc(a.label || areaName(a.key))}</div>
-                    <div class="nxb-info-sub">${esc(areaName(a.key))} · ${esc(tx(a.severity) || '')}</div></div>
-                    <button type="button" class="nxb-x" aria-label="${esc(tx('close'))}">×</button></div>
+            info.innerHTML = `<div class="nxb-info-head sev-${esc(a.gone ? 'gone' : (a.severity || 'medium'))}"><span class="nxb-dot"></span><div><div class="nxb-info-title">${esc(a.label || areaName(a.key))}</div>
+                    <div class="nxb-info-sub">${esc(areaName(a.key))} · ${esc(a.gone ? tx('gone') : a.isNew ? tx('newHere') : (tx(a.severity) || ''))}</div></div>
+                    <button type="button" class="nxb-x" aria-label="${esc(tx('close'))}">×</button></div>                ${a.gone ? `<div class="nxb-gone-note">✅ ${esc(tx('goneNote').replace('{when}', fmtDay(a.goneAt)))}</div>` : ''}
                 <div class="nxb-sec"><div class="nxb-sec-t">🩺 ${esc(tx('what'))}</div><p>${esc(a.what_happened)}</p></div>
                 <div class="nxb-sec"><div class="nxb-sec-t">🔍 ${esc(tx('cause'))}</div><p>${esc(a.cause)}</p></div>
                 <div class="nxb-sec"><div class="nxb-sec-t">💊 ${esc(tx('fix'))}</div><p>${esc(a.treatment)}</p></div>

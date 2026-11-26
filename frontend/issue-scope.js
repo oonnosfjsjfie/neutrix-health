@@ -28,7 +28,11 @@
         'neutrixTracker',
         'neutrixBriefLog',
         'neutrixProgressReport',
-        'neutrixVisuals'
+        'neutrixVisuals',
+        'neutrixHistory',
+        'neutrixBodyMap',
+        'neutrixCheckupStatus',
+        'neutrixLabTrends'
     ];
     const ACTIVE_KEY = 'neutrixActiveIssue';
 

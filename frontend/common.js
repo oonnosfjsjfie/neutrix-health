@@ -558,9 +558,11 @@ window.fetchExercises = function () {
                 version,
                 exercises: data.exercises || [],
                 restrictions_en: data.restrictions_en || [],
-                restrictions_ml: data.restrictions_ml || [],
-                checkedAt: new Date().toISOString()
+                restrictions_ml: data.restrictions_ml || [],                checkedAt: new Date().toISOString()
             };
+            // The earlier list (from older reports) is kept in the history, not thrown away
+            const old = storeGet('neutrixExercises');
+            if (old && old.version !== version && window.NxHist) NxHist.archive('exercises', old, { madeAt: old.checkedAt, version: old.version });
             storeSet('neutrixExercises', info);
             return info;
         })

@@ -14,12 +14,12 @@
     <script src="firebase-config.js?v=20261030c"></script>
     <script src="neutrix-cloud.js?v=20261125a"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261030c"></script>
+    <script src="issue-scope.js?v=20261126h"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Medicine Plan</title>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css?v=20261126b">
+    <link rel="stylesheet" href="skin.css?v=20261126h">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <style>
@@ -68,6 +68,17 @@
                     <div id="planContent" class="output-text md-content scroll-box"></div>
                     <button id="planRefreshBtn" class="btn-secondary refresh-btn" type="button" data-i18n="refreshBtn"></button>
                 </div>
+                <!-- Medicine history: what changed with each report, and medicines no longer taken -->
+                <div id="medChanges" class="nxh-section">
+                    <div class="card-header">
+                        <div>
+                            <h2 data-mh="title"></h2>
+                            <p class="subtitle" data-mh="sub"></p>
+                        </div>
+                        <span class="form-status" data-mh="badge"></span>
+                    </div>
+                    <div id="medChangesBody"><p class="loading-line" data-mh="loading"></p></div>
+                </div>
             </div>
         </section>
 
@@ -77,7 +88,8 @@
                 <span class="mrn-badge">💊</span>
             </div>
             <p class="hint" data-i18n="planHint"></p>
-
+            <div class="chart-divider"></div>
+            <div id="planHistory" class="nxh-side"></div>
             <div class="chart-divider"></div>
 
             <div class="caregiver-alert-box">
@@ -97,10 +109,11 @@
 
     </main>
 
-    <script src="common.js?v=20261126a"></script>
+    <script src="common.js?v=20261126h"></script>
     <script src="account-menu.js?v=20261030e"></script>
     <script src="feedback.js?v=20261030c"></script>
-    <script src="ai-sections.js"></script>
+    <script src="history.js?v=20261126a"></script>
+    <script src="ai-sections.js?v=20261126h"></script>
     <script>
         const planRecord = loadReport();
 
@@ -113,6 +126,63 @@
             btn.textContent = t(btn.dataset.i18n);
         }
 
+                // ---------- Medicine history (from the schedule's dated versions) ----------
+        const MH = {
+            English: {
+                title: 'Medicine changes', sub: 'Every change your reports made to your medicines, newest first.', badge: 'History',
+                loading: 'Checking your medicines…', failed: 'Could not check your medicine history right now. It will try again next time.',
+                whatChanged: 'What changed after your report of {when}', started: 'Started with these medicines', changedOn: 'Changes from your report of {when}',
+                added: 'New', changed: 'Changed', stopped: 'Stopped', noChange: 'No medicine changes yet. When a new report changes your medicines, it shows here.',
+                past: 'Past medicines', noPast: 'None yet.', took: 'Taken {from} – {to}', whyStopped: 'stopped by a newer report', whyFinished: 'course finished',
+                askDoctor: 'Always follow your doctor’s latest prescription. If a change looks wrong, ask your doctor or pharmacist.'
+            },
+            Malayalam: {
+                title: 'മരുന്ന് മാറ്റങ്ങൾ', sub: 'റിപ്പോർട്ടുകൾ നിങ്ങളുടെ മരുന്നുകളിൽ വരുത്തിയ എല്ലാ മാറ്റങ്ങളും, പുതിയത് ആദ്യം.', badge: 'ചരിത്രം',
+                loading: 'മരുന്നുകൾ പരിശോധിക്കുന്നു…', failed: 'ഇപ്പോൾ മരുന്ന് ചരിത്രം പരിശോധിക്കാനായില്ല. അടുത്ത തവണ വീണ്ടും ശ്രമിക്കും.',
+                whatChanged: '{when}-ലെ റിപ്പോർട്ടിന് ശേഷം മാറിയത്', started: 'ഈ മരുന്നുകളോടെ തുടങ്ങി', changedOn: '{when}-ലെ റിപ്പോർട്ടിലെ മാറ്റങ്ങൾ',
+                added: 'പുതിയത്', changed: 'മാറ്റി', stopped: 'നിർത്തി', noChange: 'ഇതുവരെ മരുന്ന് മാറ്റങ്ങളില്ല. പുതിയ റിപ്പോർട്ട് മരുന്നുകൾ മാറ്റിയാൽ ഇവിടെ കാണാം.',
+                past: 'പഴയ മരുന്നുകൾ', noPast: 'ഇതുവരെ ഇല്ല.', took: '{from} – {to} വരെ കഴിച്ചു', whyStopped: 'പുതിയ റിപ്പോർട്ട് നിർത്തി', whyFinished: 'കോഴ്സ് കഴിഞ്ഞു',
+                askDoctor: 'എപ്പോഴും ഡോക്ടറുടെ ഏറ്റവും പുതിയ കുറിപ്പടി പിന്തുടരുക. ഒരു മാറ്റം തെറ്റാണെന്ന് തോന്നിയാൽ ഡോക്ടറോടോ ഫാർമസിസ്റ്റിനോടോ ചോദിക്കുക.'
+            }
+        };
+        const mh = (k, v) => { let s = (MH[neutrixLang] || MH.English)[k] ?? MH.English[k]; for (const n in (v || {})) s = s.replace('{' + n + '}', v[n]); return s; };
+        let medSchedule = null, medFailed = false;
+        function medTexts() { document.querySelectorAll('[data-mh]').forEach(e => { e.textContent = mh(e.dataset.mh); }); }
+        function renderMedHistory() {
+            medTexts();
+            const box = document.getElementById('medChangesBody');
+            if (!medSchedule) { box.innerHTML = `<p class="loading-line">${NxHist.esc(mh(medFailed ? 'failed' : 'loading'))}</p>`; return; }
+            const E = NxHist.esc, day = NxHist.day, today = dayKey(new Date());
+            const line = (cls, label, html) => `<li class="nxh-${cls}"><span class="nxh-tag">${E(label)}</span> ${html}</li>`;
+            const med = g => `<b>${E(g.name)}</b> <span class="nxh-muted">${E(NxHist.describe(g))}</span>`;
+            const changes = e => [
+                ...e.added.map(g => line('add', mh('added'), med(g))),
+                ...e.changed.map(c => line('chg', mh('changed'), `<b>${E(c.after.name)}</b> <span class="nxh-muted">${E(NxHist.describe(c.before))}</span> → <span>${E(NxHist.describe(c.after))}</span>`)),
+                ...e.stopped.map(g => line('stop', mh('stopped'), med(g)))
+            ].join('');
+            const tl = NxHist.medTimeline(medSchedule);
+            let html = '';
+            const latest = tl[0];
+            if (latest && !latest.first && (latest.added.length + latest.changed.length + latest.stopped.length)) {
+                html += `<div class="nxh-what"><div class="nxh-what-title">🔔 ${E(mh('whatChanged', { when: day(latest.from) }))}</div><ul class="nxh-changes">${changes(latest)}</ul></div>`;
+            } else if (tl.length <= 1) {
+                html += `<p class="hint">${E(mh('noChange'))}</p>`;
+            }
+            html += '<ol class="nxh-timeline">' + tl.map(e => `<li><div class="nxh-when">${E(day(e.from))}</div>
+                <div class="nxh-what-title">${E(e.first ? mh('started') : mh('changedOn', { when: day(e.from) }))}</div>
+                <ul class="nxh-changes">${e.first ? [...e.meds.values()].map(g => `<li>${med(g)}</li>`).join('') : changes(e)}</ul></li>`).join('') + '</ol>';
+            const past = NxHist.pastMeds(medSchedule, today);
+            html += `<h3 class="nxh-h3">${E(mh('past'))}</h3>` + (past.length ? '<ul class="nxh-past">' + past.map(p => `<li>${med(p.g)}<div class="nxh-muted">${E(mh('took', { from: day(p.from), to: day(p.to) }))} · ${E(mh(p.why === 'stopped' ? 'whyStopped' : 'whyFinished'))}</div></li>`).join('') + '</ul>' : `<p class="hint">${E(mh('noPast'))}</p>`);
+            html += `<p class="hint nxh-note">${E(mh('askDoctor'))}</p>`;
+            box.innerHTML = html;
+        }
+        function medHistory() {
+            renderMedHistory();
+            NxHist.syncSchedule(planRecord).then(s => { medSchedule = s; renderMedHistory(); updateScheduleButton(); })
+                .catch(e => { console.warn('[medicines] history', e); medSchedule = storeGet('neutrixSchedule'); medFailed = !medSchedule; renderMedHistory(); });
+        }
+        document.addEventListener('neutrix:langchange', renderMedHistory);
+
         if (!planRecord) {
             document.getElementById('emptyView').classList.remove('hidden');
         } else {
@@ -120,8 +190,10 @@
             loadAiSection({
                 storeKey: 'neutrixPlan', url: '/api/medicine-plan', field: 'plan',
                 el: document.getElementById('planContent'), loadingKey: 'planLoading',
-                record: planRecord, refreshBtn: document.getElementById('planRefreshBtn')
+                record: planRecord, refreshBtn: document.getElementById('planRefreshBtn'),
+                historyHost: document.getElementById('planHistory'), historyTitle: neutrixLang === 'Malayalam' ? 'പ്ലാൻ ചരിത്രം' : 'Plan history'
             });
+            medHistory();
             updateScheduleButton();
             document.addEventListener('neutrix:langchange', updateScheduleButton);
         }

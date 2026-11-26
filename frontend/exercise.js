@@ -313,6 +313,32 @@
     function sideText(ex) {
         return ex.side === 'left' ? x('sideLeft') : ex.side === 'right' ? x('sideRight') : x('sideBoth');
     }
+    // ---------- How the exercise list changed with each report (older lists are kept in history.js) ----------
+    function renderListHistory(exercises) {
+        const box = $('exListHistory');
+        if (!box || !window.NxHist) return;
+        const old = NxHist.list('exercises');
+        if (!old.length) { box.classList.add('hidden'); return; }
+        const names = list => (list || []).map(ex => pick(ex, 'name')).filter(Boolean);
+        const L = ml() ? { t: 'നിങ്ങളുടെ വ്യായാമ പട്ടികയിലെ മാറ്റങ്ങൾ', s: 'പുതിയ റിപ്പോർട്ടുകൾ വ്യായാമങ്ങൾ മാറ്റിയപ്പോൾ, പുതിയത് ആദ്യം.', on: '{when}-ന് ശേഷം', add: 'ചേർത്തു', rem: 'നീക്കി', same: 'വ്യായാമങ്ങൾ മാറിയില്ല', had: 'മുമ്പ്: {list}', none: 'ഒന്നുമില്ല' }
+            : { t: 'Changes to your exercise list', s: 'When a new report changed your exercises, newest first.', on: 'After {when}', add: 'Added', rem: 'Removed', same: 'No change to the exercises', had: 'Before: {list}', none: 'none' };
+        // versions oldest → newest, the current list last
+        const versions = old.map(e => ({ at: e.replacedAt, list: (e.data && e.data.exercises) || [] }));
+        versions.push({ at: null, list: exercises });
+        const rows = [];
+        for (let i = versions.length - 1; i >= 1; i--) {
+            const before = names(versions[i - 1].list), after = names(versions[i].list);
+            const added = after.filter(n => !before.includes(n)), removed = before.filter(n => !after.includes(n));
+            const parts = [];
+            if (added.length) parts.push(`<li class="nxh-add"><span class="nxh-tag">${esc(L.add)}</span> ${esc(added.join(', '))}</li>`);
+            if (removed.length) parts.push(`<li class="nxh-stop"><span class="nxh-tag">${esc(L.rem)}</span> ${esc(removed.join(', '))}</li>`);
+            if (!parts.length) parts.push(`<li class="nxh-muted">${esc(L.same)}</li>`);
+            rows.push(`<li><div class="nxh-when">${esc(L.on.replace('{when}', NxHist.when(versions[i - 1].at)))}</div>
+                <ul class="nxh-changes">${parts.join('')}</ul><div class="nxh-muted">${esc(L.had.replace('{list}', before.join(', ') || L.none))}</div></li>`);
+        }
+        box.innerHTML = `<h3 class="nxh-h3">${esc(L.t)}</h3><p class="hint">${esc(L.s)}</p><ol class="nxh-timeline">${rows.join('')}</ol>`;
+        box.classList.remove('hidden');
+    }
 
     function renderList() {
         show('listView', true);
@@ -325,10 +351,9 @@
         const rbox = $('exRestrict');
         rbox.classList.toggle('hidden', !restrictions.length);
         rbox.innerHTML = restrictions.length
-            ? `<strong>${esc(x('restrictTitle'))}</strong><ul>${restrictions.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : '';
-
-        show('exNone', !!info && !exercises.length);
+            ? `<strong>${esc(x('restrictTitle'))}</strong><ul>${restrictions.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : '';        show('exNone', !!info && !exercises.length);
         renderHistory();
+        renderListHistory(exercises);
 
         exercises.forEach((ex, i) => {
             const camera = NxPose.trackable(ex.move);
