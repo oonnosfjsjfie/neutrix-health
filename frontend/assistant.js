@@ -454,67 +454,29 @@
         if (text.length > 220) return;
         caches.open(VOICE_CACHE).then(c => c.put(voiceKey(text), new Response(blob, { headers: { 'Content-Type': 'audio/wav' } }))).catch(() => {});
     }
-    function wavBlob(chunks, rate) {
-        const n = chunks.reduce((a, c) => a + c.length, 0);
-        const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
-        const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
-        w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
-        v.setUint16(22, 1, true); v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
-        w(36, 'data'); v.setUint32(40, n * 2, true);
-        let o = 44; for (const c of chunks) { new Int16Array(buf, o, c.length).set(c); o += c.length * 2; }
-        return new Blob([buf], { type: 'audio/wav' });
+    function splitForSpeech(text) {
+        const m = /^(.{6,140}?[.!?…])\s+(\S[\s\S]*)$/.exec(text);
+        return m ? [m[1], m[2]] : [text];
     }
-    // Sound output: unlocked by the first tap or key press on the page (browsers require that)
-    let actx = null;
-    const audioCtx = () => { if (!actx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); } return actx; };
-    ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => {
-        const c = audioCtx(); if (c && c.state === 'suspended') c.resume().catch(() => {});
-    }, { capture: true, passive: true }));
-
-    // The natural voice, played piece by piece while the rest is still being made (starts in about a second)
-    async function streamSpeak(text, my) {
-        const ctx = audioCtx();
-        if (!ctx) throw new Error('no audio');
-        if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
-        if (ctx.state !== 'running') throw new Error('audio locked');
+    async function naturalBlob(text) {
+        const saved = await cacheGet(text);
+        if (saved) return saved;
         const ctrl = new AbortController();
-        curAbort = ctrl;
-        const firstByte = setTimeout(() => ctrl.abort(), 10000);
-        const res = await fetch(API().replace(/\/api\/assistant$/, '/api/assistant/voice/stream'), {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }), signal: ctrl.signal });
-        clearTimeout(firstByte);
-        if (!res.ok || !res.body) throw new Error('voice ' + res.status);
-        const reader = res.body.getReader();
-        let carry = null, at = ctx.currentTime + 0.06, last = null, got = 0;
-        const chunks = [];
-        for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (my !== speakId) { ctrl.abort(); return; }
-            let bytes = value;
-            if (carry) { const m = new Uint8Array(carry.length + bytes.length); m.set(carry); m.set(bytes, carry.length); bytes = m; carry = null; }
-            const even = bytes.length - (bytes.length % 2);
-            if (even < bytes.length) carry = bytes.slice(even);
-            if (!even) continue;
-            const pcm = new Int16Array(bytes.slice(0, even).buffer);
-            chunks.push(pcm); got += pcm.length;
-            const buf = ctx.createBuffer(1, pcm.length, 24000);
-            const ch = buf.getChannelData(0);
-            for (let i = 0; i < pcm.length; i++) ch[i] = pcm[i] / 32768;
-            const src = ctx.createBufferSource();
-            src.buffer = buf; src.connect(ctx.destination);
-            at = Math.max(at, ctx.currentTime + 0.02);
-            src.start(at); at += buf.duration;
-            curSources.push(src); last = src;
-        }
-        if (!got) throw new Error('no audio');
-        cachePut(text, wavBlob(chunks, 24000));
-        await new Promise(resolve => {
-            const left = Math.max(0, at - ctx.currentTime);
-            const timer = setTimeout(resolve, left * 1000 + 300);
-            last.onended = () => { clearTimeout(timer); resolve(); };
-        });
-        curSources = [];
+        const to = setTimeout(() => ctrl.abort(), 12000);
+        try {
+            const res = await fetch(API().replace(/\/api\/assistant$/, '/api/assistant/voice'), {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }), signal: ctrl.signal });
+            if (!res.ok) throw new Error('voice ' + res.status);
+            const blob = await res.blob();
+            if (blob.size < 2000) throw new Error('voice empty');
+            cachePut(text, blob);
+            return blob;
+        } finally { clearTimeout(to); }
+    }
+    function naturalDeviceVoice() {
+        const all = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+        return all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_](IE|GB)/i.test(v.lang) && /emily|libby|sonia|maisie|hazel|bella/i.test(v.name))
+            || all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_]/i.test(v.lang) && /ava|emma|jenny|aria|michelle|neerja|natasha|clara/i.test(v.name)) || null;
     }
     function playBlob(blob, my) {
         return new Promise(resolve => {
@@ -531,15 +493,24 @@
         text = cleanForSpeech(text);
         if (!text) return;
         const my = ++speakId;
-        const saved = await cacheGet(text);                  // said before: plays at once
-        if (saved) { if (my === speakId) await playBlob(saved, my); return; }
-        if (navigator.onLine && Date.now() > naturalDownUntil) {
+        // Microsoft Edge has natural, human-sounding voices built in: instant, so use those when there
+        const edgeNatural = !isApp && code.startsWith('en') ? naturalDeviceVoice() : null;
+        if (!edgeNatural && navigator.onLine && Date.now() > naturalDownUntil) {
             try {
-                await streamSpeak(text, my);
+                // First sentence on its own (ready in ~2 s) while the rest is made at the same time
+                const parts = splitForSpeech(text);
+                const jobs = parts.map(part => naturalBlob(part));
+                jobs.forEach(j => j.catch(() => {}));
+                for (let i = 0; i < jobs.length; i++) {
+                    const blob = await jobs[i];
+                    if (my !== speakId) return;
+                    await playBlob(blob, my);
+                    if (my !== speakId) return;
+                }
                 return;
             } catch (e) {
                 if (my !== speakId) return;
-                if (!/audio locked|no audio$/.test(e.message || '')) naturalDownUntil = Date.now() + 60000;      // try the natural voice again in a minute
+                naturalDownUntil = Date.now() + 60000;      // try the natural voice again in a minute
                 console.warn('[assistant] natural voice not available, using the device voice', e);
             }
         }
@@ -550,9 +521,10 @@
         return new Promise(resolve => {
             const u = new SpeechSynthesisUtterance(text);
             u.lang = code;
-            const v = pickVoice(code);
+            const nat = code.startsWith('en') ? naturalDeviceVoice() : null;
+            const v = nat || pickVoice(code);
             if (v) u.voice = v;
-            u.rate = 1; u.pitch = 1.1;
+            u.rate = 1; u.pitch = nat ? 1 : 1.1;
             u.onend = u.onerror = resolve;
             speechSynthesis.speak(u);
             setTimeout(resolve, 60000);
