@@ -29,7 +29,7 @@
         English: {
             btn: 'Assistant', open: 'Open Neutrix Assistant', title: 'Neutrix Assistant', close: 'Close assistant',
             hello: "Neutrix online. Talk or type, boss. I can open any page, fill things in, read the screen to you, or just chat.",
-            placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. I will keep listening until you tap the mic again.', micOff: 'Mic off.',
+            placeholder: 'Type or tap the mic…', send: 'Send', expand: 'Show the conversation', collapse: 'Hide the conversation', mic: 'Turn the mic on', stopMic: 'Mic is on: tap to mute', micOn: 'Mic on. Say “Hey Neutrix” and then what you need.', wakeHint: 'Say “Hey Neutrix”…', micOff: 'Mic off.',
             listening: 'Listening…', thinking: 'Thinking…', speaking: 'Speaking…', working: 'Working on the page…', ready: 'Ready',
             detail: 'Detailed', voice: 'Voice', yes: 'Yes, do it', no: 'No', stop: 'Stop',
             stopped: 'Okay, I stopped.', cancelled: "Okay, I won't do that.", noMic: "Your browser can't use the microphone here. Please type instead.",
@@ -40,7 +40,7 @@
         Malayalam: {
             btn: 'അസിസ്റ്റന്റ്', open: 'Neutrix അസിസ്റ്റന്റ് തുറക്കുക', title: 'Neutrix അസിസ്റ്റന്റ്', close: 'അടയ്ക്കുക',
             hello: 'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ Neutrix അസിസ്റ്റന്റ് ആണ്. സംസാരിക്കുകയോ ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം. ലളിതമായി വിശദീകരിക്കാം, അല്ലെങ്കിൽ ഈ വെബ്സൈറ്റിൽ കാര്യങ്ങൾ ചെയ്തു തരാം.',
-            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', expand: 'സംഭാഷണം കാണിക്കുക', collapse: 'സംഭാഷണം മറയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ.', micOff: 'മൈക്ക് ഓഫ്.',
+            placeholder: 'ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ മൈക്ക് അമർത്തുക…', send: 'അയയ്ക്കുക', expand: 'സംഭാഷണം കാണിക്കുക', collapse: 'സംഭാഷണം മറയ്ക്കുക', mic: 'മൈക്ക് ഓണാക്കുക', stopMic: 'മൈക്ക് ഓണാണ്: ഓഫാക്കാൻ അമർത്തുക', micOn: 'മൈക്ക് ഓൺ. “Hey Neutrix” എന്ന് പറഞ്ഞ ശേഷം സംസാരിക്കുക.', wakeHint: '“Hey Neutrix” എന്ന് പറയൂ…', micOff: 'മൈക്ക് ഓഫ്.',
             listening: 'കേൾക്കുന്നു…', thinking: 'ആലോചിക്കുന്നു…', speaking: 'സംസാരിക്കുന്നു…', working: 'പേജിൽ ചെയ്യുന്നു…', ready: 'തയ്യാർ',
             detail: 'വിശദമായി', voice: 'ശബ്ദം', yes: 'അതെ, ചെയ്യൂ', no: 'വേണ്ട', stop: 'നിർത്തുക',
             stopped: 'ശരി, നിർത്തി.', cancelled: 'ശരി, അത് ചെയ്യുന്നില്ല.', noMic: 'ഇവിടെ മൈക്ക് ഉപയോഗിക്കാൻ കഴിയില്ല. ടൈപ്പ് ചെയ്യുക.',
@@ -340,7 +340,8 @@
     }
     function paintPlaceholder() {
         const m = dock.dataset.mode;
-        input.placeholder = dock.classList.contains('collapsed') && m && m !== 'ready' ? (t(m) || t('placeholder')) : t('placeholder');
+        const base = prefs.mic ? t('wakeHint') : t('placeholder');
+        input.placeholder = dock.classList.contains('collapsed') && m && m !== 'ready' && m !== 'listening' ? (t(m) || base) : base;
     }
     function setMode(mode) {
         dock.dataset.mode = mode;
@@ -560,6 +561,23 @@
         voiceStop();
     }
 
+    // ---------- wake word: with the mic on, only speech that starts with "Hey Neutrix" / "Neutrix" is for me ----------
+    // (After the name, or right after I answer, there are a few seconds to talk without saying it again.)
+    const WAKE = /^(?:.{0,12}?\b)?(?:hey|hi|hello|ok|okay|yo|a)?[\s,]*(neutrix|neutrics|neutrex|nutrix|nutrics|neotrix|new ?trix|new ?tricks|neo ?tricks|nu ?tricks|neutric|ന്യൂട്രിക്സ്)\b[\s,.!?:-]*/i;
+    let wakeUntil = 0;
+    const awake = () => Date.now() < wakeUntil || !!askBox;
+    function wakeFilter(text) {
+        const m = WAKE.exec(text);
+        if (m) return text.slice(m.index + m[0].length).trim();     // '' = just the name
+        return awake() ? text : null;
+    }
+    function heardName() {
+        const r = lang() === 'Malayalam' ? 'പറയൂ?' : ['Yes, boss?', "I'm listening.", 'Go ahead.', 'Yes?'][Math.floor(Math.random() * 4)];
+        if (!state.open) open(false);
+        add('ai', r);
+        speak(r);
+    }
+
     // ---------- listening (speech to text) ----------
     // The mic is a switch: one tap turns it on and it stays on (also on other pages) until the user taps it
     // again. While on, it keeps listening; it only pauses while the assistant itself is talking.
@@ -571,6 +589,7 @@
         else { discard = true; stopListening(); input.value = ''; }
         paint();
         live.textContent = prefs.mic ? t('micOn') : t('micOff');
+        if (prefs.mic) add('note', t('micOn'));
     }
     function maybeListen(delay) {
         clearTimeout(restartTimer);
@@ -590,10 +609,15 @@
             if (discard) { discard = false; input.value = ''; maybeListen(400); return; }
             text = (text || '').trim();
             input.value = '';
-            if (text) { failCount = 0; userSays(text); }
+            if (text) {
+                failCount = 0;
+                const cmd = wakeFilter(text);              // only "Hey Neutrix ..." / "Neutrix ..." is for me
+                if (cmd === '') { wakeUntil = Date.now() + 9000; heardName(); }
+                else if (cmd) { wakeUntil = Date.now() + 9000; userSays(cmd); }
+            }
             else if (Date.now() - started < 1500) failCount++;     // ended at once: wait longer before trying again
             else failCount = 0;
-            maybeListen(failCount ? Math.min(8000, 400 * 2 ** failCount) : 250);
+            maybeListen(failCount ? Math.min(3000, 400 * 2 ** failCount) : 250);
         };
         if (isApp && P.SpeechRecognition) {
             try {
@@ -621,7 +645,8 @@
                 if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
                 else interim += e.results[i][0].transcript;
             }
-            if (!discard) input.value = (finalText + interim).trim();
+            const said = (finalText + interim).trim();
+            if (!discard && (WAKE.test(said) || awake())) input.value = said;     // show only what is for me
         };
         recog.onerror = e => {
             if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { discard = true; micBlocked(t('micDenied')); }
@@ -639,7 +664,9 @@
     }
     // Pause the mic while the assistant talks (so it doesn't hear itself), then carry on listening
     function pauseForSpeech() { if (listening) { discard = true; stopListening(); } }
-    function afterReply() { if (prefs.mic && !speaking) maybeListen(300); }
+    function afterReply() {
+        if (prefs.mic && !speaking) { if (wakeUntil > Date.now() - 60000) wakeUntil = Date.now() + 7000; maybeListen(300); }
+    }
 
     // ---------- what is on the page (sent to the AI) ----------
     let elMap = new Map();
