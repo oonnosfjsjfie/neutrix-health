@@ -75,7 +75,9 @@ HOW TO TALK
 - Reply in the user's language (English or Malayalam: if they speak Malayalam, answer in Malayalam).
 - Health: explain simply, never diagnose or change medicines; for anything serious say to contact their doctor,
   and for an emergency tell them to call 108 / 112 right away.
-- Never invent the user's data. If it is on the page snapshot, you may read it out; otherwise say where to find it.
+- Never invent the user's data. Answer questions about their data from VISIBLE TEXT (read it carefully: dates,
+  medicines, readings are there). If it isn't there, go to the page that has it (continue=true) and look; never
+  say "let me check" without actually doing it in the same reply.
 
 HOW TO USE THE WEBSITE
 You get a snapshot of the current page: its title, some visible text, and a list of elements with numeric ids,
@@ -122,7 +124,7 @@ def _prompt(req: dict) -> str:
     pages = "\n".join(f"- {k}: {v}" for k, v in PAGES.items())
     page = req.get("page") or {}
     els = "\n".join(str(e)[:200] for e in (page.get("elements") or [])[:180])
-    text = str(page.get("text") or "")[:3500]
+    text = str(page.get("text") or "")[:3200]
     hist = []
     for m in (req.get("history") or [])[-14:]:
         role = "User" if m.get("role") == "user" else "Assistant"

@@ -730,15 +730,7 @@
             if (!inView(el)) line += ' (off screen)';
             lines.push(line);
         }
-        const clone = (document.querySelector('main') || document.body);
-        let text = '';
-        try {
-            text = [...clone.querySelectorAll('h1, h2, h3, h4, p, li, td, th, label, .card, [class*="title"], [class*="value"]')]
-                .filter(el => !el.closest('#nxa-dock') && el.offsetParent !== null)
-                .map(el => el.innerText.replace(/\s+/g, ' ').trim()).filter(Boolean);
-            text = [...new Set(text)].join('\n').slice(0, 2200);
-        } catch (e) {}
-        if (!text) text = (clone.innerText || '').replace(/\n{2,}/g, '\n').slice(0, 2200);
+        const text = visibleText(3000);
         return { url: location.pathname.split('/').pop() || 'home.html', title: document.title, elements: lines, text,
             scroll: `${Math.round(scrollY)} of ${Math.max(0, document.documentElement.scrollHeight - innerHeight)}` };
     }
@@ -994,12 +986,17 @@
         });
         return best;
     }
-    function pageText() {
+    function pageText() { return visibleText(1400).replace(/\n/g, '. ').replace(/\.\s*\./g, '.'); }
+    // Everything a person can read on the page (not the menus or this assistant), top to bottom
+    function visibleText(max) {
         const root = document.querySelector('main') || document.body;
-        return [...root.querySelectorAll('h1, h2, h3, p, li, label, td, .card-title, [class*="value"]')]
-            .filter(el => !el.closest('#nxa-dock, nav, header, footer, .ehr-navbar') && el.offsetParent !== null)
-            .map(el => el.innerText.replace(/\s+/g, ' ').trim()).filter(x => x && x.length > 1)
-            .filter((x, i, a) => a.indexOf(x) === i).join('. ').slice(0, 1400);
+        let txt = root.innerText || '';
+        root.querySelectorAll('#nxa-dock, .ehr-navbar, nav, header, footer, .nx-appbar, .nx-tabbar, .chat-panel').forEach(el => {
+            const t = (el.innerText || '').trim();
+            if (t && t.length > 3) txt = txt.split(t).join(' ');
+        });
+        return txt.split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean)
+            .filter((l, i, a) => a.indexOf(l) === i).join('\n').slice(0, max);
     }
     function setZoom(z) {
         prefs.zoom = Math.max(0.8, Math.min(1.6, Math.round(z * 10) / 10));
