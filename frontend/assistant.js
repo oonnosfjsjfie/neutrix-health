@@ -34,6 +34,9 @@
             detail: 'Detailed', voice: 'Voice', yes: 'Yes, do it', no: 'No', stop: 'Stop',
             stopped: 'Okay, I stopped.', cancelled: "Okay, I won't do that.", noMic: "Your browser can't use the microphone here. Please type instead.",
             micDenied: 'Microphone permission is off. Allow it, or type instead.', offline: "You're offline. I need the internet to answer.",
+            offlineLimited: "I'm offline, so I can only do simple things right now: open pages, read the page, scroll, tell you today's medicines, your next check-up, your exercises or the time. Everything else needs the internet.",
+            offlineNoMic: "Without internet I can't hear you on this browser. Type to me instead. I'll be able to hear you offline next time, after you turn the mic on once while online.",
+            offlineNoMicApp: "Without internet I can't hear you yet. In your phone's Google voice settings, download offline speech recognition for English, then I can hear you offline. Until then, type to me.",
             error: "Sorry, I couldn't reach the assistant. Please try again.", waking: 'Waking up the AI server, one moment…', tooMany: 'I stopped after several steps. Tell me what to do next.',
             chips: ['What can you do?', 'Open my medicine schedule', 'Read this page to me', 'Make the text bigger']
         },
@@ -44,7 +47,10 @@
             listening: 'കേൾക്കുന്നു…', thinking: 'ആലോചിക്കുന്നു…', speaking: 'സംസാരിക്കുന്നു…', working: 'പേജിൽ ചെയ്യുന്നു…', ready: 'തയ്യാർ',
             detail: 'വിശദമായി', voice: 'ശബ്ദം', yes: 'അതെ, ചെയ്യൂ', no: 'വേണ്ട', stop: 'നിർത്തുക',
             stopped: 'ശരി, നിർത്തി.', cancelled: 'ശരി, അത് ചെയ്യുന്നില്ല.', noMic: 'ഇവിടെ മൈക്ക് ഉപയോഗിക്കാൻ കഴിയില്ല. ടൈപ്പ് ചെയ്യുക.',
-            micDenied: 'മൈക്ക് അനുമതി ഓഫാണ്.', offline: 'ഇന്റർനെറ്റ് ഇല്ല.', error: 'ക്ഷമിക്കണം, വീണ്ടും ശ്രമിക്കുക.', waking: 'AI സെർവർ ഉണരുന്നു, ഒരു നിമിഷം…', tooMany: 'കുറച്ച് ഘട്ടങ്ങൾക്ക് ശേഷം നിർത്തി. അടുത്തത് പറയൂ.',
+            micDenied: 'മൈക്ക് അനുമതി ഓഫാണ്.', offline: 'ഇന്റർനെറ്റ് ഇല്ല.',
+            offlineLimited: 'ഇന്റർനെറ്റ് ഇല്ലാത്തതിനാൽ ലളിതമായ കാര്യങ്ങൾ മാത്രം: പേജുകൾ തുറക്കാം, പേജ് വായിക്കാം, ഇന്നത്തെ മരുന്നുകൾ, അടുത്ത പരിശോധന, വ്യായാമങ്ങൾ, സമയം.',
+            offlineNoMic: 'ഇന്റർനെറ്റ് ഇല്ലാതെ ഈ ബ്രൗസറിൽ എനിക്ക് കേൾക്കാൻ കഴിയില്ല. ടൈപ്പ് ചെയ്യുക.',
+            offlineNoMicApp: 'ഇന്റർനെറ്റ് ഇല്ലാതെ എനിക്ക് കേൾക്കാൻ കഴിയില്ല. ഫോണിലെ Google voice ക്രമീകരണങ്ങളിൽ ഓഫ്‌ലൈൻ സ്പീച്ച് ഡൗൺലോഡ് ചെയ്യുക. അതുവരെ ടൈപ്പ് ചെയ്യുക.', error: 'ക്ഷമിക്കണം, വീണ്ടും ശ്രമിക്കുക.', waking: 'AI സെർവർ ഉണരുന്നു, ഒരു നിമിഷം…', tooMany: 'കുറച്ച് ഘട്ടങ്ങൾക്ക് ശേഷം നിർത്തി. അടുത്തത് പറയൂ.',
             chips: ['എന്തൊക്കെ ചെയ്യാം?', 'മരുന്ന് ഷെഡ്യൂൾ തുറക്കൂ', 'ഈ പേജ് വായിച്ചു തരൂ']
         }
     };
@@ -426,7 +432,8 @@
         const two = code.slice(0, 2).toLowerCase();
         const fits = v => v.lang && v.lang.toLowerCase().startsWith(two);
         let saved = null;
-        try { saved = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}'); } catch (e) { saved = {}; }        const off = !navigator.onLine;
+        try { saved = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}'); } catch (e) { saved = {}; }
+        const off = !navigator.onLine;
         // Offline, voices that need the internet ("Google UK English Female", "… Online (Natural)") are silent or very slow
         const works = v => !off || (v.localService !== false && !/online|google/i.test(v.name));
         const keep = saved[two] && all.find(v => v.name === saved[two] && works(v));
@@ -480,7 +487,8 @@
         const all = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
         return all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_]GB/i.test(v.lang) && /libby|sonia|maisie|bella|hazel/i.test(v.name))
             || all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_]/i.test(v.lang) && /ava|emma|jenny|aria|michelle|neerja|natasha|clara/i.test(v.name)) || null;
-    }    // Phone app: the phone's British English woman's voice (Google's offline en-GB voices gba / gbc / gbg are women)
+    }
+    // Phone app: the phone's British English woman's voice (Google's offline en-GB voices gba / gbc / gbg are women)
     let appVoiceP = null;
     function appVoice() {
         if (!appVoiceP) appVoiceP = (async () => {
@@ -574,15 +582,15 @@
         try { if (curAudio) { curAudio.pause(); curAudio = null; } } catch (e) {}
         try { if (isApp && P.TextToSpeech) P.TextToSpeech.stop(); } catch (e) {}
         try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
-    }    // Emma's everyday phrases, saved once per device in her natural voice so she sounds the same offline
+    }
+    // Emma's everyday phrases, saved once per device in her natural voice so she sounds the same offline
     const WARM_KEY = 'nxVoiceWarm';
     let warming = false;
     function warmVoice() {
         if (warming || !navigator.onLine || !prefs.voice || lang() !== 'English') return;
-        try { if (localStorage.getItem(WARM_KEY) === VOICE_CACHE + '.1') return; } catch (e) {}
+        try { if (localStorage.getItem(WARM_KEY) === VOICE_CACHE + '.2') return; } catch (e) {}
         warming = true;
-        const E = T.English;
-        const phrases = [E.stopped, E.cancelled, E.micOn, E.micOff, E.tapToHear, E.offline, E.error, E.waking, E.tooMany,
+        const E = T.English;        const phrases = [E.stopped, E.cancelled, E.micOn, E.micOff, E.tapToHear, E.offline, E.offlineLimited, E.offlineNoMic, E.offlineNoMicApp, E.error, E.waking, E.tooMany,
             'Yes?', "I'm listening.", 'Go ahead.', 'Okay, cancelled.', 'Going back.', 'Refreshing.', 'Text is bigger.', 'Text is smaller.',
             'Back to normal size.', 'Mic off. Tap the mic when you need me.', 'Rating form is open.'];
         if (firstName()) phrases.push('Yes, ' + firstName() + '?');
@@ -597,7 +605,7 @@
                 }
                 if (!ok) break;
             }
-            if (ok) try { localStorage.setItem(WARM_KEY, VOICE_CACHE + '.1'); } catch (e) {}
+            if (ok) try { localStorage.setItem(WARM_KEY, VOICE_CACHE + '.2'); } catch (e) {}
             warming = false;
         })();
     }
@@ -645,13 +653,48 @@
     let listening = false, recog = null, discard = false, failCount = 0, restartTimer = null;
     function toggleMic() {
         prefs.mic = !prefs.mic;
-        savePrefs();
-        if (prefs.mic) { failCount = 0; liveStart().then(ok => { if (!ok) listen(); }); }
+        savePrefs();        if (prefs.mic) { failCount = 0; offlineMicSaid = false; prepareOfflineHearing(); liveStart().then(ok => { if (!ok) listen(); }); }
         else { liveStop(); discard = true; stopListening(); input.value = ''; }
         paint();
         live.textContent = prefs.mic ? t('micOn') : t('micOff');
         if (prefs.mic) add('note', t('micOn'));
+    }    // ---------- hearing without internet ----------
+    // Chrome / Edge normally send speech to an online service. Newer versions can recognise it on the device once the
+    // language pack is installed (needs a tap while online). The phone app uses the phone's own offline speech.
+    const SRC = () => window.SpeechRecognition || window.webkitSpeechRecognition;
+    const srLangs = () => lang() === 'Malayalam' ? ['ml-IN'] : ['en-IN', 'en-GB', 'en-US'];
+    let localLang = null, offlineMicSaid = false;
+    async function localHearing() {
+        const SR = SRC();
+        if (!SR || !SR.available) return null;
+        for (const l of srLangs()) {
+            try { if (await SR.available({ langs: [l], processLocally: true }) === 'available') return (localLang = l); } catch (e) {}
+        }
+        return null;
     }
+    // called from the mic button (a tap), while online: download the on-device language pack once
+    function prepareOfflineHearing() {
+        const SR = SRC();
+        if (isApp || !SR || !SR.available || !SR.install || !navigator.onLine) return;
+        (async () => {
+            for (const l of srLangs()) {
+                let st = 'unavailable';
+                try { st = await SR.available({ langs: [l], processLocally: true }); } catch (e) {}
+                if (st === 'available') return;
+                if (st === 'downloadable' || st === 'downloading') {
+                    try { await SR.install({ langs: [l], processLocally: true }); } catch (e) { console.warn('[assistant] offline hearing', e); }
+                    return;
+                }
+            }
+        })();
+    }
+    function offlineMic() {
+        if (!offlineMicSaid) { offlineMicSaid = true; reply(t(isApp ? 'offlineNoMicApp' : 'offlineNoMic')); }
+        paintMic();
+    }
+    addEventListener('online', () => { offlineMicSaid = false; if (prefs.mic) maybeListen(500); });
+    addEventListener('offline', () => { if (prefs.mic && !isApp) { stopListening(); maybeListen(300); } });
+
     function maybeListen(delay) {
         clearTimeout(restartTimer);
         restartTimer = setTimeout(() => { if (prefs.mic && !speaking && !listening && !leaving && !LV.on && !LV.connecting) listen(); }, delay || 300);
@@ -685,18 +728,21 @@
                 const perm = await P.SpeechRecognition.requestPermissions();
                 if (perm && perm.speechRecognition && perm.speechRecognition !== 'granted') { micBlocked(t('micDenied')); return; }
                 if (!prefs.mic || speaking) return;
-                listening = true; paintMic(); if (!busy) setMode('listening');
-                const r = await P.SpeechRecognition.start({ language: speechLang(), maxResults: 1, partialResults: false, popup: false });
+                listening = true; paintMic(); if (!busy) setMode('listening');                const r = await P.SpeechRecognition.start({ language: speechLang(), maxResults: 1, partialResults: false, popup: false });
                 done((r && r.matches && r.matches[0]) || '');
             } catch (e) {
+                if (!navigator.onLine && Date.now() - started < 4000) { listening = false; paintMic(); offlineMic(); maybeListen(8000); return; }
                 done('');
             }
             return;
-        }
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        }        const SR = SRC();
         if (!SR) { micBlocked(t('noMic')); input.focus(); return; }
+        const offline = !navigator.onLine;
+        if (offline && !(await localHearing())) { offlineMic(); return; }        // waits for the 'online' event
+        if (listening || !prefs.mic || speaking) return;
         recog = new SR();
-        recog.lang = speechLang();
+        recog.lang = offline ? localLang : speechLang();
+        if (offline) { try { recog.processLocally = true; } catch (e) {} }
         recog.interimResults = true;
         recog.maxAlternatives = 1;
         let finalText = '';
@@ -708,11 +754,10 @@
             }
             const said = (finalText + interim).trim();
             if (!discard && (WAKE.test(said) || awake())) input.value = said;     // show only what is for me
-        };
-        recog.onerror = e => {
+        };        recog.onerror = e => {
+            if (!navigator.onLine || e.error === 'network') { discard = true; recog = null; listening = false; offlineMic(); return; }
             if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { discard = true; micBlocked(t('micDenied')); }
-        };
-        recog.onend = () => done(finalText || input.value);
+        };        recog.onend = () => { if (!navigator.onLine && offlineMicSaid && !finalText) { listening = false; recog = null; paintMic(); return; } done(finalText || input.value); };
         try { recog.start(); listening = true; paintMic(); if (!busy) setMode('listening'); }
         catch (e) { listening = false; recog = null; paintMic(); maybeListen(1000); }
     }
@@ -961,11 +1006,63 @@
         }
         await sleep(300);
         return done.join('; ');
+    }    // ---------- offline answers from what is saved on this device ----------
+    function offlineAnswer(q) {
+        q = String(q || '').toLowerCase();
+        const ml = lang() === 'Malayalam';
+        const today = window.dayKey ? dayKey(new Date()) : '';
+        if (/\b(time|date|day is it|today'?s date)\b|സമയം|തീയതി/.test(q)) {
+            const d = new Date();
+            return (ml ? 'ഇപ്പോൾ ' : "It's ") + d.toLocaleTimeString(ml ? 'ml-IN' : 'en-IN', { hour: 'numeric', minute: '2-digit' }) + ', ' + d.toLocaleDateString(ml ? 'ml-IN' : 'en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) + '.';
+        }
+        if (/medicine|medication|tablet|pill|dose|drug|take today|മരുന്ന്|ഗുളിക/.test(q)) {
+            const sch = window.storeGet && storeGet('neutrixSchedule');
+            const doses = sch && window.dosesForDay ? dosesForDay(sch, today) : [];
+            if (!doses.length) return ml ? 'ഈ ഉപകരണത്തിൽ ഇന്നത്തെ മരുന്നുകൾ സേവ് ചെയ്തിട്ടില്ല.' : "I don't have today's medicines saved on this device yet.";
+            const slots = ['morning', 'afternoon', 'evening', 'night', 'unclear'], names = { morning: 'In the morning', afternoon: 'In the afternoon', evening: 'In the evening', night: 'At night', unclear: 'At a time to check' };
+            const ticks = (sch.ticks && sch.ticks[today]) || {};
+            const parts = slots.map(sl => {
+                const ds = doses.filter(d => (d.slot || 'unclear') === sl);
+                return ds.length ? `${names[sl]}: ${ds.map(d => `${d.medicine}${d.strength ? ' ' + d.strength : ''}${ticks[d.id] ? ' (taken)' : ''}`).join(', ')}.` : '';
+            }).filter(Boolean);
+            return `Today's medicines. ${parts.join(' ')}`;
+        }
+        if (/check[\s-]?ups?|appointment|follow[\s-]?up|next visit|review|പരിശോധന/.test(q)) {
+            const ck = window.storeGet && storeGet('neutrixCheckups');
+            const map = (ck && ck.content) || {};
+            const md = map[lang()] || map.English || '';
+            const next = md.split('\n').filter(l => /^###\s/.test(l)).map(l => {
+                const h = l.replace(/^###\s*(📅\s*)?/, '').replace(/\*\*/g, '').trim();
+                const m = h.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+                return m ? { iso: `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`, h } : null;
+            }).filter(x => x && x.iso >= today).sort((a, b) => a.iso.localeCompare(b.iso))[0];
+            if (!next) return ml ? 'ഈ ഉപകരണത്തിൽ വരാനിരിക്കുന്ന പരിശോധനകൾ സേവ് ചെയ്തിട്ടില്ല.' : "I don't have an upcoming check-up saved on this device.";
+            return (ml ? 'അടുത്ത പരിശോധന: ' : 'Your next check-up: ') + next.h.replace(/\s+[—–]\s+/, ', ') + '.';
+        }
+        if (/exercise|workout|walk|വ്യായാമം/.test(q)) {
+            const ex = window.storeGet && storeGet('neutrixExercises');
+            const list = ((ex && ex.exercises) || []).map(e => e[ml ? 'name_ml' : 'name_en'] || e.name_en || e.name).filter(Boolean);
+            if (!list.length) return ml ? 'ഈ ഉപകരണത്തിൽ വ്യായാമങ്ങൾ സേവ് ചെയ്തിട്ടില്ല.' : "I don't have your exercises saved on this device.";
+            return (ml ? 'നിങ്ങളുടെ വ്യായാമങ്ങൾ: ' : 'Your exercises: ') + list.join(', ') + '.';
+        }
+        if (/what happened|my (condition|diagnosis|report|problem|illness)|summary|രോഗം|റിപ്പോർട്ട്/.test(q)) {
+            const r = window.loadReport ? loadReport() : null;
+            const sum = r && r.summaries && (r.summaries[lang()] || r.summaries.English);
+            if (!sum) return null;
+            const plain = sum.split('\n').filter(l => !/^\s*#/.test(l)).join(' ').replace(/[#*_>`|]/g, ' ').replace(/\s+/g, ' ').trim();
+            const first = (plain.match(/[^.!?]+[.!?]/g) || [plain]).slice(0, 3).join(' ').trim();
+            return (ml ? 'നിങ്ങളുടെ റിപ്പോർട്ടിൽ നിന്ന്: ' : 'From your report: ') + first.slice(0, 400);
+        }
+        return null;
     }
 
     // ---------- one turn with the AI ----------
     async function ask(message, results, step) {
-        if (!navigator.onLine) { add('note', t('offline')); return; }
+        if (!navigator.onLine) {
+            if (results) { add('note', t('offline')); return; }
+            await reply(offlineAnswer(message) || t('offlineLimited'));
+            return;
+        }
         busy = true; stopFlag = false;
         setMode(results ? 'working' : 'thinking');
         let data;
