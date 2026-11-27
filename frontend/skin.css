@@ -815,3 +815,8 @@ body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
     .nx-nav .nx-nav-links .nx-nav-item:not(.active):hover::after, .nx-nav .nx-nav-links .nx-nav-item:not(.active):focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
 }
 @media (min-width: 901px) { .nx-nav .nx-nav-links { overflow: visible; } }
+/* More button when the current page is in the menu: same filled pill as the active tab, both themes */
+.nx-nav .nx-more .nx-more-btn.active,
+[data-theme="dark"] .nx-nav .nx-more .nx-more-btn.active { background: var(--text-primary); color: var(--bg-page); border-color: var(--text-primary); font-weight: 650; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); }
+.nx-nav .nx-more .nx-more-btn:not(.active),
+[data-theme="dark"] .nx-nav .nx-more .nx-more-btn:not(.active) { color: var(--text-primary); }
