@@ -857,7 +857,7 @@ langBtn.addEventListener('click', () => {
 const NX_LAYOUT = {
     English: {
         nav: { dashboard: 'Dashboard', upload: 'AI Summary', report: 'Reports', medplan: 'Medicines', schedule: 'Schedule',
-               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Ask Doctor', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website', body3d: '3D View', care: 'My Care', doctorcard: 'Doctor Card', family: 'Family', privacy: 'Privacy' },
+               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Ask Doctor', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website', body3d: '3D View', care: 'My Care', doctorcard: 'Doctor Card', family: 'Family Sharing', privacy: 'Privacy', progress: 'Progress Report' },
         hero: {
             issues:       ['MY MEDICAL ISSUES', 'Your recovery, one issue at a time.', 'Pick an issue to continue, or add a new one. Each issue keeps its own reports, plans and history.'],
             upload:       ['AI DISCHARGE SUMMARY', 'Upload. Understand. Recover.', 'Add your discharge summary, lab reports and pharmacy bills. Neutrix turns them into a simple summary.'],
@@ -882,7 +882,7 @@ const NX_LAYOUT = {
     },
     Malayalam: {
         nav: { dashboard: 'ഡാഷ്ബോർഡ്', upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്നുകൾ', schedule: 'ഷെഡ്യൂൾ',
-               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്', body3d: '3D വ്യൂ', care: 'എന്റെ പരിചരണം', doctorcard: 'ഡോക്ടർ കാർഡ്', family: 'കുടുംബം', privacy: 'സ്വകാര്യത' },
+               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്', body3d: '3D വ്യൂ', care: 'എന്റെ പരിചരണം', doctorcard: 'ഡോക്ടർ കാർഡ്', family: 'കുടുംബ പങ്കിടൽ', privacy: 'സ്വകാര്യത', progress: 'പുരോഗതി റിപ്പോർട്ട്' },
         hero: {
             issues:       ['എന്റെ ആരോഗ്യ പ്രശ്നങ്ങൾ', 'ഓരോ പ്രശ്നവും, ഓരോ ചുവടും.', 'തുടരാൻ ഒരു പ്രശ്നം തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ പുതിയത് ചേർക്കുക.'],
             upload:       ['AI ഡിസ്ചാർജ് സംഗ്രഹം', 'അപ്‌ലോഡ് ചെയ്യൂ. മനസ്സിലാക്കൂ.', 'ഡിസ്ചാർജ് സമ്മറി, ലാബ് റിപ്പോർട്ടുകൾ, ഫാർമസി ബില്ലുകൾ എന്നിവ ചേർക്കുക.'],
@@ -932,34 +932,94 @@ const NX_LAYOUT = {
         topBtn.classList.toggle('visible', window.scrollY > 400);
     }, { passive: true });
 
-    // Pill menu in the top bar
+    // Top bar menu: the main tabs (icon + name), and "More" for everything else
     const pills = document.createElement('nav');
-    pills.className = 'nx-nav-links';
+    pills.className = 'nx-nav';
+    pills.setAttribute('aria-label', 'Main');
     navbar.querySelector('.hospital-brand').insertAdjacentElement('afterend', pills);
 
+    const ICON = { dashboard: '🏠', upload: '✨', report: '📄', body3d: '🫀', medplan: '💊', checkups: '📅', care: '🛡️', improvements: '📈',
+        exercise: '🏃', tracking: '🩺', briefing: '💬', doctorcard: '🪪', family: '👨‍👩‍👧', progress: '📊', privacy: '🔒', issues: '📁', website: '🌐' };
+    const MORE_SUB = {
+        English: { upload: 'Upload reports, get the summary', body3d: 'Your body in 3D', improvements: 'Old vs new reports, test trends', exercise: 'Safe exercises with a coach',
+            doctorcard: 'One page + emergency QR', family: 'Share with family, or look after someone', progress: 'One report for your doctor', privacy: 'Your data and consent', more: 'More' },
+        Malayalam: { upload: 'റിപ്പോർട്ട് അപ്‌ലോഡ്, സംഗ്രഹം', body3d: 'നിങ്ങളുടെ ശരീരം 3D-യിൽ', improvements: 'പഴയതും പുതിയതും, ടെസ്റ്റ് ട്രെൻഡ്', exercise: 'കോച്ചിനൊപ്പം സുരക്ഷിത വ്യായാമം',
+            doctorcard: 'ഒരു പേജ് + എമർജൻസി QR', family: 'കുടുംബവുമായി പങ്കിടുക', progress: 'ഡോക്ടർക്കുള്ള റിപ്പോർട്ട്', privacy: 'നിങ്ങളുടെ ഡാറ്റയും സമ്മതവും', more: 'കൂടുതൽ' }
+    };
     function navItems() {
-        if (!inIssue) return [['issues', 'issues.html'], ['website', 'home.html']];
+        if (!inIssue) return { main: [['issues', 'issues.html'], ['website', 'home.html']], more: [['privacy', 'privacy.html']] };
         const hasReport = !!storeGet('neutrixReport');
         const hasProgress = loadFollowups().some(f => f.comparison);
-        const items = [['dashboard', 'index.html'], ['upload', 'summary.html']];        if (hasReport) items.push(['report', 'report.html'], ['body3d', 'body3d.html'], ['medplan', 'medplan.html'], ['checkups', 'checkups.html'], ['care', 'care.html']);
-        if (hasProgress) items.push(['improvements', 'improvements.html']);
         const ex = window.exerciseInfo && exerciseInfo();
-        if (ex && ex.exercises.length) items.push(['exercise', 'exercise.html']);
-        items.push(['tracking', 'tracking.html'], ['briefing', 'briefing.html']);
-        return items;
+        const main = [['dashboard', 'index.html']];
+        if (hasReport) main.push(['report', 'report.html'], ['medplan', 'medplan.html'], ['checkups', 'checkups.html'], ['care', 'care.html']);
+        else main.push(['upload', 'summary.html']);
+        main.push(['tracking', 'tracking.html'], ['briefing', 'briefing.html']);
+        const more = [];
+        if (hasReport) more.push(['upload', 'summary.html'], ['body3d', 'body3d.html']);
+        if (hasProgress) more.push(['improvements', 'improvements.html']);
+        if (ex && ex.exercises.length) more.push(['exercise', 'exercise.html']);
+        if (hasReport) more.push(['doctorcard', 'doctor-card.html']);
+        more.push(['family', 'family.html']);
+        if (hasReport) more.push(['progress', 'progress.html']);
+        more.push(['privacy', 'privacy.html']);
+        return { main, more };
     }
+    const isCurrent = key => key === (page === 'dashboard' ? 'dashboard' : page) || (key === 'medplan' && page === 'schedule') || (key === 'family' && page === 'family');
 
     function renderNav() {
-        const labels = L().nav;
+        const labels = L().nav, sub = MORE_SUB[window.neutrixLang] || MORE_SUB.English;
+        const { main, more } = navItems();
         pills.innerHTML = '';
-        const current = page === 'dashboard' ? 'dashboard' : page;
-        navItems().forEach(([key, href]) => {
+        const row = document.createElement('div');
+        row.className = 'nx-nav-links';
+        main.forEach(([key, href]) => {
             const a = document.createElement('a');
             a.href = href;
-            a.className = 'nx-nav-item' + ((key === current || (key === 'medplan' && page === 'schedule')) ? ' active' : '');
-            a.textContent = labels[key];
-            pills.appendChild(a);
+            a.className = 'nx-nav-item' + (isCurrent(key) ? ' active' : '');
+            if (isCurrent(key)) a.setAttribute('aria-current', 'page');
+            a.innerHTML = `<span class="nx-ic" aria-hidden="true">${ICON[key] || '•'}</span><span class="nx-lbl"></span>`;
+            a.querySelector('.nx-lbl').textContent = labels[key];
+            a.dataset.label = labels[key];
+            a.setAttribute('aria-label', labels[key]);
+            row.appendChild(a);
         });
+        pills.appendChild(row);
+        if (!more.length) return;
+        // "More": shows the current page's name when it lives in the menu
+        const cur = more.find(([k]) => isCurrent(k));
+        const wrap = document.createElement('div');
+        wrap.className = 'nx-more';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'nx-nav-item nx-more-btn' + (cur ? ' active' : '');
+        btn.setAttribute('aria-haspopup', 'true');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.innerHTML = `<span class="nx-ic" aria-hidden="true">${cur ? ICON[cur[0]] : '☰'}</span><span class="nx-lbl"></span><span class="nx-caret" aria-hidden="true">▾</span>`;
+        btn.querySelector('.nx-lbl').textContent = cur ? labels[cur[0]] : sub.more;
+        const panel = document.createElement('div');
+        panel.className = 'nx-more-panel';
+        panel.hidden = true;
+        more.forEach(([key, href]) => {
+            const a = document.createElement('a');
+            a.href = href;
+            a.className = 'nx-more-item' + (isCurrent(key) ? ' active' : '');
+            a.innerHTML = `<span class="nx-more-ic" aria-hidden="true">${ICON[key] || '•'}</span><span><b></b><small></small></span>`;
+            a.querySelector('b').textContent = labels[key];
+            a.querySelector('small').textContent = sub[key] || '';
+            panel.appendChild(a);
+        });
+        const open = on => {
+            if (on && innerWidth <= 900) panel.style.top = (btn.getBoundingClientRect().bottom + 8) + 'px';    // phones: full width under the bar
+            else panel.style.top = '';
+            panel.hidden = !on; btn.setAttribute('aria-expanded', String(on)); wrap.classList.toggle('open', on);
+        };
+        addEventListener('scroll', () => { if (!panel.hidden && innerWidth <= 900) open(false); }, { passive: true });
+        btn.addEventListener('click', e => { e.stopPropagation(); open(panel.hidden); });
+        document.addEventListener('click', e => { if (!wrap.contains(e.target)) open(false); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { open(false); btn.focus(); } });
+        wrap.append(btn, panel);
+        pills.appendChild(wrap);
     }
 
     // Centred hero heading above the page
