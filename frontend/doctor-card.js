@@ -96,7 +96,10 @@
         const SLOT_WORD = { morning: 'morning', afternoon: 'afternoon', evening: 'evening', night: 'night' };
         const meds = f.meds.slice(0, 14).map(m => [`${m.name.replace(/^(tab|cap|inj|syp|syr)\.?\s+/i, '')} ${m.strength}`.trim(),
             [m.dose, m.when.split(', ').map(w => SLOT_WORD[w] || '').filter(Boolean).join(' & ')].filter(Boolean).join(', ')]);
-        const cond = [f.problem, ...(f.summary ? [f.summary.split(/(?<=[.!?])\s/)[0]] : [])].filter(Boolean).join('. ').slice(0, 220);
+        // Short, clear condition: the profile's condition and the diagnoses the 3D body map found (not a summary sentence)
+        const bm = storeGet('neutrixBodyMap');
+        const found = ((bm && bm.data && bm.data.areas) || []).map(x => x.label).filter(Boolean);
+        const cond = [...new Set([p.condition, f.problem, ...found].map(x => String(x || '').trim()).filter(x => x && !/^(none|other|select)/i.test(x)))].join(', ').slice(0, 220);
         const d = { n: f.name, g: f.sex, a: f.age || '', b: p.dob || '', bg: f.blood, al: f.allergies, c: cond, m: meds, u: new Date().toISOString().slice(0, 10) };
         if (p.caregiverName || (p.caregiverPhone && p.caregiverPhone !== 'Not provided') || p.caregiverEmail)
             d.cg = { n: p.caregiverName || '', p: p.caregiverPhone && p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : '', e: p.caregiverEmail || '' };
