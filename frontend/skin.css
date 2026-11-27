@@ -669,7 +669,7 @@ body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
 .dc-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
 .dc-title { font-size: 20px; font-weight: 900; }
 .dc-sub { font-size: 12px; color: #555; margin-top: 4px; max-width: 520px; }
-.dc-qr-print svg { width: 110px; height: 110px; }
+.dc-qr-print svg { width: 160px; height: 160px; }
 .dc-id, .dc-t { width: 100%; border-collapse: collapse; margin: 10px 0 4px; }
 .dc-id th, .dc-id td, .dc-t th, .dc-t td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; vertical-align: top; color: #111; }
 .dc-id th, .dc-t th { background: #f3f4f6; font-size: 12px; white-space: nowrap; }
@@ -677,7 +677,7 @@ body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
 .dc-none { color: #666; font-style: italic; margin: 4px 0; }
 .dc-foot { margin-top: 18px; font-size: 11.5px; color: #555; border-top: 1px solid #ddd; padding-top: 8px; }
 .dc-qr { background: #fff; border-radius: 12px; padding: 10px; display: flex; justify-content: center; }
-.dc-qr svg { width: 100%; max-width: 240px; height: auto; }
+.dc-qr svg { width: 100%; max-width: 300px; height: auto; }
 @media (max-width: 640px) { .dc-paper { padding: 14px; } .dc-head { flex-direction: column; } .dc-id th, .dc-t th { white-space: normal; } }
 @media print {
     body[data-page="doctorcard"] * { visibility: hidden !important; }
@@ -744,3 +744,7 @@ body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
 .nx-has-hero .ehr-card:not(.chart-card) #cgView .card-header,
 .nx-has-hero .ehr-card:not(.chart-card) #pvView .card-header { display: flex; }
 .nxc-section .card-header h2, .nxh-section .card-header h2, .nxh-sent .card-header h2, #famOwner .card-header h2, #famWatch .card-header h2, #cgView .card-header h2, #pvView .card-header h2 { font-size: 20px; }
+.dc-qr { flex-direction: column; align-items: center; gap: 10px; }
+.dc-open { width: auto !important; margin: 0 !important; text-decoration: none; }
+.dc-qr-print { text-align: center; }
+.dc-qr-cap { font-size: 10px; color: #333; margin-top: 2px; }

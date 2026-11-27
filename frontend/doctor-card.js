@@ -90,6 +90,35 @@
         if (f.nextCheckup) lines.push(`Next check-up: ${f.nextCheckup}`);
         lines.push('From patient records in the Neutrix app. Verify with original documents.');
         return lines.join('\n').replace(/[^\x20-\x7E\n]/g, '').slice(0, 1100);
+    }    // Emergency card (emergency.html): the details go inside the link after "#" (never sent to a server)
+    function emergencyData(f) {
+        const p = profile();
+        const SLOT_WORD = { morning: 'morning', afternoon: 'afternoon', evening: 'evening', night: 'night' };
+        const meds = f.meds.slice(0, 14).map(m => [`${m.name.replace(/^(tab|cap|inj|syp|syr)\.?\s+/i, '')} ${m.strength}`.trim(),
+            [m.dose, m.when.split(', ').map(w => SLOT_WORD[w] || '').filter(Boolean).join(' & ')].filter(Boolean).join(', ')]);
+        const cond = [f.problem, ...(f.summary ? [f.summary.split(/(?<=[.!?])\s/)[0]] : [])].filter(Boolean).join('. ').slice(0, 220);
+        const d = { n: f.name, g: f.sex, a: f.age || '', b: p.dob || '', bg: f.blood, al: f.allergies, c: cond, m: meds, u: new Date().toISOString().slice(0, 10) };
+        if (p.caregiverName || (p.caregiverPhone && p.caregiverPhone !== 'Not provided') || p.caregiverEmail)
+            d.cg = { n: p.caregiverName || '', p: p.caregiverPhone && p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : '', e: p.caregiverEmail || '' };
+        Object.keys(d).forEach(k => { if (d[k] === '' || (Array.isArray(d[k]) && !d[k].length)) delete d[k]; });
+        return d;
+    }
+    const b64url = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    async function emergencyLink(d) {
+        const raw = new TextEncoder().encode(JSON.stringify(d));
+        let tag = 'j', bytes = raw;
+        try {
+            const cs = new CompressionStream('deflate-raw');
+            const z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(cs)).arrayBuffer());
+            if (z.length < raw.length) { tag = 'z'; bytes = z; }
+        } catch (e) {}
+        return location.origin + location.pathname.replace(/[^/]*$/, '') + 'emergency.html#' + tag + '.' + b64url(bytes);
+    }
+    function qrSvg(text) {
+        const qr = qrcode(0, 'M');
+        qr.addData(text, 'Byte');
+        qr.make();
+        return qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true, alt: 'QR code: emergency medical info' });
     }
 
     function render() {
@@ -97,8 +126,8 @@
         $('dcPdf').textContent = '⬇ ' + L('Download PDF', 'PDF ഡൗൺലോഡ്');
         $('dcPrint').textContent = '🖨 ' + L('Print', 'പ്രിന്റ്');
         $('dcNote').textContent = L('The card is in English so any doctor can read it.', 'ഏത് ഡോക്ടർക്കും വായിക്കാൻ കാർഡ് ഇംഗ്ലീഷിലാണ്.');
-        $('dcQrTitle').textContent = L('QR code for the doctor', 'ഡോക്ടർക്കുള്ള QR കോഡ്');
-        $('dcQrHint').textContent = L('The doctor scans this with any phone camera to get the main facts as text. Nothing is uploaded.', 'ഏത് ഫോൺ ക്യാമറ കൊണ്ടും സ്കാൻ ചെയ്ത് പ്രധാന വിവരങ്ങൾ ടെക്സ്റ്റായി ലഭിക്കും. ഒന്നും അപ്‌ലോഡ് ചെയ്യുന്നില്ല.');
+        $('dcQrTitle').textContent = L('Emergency QR code', 'എമർജൻസി QR കോഡ്');
+        $('dcQrHint').textContent = L('Anyone who scans this with a phone camera (ambulance staff, a new doctor) opens your emergency card: blood group, allergies, condition, daily medicines and caregiver. The details are inside the code itself, not stored online. Print it or keep it on your phone.', 'ഫോൺ ക്യാമറ കൊണ്ട് സ്കാൻ ചെയ്യുന്ന ആർക്കും (ആംബുലൻസ് ജീവനക്കാർ, പുതിയ ഡോക്ടർ) നിങ്ങളുടെ എമർജൻസി കാർഡ് കാണാം: രക്തഗ്രൂപ്പ്, അലർജി, രോഗം, മരുന്നുകൾ, പരിചാരകൻ. വിവരങ്ങൾ കോഡിനുള്ളിൽ തന്നെയാണ്, ഓൺലൈനിൽ സൂക്ഷിക്കുന്നില്ല.');
         const sec = (title, body) => body ? `<div class="dc-sec"><h3>${esc(title)}</h3>${body}</div>` : '';
         const none = t => `<p class="dc-none">${esc(t)}</p>`;
         const changes = f.change ? '<ul>' + [
@@ -123,18 +152,19 @@
             ${sec('Symptoms (last 14 days)', f.symptoms.length ? '<ul>' + f.symptoms.map(s => `<li>${esc(fmt(s.at))}: ${esc(s.text)}</li>`).join('') + '</ul>' : none('None recorded.'))}
             ${sec('Check-ups', (f.nextCheckup ? `<p>Next: <b>${esc(f.nextCheckup)}</b></p>` : '') + (f.missedCheckups.length ? `<p>Missed: ${esc(f.missedCheckups.join(', '))}</p>` : '') || none('None saved.'))}
             <p class="dc-foot">Neutrix organises and explains the patient's own records. It does not diagnose or prescribe.</p>`;
-        // QR code (screen + on the paper)
+        // QR code: opens the emergency medical card (screen + on the paper)
         const text = asText(f);
-        let svg = '';
-        try {
-            const qr = qrcode(0, 'L');
-            qr.addData(text);
-            qr.make();
-            svg = qr.createSvgTag({ cellSize: 3, margin: 2, scalable: true });
-        } catch (e) { console.warn('[doctor card] QR', e); }
-        $('dcQr').innerHTML = svg || `<p class="hint">${esc(L('QR code not available offline the first time.', 'ആദ്യ തവണ ഓഫ്‌ലൈനിൽ QR ലഭ്യമല്ല.'))}</p>`;
-        const pq = $('dcPaper').querySelector('.dc-qr-print');
-        if (pq && svg) pq.innerHTML = svg;
+        const qrBox = $('dcQr');
+        qrBox.innerHTML = `<p class="hint">${esc(L('Making the QR code…', 'QR കോഡ് ഉണ്ടാക്കുന്നു…'))}</p>`;
+        emergencyLink(emergencyData(f)).then(link => {
+            window.__nxEmergencyLink = link;
+            let svg = '';
+            try { svg = qrSvg(link); } catch (e) { console.warn('[doctor card] QR', e); }
+            qrBox.innerHTML = svg ? svg + `<a class="btn-secondary dc-open" href="${esc(link)}" target="_blank" rel="noopener">${esc(L('Open the emergency card', 'എമർജൻസി കാർഡ് തുറക്കുക'))}</a>`
+                : `<p class="hint">${esc(L('Could not make the QR code.', 'QR കോഡ് ഉണ്ടാക്കാനായില്ല.'))}</p>`;
+            const pq = $('dcPaper').querySelector('.dc-qr-print');
+            if (pq && svg) pq.innerHTML = svg + '<div class="dc-qr-cap">Scan for emergency info</div>';
+        });
         window.__nxDoctorCardText = text;
     }
 
