@@ -386,6 +386,7 @@
     // ---------- open / close ----------
     function open(fromClick) {
         state.open = true;
+        setTimeout(warmVoice, 6000);          // save her everyday phrases for offline (once per device)
         save();
         dock.classList.add('show');
         document.documentElement.classList.add('nxa-open');
@@ -425,17 +426,20 @@
         const two = code.slice(0, 2).toLowerCase();
         const fits = v => v.lang && v.lang.toLowerCase().startsWith(two);
         let saved = null;
-        try { saved = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}'); } catch (e) { saved = {}; }
-        const keep = saved[two] && all.find(v => v.name === saved[two]);
+        try { saved = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}'); } catch (e) { saved = {}; }        const off = !navigator.onLine;
+        // Offline, voices that need the internet ("Google UK English Female", "… Online (Natural)") are silent or very slow
+        const works = v => !off || (v.localService !== false && !/online|google/i.test(v.name));
+        const keep = saved[two] && all.find(v => v.name === saved[two] && works(v));
         if (keep) return keep;
-        const pool = all.filter(fits);
+        const pool = all.filter(v => fits(v) && works(v));
         if (!pool.length) return null;
         const exact = pool.filter(v => v.lang.toLowerCase() === code.toLowerCase());
         let v = null;
-        if (two === 'en') { for (const ok of PREFERRED) { v = pool.find(ok); if (v) break; } }
-        v = v || exact[0] || pool[0];
-        saved[two] = v.name;
-        try { localStorage.setItem(VOICE_KEY, JSON.stringify(saved)); } catch (e) {}
+        if (two === 'en') { for (const ok of PREFERRED) { v = pool.find(ok); if (v) break; } }        v = v || exact.filter(works)[0] || pool[0];
+        if (!off) {                                       // remember the online choice only; offline picks are for now
+            saved[two] = v.name;
+            try { localStorage.setItem(VOICE_KEY, JSON.stringify(saved)); } catch (e) {}
+        }
         return v;
     }
     if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
@@ -471,11 +475,32 @@
             cachePut(text, blob);
             return blob;
         } finally { clearTimeout(to); }
-    }
-    function naturalDeviceVoice() {
+    }    function naturalDeviceVoice() {
+        if (!navigator.onLine) return null;                // Edge's natural voices need the internet
         const all = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
         return all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_]GB/i.test(v.lang) && /libby|sonia|maisie|bella|hazel/i.test(v.name))
             || all.find(v => /Online \(Natural\)/i.test(v.name) && /en[-_]/i.test(v.lang) && /ava|emma|jenny|aria|michelle|neerja|natasha|clara/i.test(v.name)) || null;
+    }    // Phone app: the phone's British English woman's voice (Google's offline en-GB voices gba / gbc / gbg are women)
+    let appVoiceP = null;
+    function appVoice() {
+        if (!appVoiceP) appVoiceP = (async () => {
+            try {
+                const r = await P.TextToSpeech.getSupportedVoices();
+                const vs = (r && r.voices) || [];
+                const name = v => ((v.voiceURI || '') + ' ' + (v.name || '')).toLowerCase();
+                const gb = v => /en[-_]gb/i.test(v.lang || '') || /en-gb/.test(name(v));
+                const order = [
+                    v => gb(v) && /gb[acg]-local/.test(name(v)),
+                    v => gb(v) && /gb[acg]/.test(name(v)),
+                    v => gb(v) && /female|woman/.test(name(v)),
+                    v => gb(v) && v.localService !== false && !/male|gbb|gbd|rjs/.test(name(v)),
+                    v => gb(v) && !/male|gbb|gbd|rjs/.test(name(v))
+                ];
+                for (const ok of order) { const i = vs.findIndex(ok); if (i >= 0) return i; }
+            } catch (e) {}
+            return -1;
+        })();
+        return appVoiceP;
     }
     function playBlob(blob, my) {
         return new Promise(resolve => {
@@ -512,9 +537,21 @@
                 naturalDownUntil = Date.now() + 60000;      // try the natural voice again in a minute
                 console.warn('[assistant] natural voice not available, using the device voice', e);
             }
+        }        // No internet (or the natural voice is down): Emma's own voice still plays for phrases saved on this device
+        if (!edgeNatural) {
+            const parts = splitForSpeech(text);
+            const saved = await Promise.all(parts.map(cacheGet));
+            if (my !== speakId) return;
+            if (saved.every(Boolean)) {
+                for (const blob of saved) { await playBlob(blob, my); if (my !== speakId) return; }
+                return;
+            }
         }
         if (isApp && P.TextToSpeech) {
-            return P.TextToSpeech.speak({ text, lang: code.startsWith('en') ? 'en-GB' : code, rate: 1.05, pitch: 1.05, category: 'playback' }).catch(() => {});
+            const opts = { text, lang: code.startsWith('en') ? 'en-GB' : code, rate: 1.15, pitch: 1.05, category: 'playback' };
+            const vi = code.startsWith('en') ? await appVoice() : -1;
+            if (vi >= 0) opts.voice = vi;
+            return P.TextToSpeech.speak(opts).catch(() => P.TextToSpeech.speak({ text, lang: opts.lang, rate: 1.15, pitch: 1.05 }).catch(() => {}));
         }
         if (!('speechSynthesis' in window)) return Promise.resolve();
         return new Promise(resolve => {
@@ -522,8 +559,8 @@
             u.lang = code;
             const nat = code.startsWith('en') ? naturalDeviceVoice() : null;
             const v = nat || pickVoice(code);
-            if (v) u.voice = v;
-            u.rate = 1; u.pitch = nat ? 1 : 1.1;
+            if (v) u.voice = v;            // device voices are slow at normal speed: a little quicker sounds natural; pitch stays near normal
+            u.rate = nat ? 1.05 : 1.15; u.pitch = nat ? 1 : 1.05;
             u.onend = u.onerror = resolve;
             speechSynthesis.speak(u);
             setTimeout(resolve, 60000);
@@ -537,6 +574,32 @@
         try { if (curAudio) { curAudio.pause(); curAudio = null; } } catch (e) {}
         try { if (isApp && P.TextToSpeech) P.TextToSpeech.stop(); } catch (e) {}
         try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
+    }    // Emma's everyday phrases, saved once per device in her natural voice so she sounds the same offline
+    const WARM_KEY = 'nxVoiceWarm';
+    let warming = false;
+    function warmVoice() {
+        if (warming || !navigator.onLine || !prefs.voice || lang() !== 'English') return;
+        try { if (localStorage.getItem(WARM_KEY) === VOICE_CACHE + '.1') return; } catch (e) {}
+        warming = true;
+        const E = T.English;
+        const phrases = [E.stopped, E.cancelled, E.micOn, E.micOff, E.tapToHear, E.offline, E.error, E.waking, E.tooMany,
+            'Yes?', "I'm listening.", 'Go ahead.', 'Okay, cancelled.', 'Going back.', 'Refreshing.', 'Text is bigger.', 'Text is smaller.',
+            'Back to normal size.', 'Mic off. Tap the mic when you need me.', 'Rating form is open.'];
+        if (firstName()) phrases.push('Yes, ' + firstName() + '?');
+        (async () => {
+            let ok = true;
+            for (const p of phrases) {
+                for (const part of splitForSpeech(cleanForSpeech(p))) {
+                    if (!navigator.onLine) { ok = false; break; }
+                    if (await cacheGet(part)) continue;
+                    try { await naturalBlob(part); } catch (e) { ok = false; break; }
+                    await sleep(1500);                          // gently, one at a time
+                }
+                if (!ok) break;
+            }
+            if (ok) try { localStorage.setItem(WARM_KEY, VOICE_CACHE + '.1'); } catch (e) {}
+            warming = false;
+        })();
     }
     // Other parts of the site speak through this too, so it is always the same voice
     window.NxVoice = { speak: voiceSpeak, stop: voiceStop, pick: pickVoice };
