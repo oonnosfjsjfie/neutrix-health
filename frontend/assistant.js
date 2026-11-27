@@ -1141,7 +1141,11 @@
     }
 
     // ---------- Instant commands: done right here, no waiting for the AI ----------
-    const NAV = [
+    const NAV = [        ['care.html', /\b(my care|warning signs?|danger signs?|when to (go to|call|get) (hospital|help|emergency|ambulance)|emergency signs?|safety check|medicine safety|drug interactions?|interactions?|refills?|running (low|out)|diet( tips)?|food tips|what (should i|can i|to) eat)\b/],
+        ['doctor-card.html', /\b(doctor card|doctor summary|one ?page summary|summary for (the |my |a )?(new )?doctor|qr code|medical card)\b/],
+        ['caregiver.html', /\b(look(ing)? after|caregiver view|people i look after|family member'?s? (medicines|doses))\b/],
+        ['family.html', /\b(family( sharing)?|share with (my )?(family|son|daughter|carer|caregiver)|sharing code|caregiver)\b/],
+        ['privacy.html', /\b(privacy|consent|delete (all )?my data|my data)\b/],
         ['summary.html', /\b(ai summary|upload( my)?( \w+)? (reports?|discharge|bills?|documents?|files?|results?|papers?|prescriptions?)|scan( my)? (reports?|documents?)|discharge summary|summari[sz]e( my)? reports?)\b/],
         ['report.html', /\b(summary result|report result|my summary)\b/],
         ['schedule.html', /\b(medicine schedule|med schedule|schedule|medicine times?|pill times?|reminders?|time ?table)\b/],
@@ -1162,7 +1166,8 @@
     const PAGE_NAMES = { 'summary.html': 'AI Summary', 'report.html': 'your summary', 'schedule.html': 'your medicine schedule', 'medplan.html': 'your medicine plan',
         'checkups.html': 'your check-ups', 'tracking.html': 'the recovery tracker', 'improvements.html': 'your improvements', 'exercise.html': 'exercises',
         'briefing.html': 'Ask Doctor', 'progress.html': 'your progress report', 'body3d.html': 'the 3D body view', 'profile.html': 'your profile', 'issues.html': 'your medical issues',
-        'index.html': 'the dashboard', 'home.html': 'the Neutrix home page', 'get-app.html': 'the app download page' };
+        'index.html': 'the dashboard', 'home.html': 'the Neutrix home page', 'get-app.html': 'the app download page',
+        'care.html': 'My Care', 'doctor-card.html': 'your Doctor Card', 'family.html': 'Family Sharing', 'caregiver.html': 'the people you look after', 'privacy.html': 'Privacy and consent' };
     const GO_WORDS = /^(open|go( to)?|take me( to)?|show( me)?|bring up|pull up|launch|start|navigate( to)?|switch to|jump to|let'?s go( to)?|i (want|need|wanna|would like)( to)?( go to| see| open| check| look at| use)?|can (you|u) (open|show)( me)?|where('?s| is)|check)\b/;
     const here = () => location.pathname.split('/').pop() || 'home.html';
 

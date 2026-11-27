@@ -170,12 +170,16 @@ function renderCheckups(el, markdown) {
             sub.className = 'ck-sub';
             sub.textContent = datePart;
             main.appendChild(sub);
-        }
-        if (status) {
+        }        if (status) {
             const tag = document.createElement('span');
             tag.className = 'ck-status';
             tag.textContent = status;
             main.appendChild(tag);
+        }
+        if (window.NxCare && !older) {
+            const words = NxCare.keyWords(titlePart || '').filter(w => !/^(review|visit|test|check|follow|with|the|and|for|after)$/.test(w));
+            const terms = [m ? m[0] : '', words[0] || ''].filter(Boolean);
+            if (terms.length) { const sb = NxCare.sourceButton(heading, terms); sb.classList.add('ck-src'); main.appendChild(sb); }
         }
 
         const more = document.createElement('button');

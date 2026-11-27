@@ -857,7 +857,7 @@ langBtn.addEventListener('click', () => {
 const NX_LAYOUT = {
     English: {
         nav: { dashboard: 'Dashboard', upload: 'AI Summary', report: 'Reports', medplan: 'Medicines', schedule: 'Schedule',
-               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Ask Doctor', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website', body3d: '3D View' },
+               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Ask Doctor', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website', body3d: '3D View', care: 'My Care', doctorcard: 'Doctor Card', family: 'Family', privacy: 'Privacy' },
         hero: {
             issues:       ['MY MEDICAL ISSUES', 'Your recovery, one issue at a time.', 'Pick an issue to continue, or add a new one. Each issue keeps its own reports, plans and history.'],
             upload:       ['AI DISCHARGE SUMMARY', 'Upload. Understand. Recover.', 'Add your discharge summary, lab reports and pharmacy bills. Neutrix turns them into a simple summary.'],
@@ -871,6 +871,10 @@ const NX_LAYOUT = {
             exercise:     ['AI EXERCISE COACH', 'Move right. Recover stronger.', 'The exercises from your reports, with your camera checking each movement as you go.'],
             body3d:       ['3D VIEW', 'See inside. Understand more.', 'Your body in 3D, with the areas your report talks about lit up in red. Tap one to learn what happened there.'],
             progress:     ['OVERALL PROGRESS REPORT', 'Everything, in one report.', 'Your medicines, readings, exercise and reports, turned into one clear report for your doctor.'],
+            care:         ['MY CARE', 'Stay safe at home.', 'When to get help now, a safety check of your medicines, your week, refills and food tips.'],
+            doctorcard:   ['DOCTOR CARD', 'Everything a new doctor needs, on one page.', 'Your medicines, recent changes, test results, readings, symptoms and missed doses. Print it, save it as a PDF, or show the QR code.'],
+            family:       ['FAMILY SHARING', 'Let family help.', 'Share how the medicines are going with a son, daughter or carer, or look after someone who shared with you.'],
+            privacy:      ['PRIVACY & CONSENT', 'Your data, your choice.', 'What Neutrix keeps, where it goes, and how to delete it.'],
             admin:        ['ADMIN ACCESS', 'Neutrix admin.', 'Registered people (email and phone, for contact only), ratings and problem reports. Everything else stays private.']
         },
         footer: { app: 'PATIENT PORTAL', tools: 'RECOVERY TOOLS', help: 'HELP', note: 'Neutrix organizes and explains medical information. It does not diagnose, prescribe, or replace advice from a qualified doctor.',
@@ -878,7 +882,7 @@ const NX_LAYOUT = {
     },
     Malayalam: {
         nav: { dashboard: 'ഡാഷ്ബോർഡ്', upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്നുകൾ', schedule: 'ഷെഡ്യൂൾ',
-               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്', body3d: '3D വ്യൂ' },
+               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്', body3d: '3D വ്യൂ', care: 'എന്റെ പരിചരണം', doctorcard: 'ഡോക്ടർ കാർഡ്', family: 'കുടുംബം', privacy: 'സ്വകാര്യത' },
         hero: {
             issues:       ['എന്റെ ആരോഗ്യ പ്രശ്നങ്ങൾ', 'ഓരോ പ്രശ്നവും, ഓരോ ചുവടും.', 'തുടരാൻ ഒരു പ്രശ്നം തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ പുതിയത് ചേർക്കുക.'],
             upload:       ['AI ഡിസ്ചാർജ് സംഗ്രഹം', 'അപ്‌ലോഡ് ചെയ്യൂ. മനസ്സിലാക്കൂ.', 'ഡിസ്ചാർജ് സമ്മറി, ലാബ് റിപ്പോർട്ടുകൾ, ഫാർമസി ബില്ലുകൾ എന്നിവ ചേർക്കുക.'],
@@ -892,6 +896,10 @@ const NX_LAYOUT = {
             exercise:     ['AI വ്യായാമ സഹായി', 'ശരിയായി ചെയ്യൂ. വേഗം സുഖപ്പെടൂ.', 'നിങ്ങളുടെ റിപ്പോർട്ടുകളിലെ വ്യായാമങ്ങൾ, ഓരോ ചലനവും ക്യാമറ പരിശോധിക്കുന്നു.'],
             body3d:       ['3D വ്യൂ', 'ഉള്ളിലേക്ക് നോക്കൂ. കൂടുതൽ മനസ്സിലാക്കൂ.', 'റിപ്പോർട്ടിൽ പറയുന്ന ഭാഗങ്ങൾ ചുവപ്പിൽ കാണിക്കുന്ന നിങ്ങളുടെ 3D ശരീരം. കൂടുതൽ അറിയാൻ ടാപ്പ് ചെയ്യുക.'],
             progress:     ['മൊത്തം പുരോഗതി റിപ്പോർട്ട്', 'എല്ലാം, ഒരു റിപ്പോർട്ടിൽ.', 'മരുന്നുകൾ, റീഡിംഗുകൾ, വ്യായാമം, റിപ്പോർട്ടുകൾ — ഡോക്ടർക്കായി ഒരു വ്യക്തമായ റിപ്പോർട്ട്.'],
+            care:         ['എന്റെ പരിചരണം', 'വീട്ടിൽ സുരക്ഷിതരായിരിക്കൂ.', 'എപ്പോൾ ഉടൻ സഹായം തേടണം, മരുന്ന് സുരക്ഷാ പരിശോധന, ഈ ആഴ്ച, മരുന്ന് തീരുന്നത്, ഭക്ഷണ നിർദ്ദേശങ്ങൾ.'],
+            doctorcard:   ['ഡോക്ടർ കാർഡ്', 'പുതിയ ഡോക്ടർക്ക് വേണ്ടതെല്ലാം ഒരു പേജിൽ.', 'മരുന്നുകൾ, മാറ്റങ്ങൾ, ടെസ്റ്റ് ഫലങ്ങൾ, റീഡിംഗുകൾ, ലക്ഷണങ്ങൾ, വിട്ടുപോയ ഡോസുകൾ. പ്രിന്റ്, PDF, അല്ലെങ്കിൽ QR കോഡ്.'],
+            family:       ['കുടുംബവുമായി പങ്കിടൽ', 'കുടുംബം സഹായിക്കട്ടെ.', 'മരുന്നുകൾ എങ്ങനെ പോകുന്നുവെന്ന് മകനോ മകളോ പരിചാരകനോടോ പങ്കിടുക.'],
+            privacy:      ['സ്വകാര്യതയും സമ്മതവും', 'നിങ്ങളുടെ ഡാറ്റ, നിങ്ങളുടെ തീരുമാനം.', 'Neutrix എന്ത് സൂക്ഷിക്കുന്നു, എവിടെ പോകുന്നു, എങ്ങനെ ഇല്ലാതാക്കാം.'],
             admin:        ['അഡ്മിൻ ആക്സസ്', 'ന്യൂട്രിക്സ് അഡ്മിൻ.', 'രജിസ്റ്റർ ചെയ്തവർ (ബന്ധപ്പെടാൻ ഇമെയിലും ഫോണും മാത്രം), റേറ്റിംഗുകൾ, പ്രശ്ന റിപ്പോർട്ടുകൾ. മറ്റെല്ലാം സ്വകാര്യമായി തുടരും.']
         },
         footer: { app: 'രോഗി പോർട്ടൽ', tools: 'ടൂളുകൾ', help: 'സഹായം', note: 'ന്യൂട്രിക്സ് മെഡിക്കൽ വിവരങ്ങൾ ക്രമീകരിക്കുകയും വിശദീകരിക്കുകയും മാത്രം ചെയ്യുന്നു. ഇത് ഡോക്ടറുടെ ഉപദേശത്തിന് പകരമല്ല.',
@@ -933,8 +941,7 @@ const NX_LAYOUT = {
         if (!inIssue) return [['issues', 'issues.html'], ['website', 'home.html']];
         const hasReport = !!storeGet('neutrixReport');
         const hasProgress = loadFollowups().some(f => f.comparison);
-        const items = [['dashboard', 'index.html'], ['upload', 'summary.html']];
-        if (hasReport) items.push(['report', 'report.html'], ['body3d', 'body3d.html'], ['medplan', 'medplan.html'], ['checkups', 'checkups.html']);
+        const items = [['dashboard', 'index.html'], ['upload', 'summary.html']];        if (hasReport) items.push(['report', 'report.html'], ['body3d', 'body3d.html'], ['medplan', 'medplan.html'], ['checkups', 'checkups.html'], ['care', 'care.html']);
         if (hasProgress) items.push(['improvements', 'improvements.html']);
         const ex = window.exerciseInfo && exerciseInfo();
         if (ex && ex.exercises.length) items.push(['exercise', 'exercise.html']);
@@ -987,7 +994,7 @@ const NX_LAYOUT = {
         const link = (href, text) => `<a href="${href}">${text}</a>`;
         const toolLinks = inIssue
             ? [link('index.html', n.dashboard), link('summary.html', n.upload), link('report.html', n.report),
-               link('medplan.html', n.medplan), link('checkups.html', n.checkups)].concat(((window.exerciseInfo && exerciseInfo()) || { exercises: [] }).exercises.length ? [link('exercise.html', n.exercise)] : [], [link('tracking.html', n.tracking), link('briefing.html', n.briefing)]).join('')
+               link('medplan.html', n.medplan), link('checkups.html', n.checkups), link('care.html', n.care), link('doctor-card.html', n.doctorcard)].concat(((window.exerciseInfo && exerciseInfo()) || { exercises: [] }).exercises.length ? [link('exercise.html', n.exercise)] : [], [link('tracking.html', n.tracking), link('briefing.html', n.briefing)]).join('')
             : link('issues.html', n.issues);
         footer.innerHTML = `
             <div class="footer-container">
@@ -998,7 +1005,7 @@ const NX_LAYOUT = {
                     </div>
                     <div class="footer-col"><span class="col-title">${f.app}</span>${link('issues.html', n.issues)}${inIssue ? link('index.html', n.dashboard) : ''}</div>
                     <div class="footer-col"><span class="col-title">${f.tools}</span>${toolLinks}</div>
-                    <div class="footer-col"><span class="col-title">${f.help}</span>${link('home.html', f.website)}${link('home.html#safety', f.safety)}</div>
+                    <div class="footer-col"><span class="col-title">${f.help}</span>${link('home.html', f.website)}${link('home.html#safety', f.safety)}${link('privacy.html', n.privacy)}${inIssue ? link('family.html', n.family) : ''}</div>
                     <div class="footer-col nx-footer-note"><p>${f.note}</p></div>
                 </div>
                 <div class="footer-watermark">NEUTRIX HEALTH</div>
@@ -1026,4 +1033,38 @@ const NX_LAYOUT = {
     document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
     updateNav();
     applyLanguage(savedLang === 'Malayalam' ? 'Malayalam' : 'English');
+})();
+// ---------- One-time consent (after sign-in, once per account: 'neutrixConsent' syncs with the account) ----------
+(function consentOnce() {
+    const page = document.body && document.body.dataset.page;
+    if (!page || ['privacy', 'signin', 'home', 'admin'].includes(page)) return;
+    if (localStorage.getItem('neutrix_authenticated') !== 'true') return;
+    let ok = null;
+    try { ok = JSON.parse(localStorage.getItem('neutrixConsent') || 'null'); } catch (e) {}
+    if (ok && ok.v >= 1) return;
+    const ml = window.neutrixLang === 'Malayalam';
+    const L = (en, m) => (ml ? m : en);
+    const box = document.createElement('div');
+    box.className = 'nx-consent';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.innerHTML = `<div class="nx-consent-card">
+        <h2>🔒 ${L('Before you start', 'തുടങ്ങുന്നതിന് മുമ്പ്')}</h2>
+        <ul>
+            <li>${L('Neutrix explains your own reports and helps you follow your care. It is <b>not a doctor</b> and does not diagnose or prescribe.', 'Neutrix നിങ്ങളുടെ റിപ്പോർട്ടുകൾ വിശദീകരിക്കുന്നു. ഇത് <b>ഡോക്ടറല്ല</b>, രോഗനിർണ്ണയം നടത്തുന്നില്ല.')}</li>
+            <li>${L('Your reports, and what you say to Emma, are processed by <b>Google’s Gemini AI</b> to explain them to you. The AI can make mistakes: check with your doctor.', 'റിപ്പോർട്ടുകളും എമ്മയോട് പറയുന്നതും <b>Google Gemini AI</b> പ്രോസസ്സ് ചെയ്യുന്നു. AI-ക്ക് തെറ്റ് പറ്റാം.')}</li>
+            <li>${L('Your medical data is saved on your device and in your account, where only you can read it. Nothing is sold. You can delete everything at any time.', 'മെഡിക്കൽ ഡാറ്റ നിങ്ങൾക്ക് മാത്രം വായിക്കാവുന്ന രീതിയിൽ സൂക്ഷിക്കുന്നു. ഒന്നും വിൽക്കുന്നില്ല. എപ്പോഴും ഇല്ലാതാക്കാം.')}</li>
+        </ul>
+        <p><a href="privacy.html">${L('Read the full privacy page', 'മുഴുവൻ സ്വകാര്യതാ പേജ് വായിക്കുക')}</a></p>
+        <label><input type="checkbox" id="nxConsentTick"> ${L('I understand and agree', 'ഞാൻ മനസ്സിലാക്കി, സമ്മതിക്കുന്നു')}</label>
+        <button type="button" class="btn-primary" id="nxConsentOk" disabled>${L('Continue', 'തുടരുക')}</button>
+    </div>`;
+    document.body.appendChild(box);
+    const tick = box.querySelector('#nxConsentTick'), go = box.querySelector('#nxConsentOk');
+    tick.addEventListener('change', () => { go.disabled = !tick.checked; });
+    go.addEventListener('click', () => {
+        try { localStorage.setItem('neutrixConsent', JSON.stringify({ v: 1, at: new Date().toISOString() })); } catch (e) {}
+        box.remove();
+    });
+    setTimeout(() => tick.focus(), 50);
 })();

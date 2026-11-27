@@ -242,6 +242,30 @@ def body_map_route(req: BodyMapRequest):
         return JSONResponse({"error": str(e)[:300]}, status_code=503)
 
 
+class PillCheckRequest(BaseModel):
+    image: str            # data URL or base64 (jpeg / png / webp)
+    medicines: list = []  # "Atorvastatin 40 mg" ...
+
+
+@app.post("/api/pill-check")
+def pill_check_route(req: PillCheckRequest):
+    # Medicine photo check: read the printed label and compare it with the patient's medicine list
+    import base64
+    from services.pill_check import pill_check
+    m = re.match(r"^data:(image/(?:jpeg|png|webp));base64,(.*)$", req.image or "", re.S)
+    mime, b64 = (m.group(1), m.group(2)) if m else ("image/jpeg", req.image or "")
+    try:
+        data = base64.b64decode(b64, validate=False)
+    except Exception:
+        return JSONResponse({"error": "bad image"}, status_code=400)
+    if len(data) < 1000 or len(data) > 6_000_000:
+        return JSONResponse({"error": "image size"}, status_code=400)
+    try:
+        return pill_check(data, mime, [str(x) for x in req.medicines][:40])
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:300]}, status_code=503)
+
+
 class LabTrendsRequest(BaseModel):
     report: str
 

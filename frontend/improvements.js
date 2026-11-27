@@ -267,9 +267,15 @@ renderAll();
         html += '</div>';
         if (single.length) {
             html += `<div class="lt-single"><div class="lt-single-t">${esc(l.once)}</div><ul>${single.map(t => `<li><b>${esc(t.name)}</b>: ${esc(t.pts[0].value)} ${esc(t.unit)}${t.pts[0].date ? ' · ' + esc(day(t.pts[0].date)) : ''}${t.normal ? ` <span class="hint">(${esc(l.normal.replace('{r}', t.normal))})</span>` : ''}</li>`).join('')}</ul></div>`;
-        }
-        html += `<p class="hint" style="margin-top:10px">${esc(l.note)}</p>`;
+        }        html += `<p class="hint" style="margin-top:10px">${esc(l.note)}</p>`;
         box.innerHTML = html;
+        // "Where it says this": the report line with that test
+        if (window.NxCare) box.querySelectorAll('.lt-card').forEach((card, i) => {
+            const t = multi[i];
+            if (!t) return;
+            const last = t.pts[t.pts.length - 1];
+            card.querySelector('.lt-head').appendChild(NxCare.sourceButton(`${t.name}: ${last.value} ${t.unit}`, [t.name.split(/[\s(]/)[0], String(last.value).split('/')[0]]));
+        });
     }
     async function load() {
         failed = false; render();
@@ -288,5 +294,34 @@ renderAll();
     }
     box.classList.remove('hidden');
     if (data) render(); else load();
+    document.addEventListener('neutrix:langchange', render);
+})();
+
+
+// ---------- Home readings from the Recovery Tracker, as charts ----------
+(function homeReadings() {
+    const box = document.getElementById('homeReadings');
+    if (!box) return;
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    function render() {
+        const ml = neutrixLang === 'Malayalam';
+        const list = (storeGet('neutrixTracker') || []).slice(-30);
+        const day = iso => { try { return new Date(iso).toLocaleDateString(localeFor(), { day: 'numeric', month: 'short' }); } catch (e) { return iso; } };
+        const series = [];
+        const bp = list.map(r => ({ at: r.at, m: String(r.bp || '').match(/(\d{2,3})\s*\/\s*(\d{2,3})/) })).filter(x => x.m);
+        if (bp.length >= 2) series.push({ title: ml ? 'രക്തസമ്മർദ്ദം' : 'Blood pressure', unit: 'mmHg', labels: bp.map(x => day(x.at)),
+            series: [{ name: ml ? 'സിസ്റ്റോളിക്' : 'Systolic', values: bp.map(x => +x.m[1]) }, { name: ml ? 'ഡയസ്റ്റോളിക്' : 'Diastolic', values: bp.map(x => +x.m[2]) }] });
+        [['sugar', ml ? 'ഷുഗർ' : 'Blood sugar', 'mg/dL'], ['weight', ml ? 'ഭാരം' : 'Weight', 'kg'], ['temp', ml ? 'താപനില' : 'Temperature', '']].forEach(([k, n, u]) => {
+            const pts = list.map(r => ({ at: r.at, v: parseFloat(r[k]) })).filter(x => isFinite(x.v));
+            if (pts.length >= 2) series.push({ title: n, unit: u, labels: pts.map(x => day(x.at)), series: [{ name: n, values: pts.map(x => x.v) }] });
+        });
+        if (!series.length) { box.classList.add('hidden'); return; }
+        box.classList.remove('hidden');
+        box.innerHTML = `<div class="section-title">${esc(ml ? 'വീട്ടിലെ റീഡിംഗുകൾ' : 'Your home readings')}</div>
+            <p class="hint">${esc(ml ? 'റിക്കവറി ട്രാക്കറിൽ നിങ്ങൾ എഴുതിയ അളവുകൾ (അവസാന 30).' : 'The readings you wrote in the Recovery Tracker (last 30).')}</p>
+            <div class="lt-grid">${series.map(s => `<div class="lt-card"><div class="lt-head"><b>${esc(s.title)}</b><span class="nxh-muted">${esc(s.series.map(x => x.values[x.values.length - 1]).join('/'))} ${esc(s.unit)}</span></div>${window.NxCharts ? NxCharts.render({ type: 'line', title: s.title, unit: s.unit, labels: s.labels, series: s.series }) : ''}</div>`).join('')}</div>
+            <p class="hint"><a href="tracking.html">${esc(ml ? 'പുതിയ റീഡിംഗ് ചേർക്കുക' : 'Add a reading')}</a></p>`;
+    }
+    render();
     document.addEventListener('neutrix:langchange', render);
 })();

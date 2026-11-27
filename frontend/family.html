@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#000000">
+    <script src="pwa.js?v=20261125a" defer></script>
+    <script src="native-app.js?v=20261125c"></script>
+    <script src="app-shell.js?v=20261127c"></script>
+    <script src="assistant.js?v=20261127c" defer></script>
+    <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
+    <!-- Accounts + online saving (must load before issue-scope.js) -->
+    <script src="firebase-config.js?v=20261030c"></script>
+    <script src="neutrix-cloud.js?v=20261127c"></script>
+    <!-- Login check, per-issue data and the issue bar -->
+    <script src="issue-scope.js?v=20261127c"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutrix | Family Sharing</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pages.css">
+    <link rel="stylesheet" href="skin.css?v=20261127c">
+</head>
+<body data-page="family">
+
+    <nav class="ehr-navbar">
+        <div class="nav-container">
+            <div class="hospital-brand">
+                <div class="cross-icon">+</div>
+                <div class="brand-text">
+                    <span class="brand-title">NEUTRIX HEALTH</span>
+                    <span class="brand-sub" data-i18n="brandSub">Post-Discharge Patient Portal</span>
+                </div>
+            </div>
+            <div class="system-controls">
+                <button class="ctrl-btn" id="themeToggle" type="button">🌙 Dark Mode</button>
+                <button class="ctrl-btn" id="langToggle" type="button">🌐 മലയാളം</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="ehr-workspace">
+        <section class="ehr-card">
+            <div id="famOwner"></div>
+            <div class="nxc-section" id="famWatch"></div>
+        </section>
+
+        <aside class="ehr-card chart-card">
+            <div class="chart-header"><h3 id="famHowTitle"></h3><span class="mrn-badge">👨‍👩‍👧</span></div>
+            <ol class="info-list" id="famHow"></ol>
+            <div class="chart-divider"></div>
+            <div class="caregiver-alert-box">
+                <div class="caregiver-name" data-i18n="labelTitle"></div>
+                <div class="caregiver-phone" data-i18n="labelText"></div>
+            </div>
+            <footer class="ehr-disclaimer"><p data-i18n-html="notice"></p></footer>
+        </aside>
+    </main>
+
+    <script src="common.js?v=20261127c"></script>
+    <script src="account-menu.js?v=20261030e"></script>
+    <script src="history.js?v=20261126a"></script>
+    <script src="nx-care.js?v=20261127c"></script>
+    <script src="feedback.js?v=20261030c"></script>
+    <script src="family.js?v=20261127c"></script>
+    <script src="family-page.js?v=20261127c"></script>
+    <script src="chat.js?v=20261030c"></script>
+</body>
+</html>

@@ -32,6 +32,28 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
+    // ---------- Family sharing ----------
+    // The patient's device keeps a small summary at shares/{code} (doses taken, last 7 days, refills, alerts).
+    // Anyone signed in who knows the exact 10-character code can read it (codes can't be listed).
+    // Only the patient who made it can write or delete it.
+    match /shares/{code} {
+      allow get: if request.auth != null;
+      allow list: if false;
+      allow create, update: if request.auth != null
+        && code.matches('^[A-Z2-9]{10}$')
+        && request.resource.data.owner == request.auth.uid
+        && (resource == null || resource.data.owner == request.auth.uid)
+        && request.resource.data.keys().hasOnly(['owner', 'v', 'name', 'issue', 'day', 'due', 'taken', 'pending', 'week', 'pct', 'low', 'alerts', 'updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && request.resource.data.issue is string && request.resource.data.issue.size() <= 80
+        && request.resource.data.pending is list && request.resource.data.pending.size() <= 20
+        && request.resource.data.week is list && request.resource.data.week.size() <= 7
+        && request.resource.data.low is list && request.resource.data.low.size() <= 10
+        && request.resource.data.alerts is list && request.resource.data.alerts.size() <= 5
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
+    }
+
     // ---------- Ratings and problem reports ----------
     // Anyone (signed in or not) can send one; only admins can read or delete them.
     match /feedback/{id} {

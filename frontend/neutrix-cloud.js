@@ -296,6 +296,12 @@
             await auth.signOut();
         } catch (e) {}
         clearLocalData();
+    }    // "Delete all my data": forget everything on this device and sign out WITHOUT uploading anything first
+    // (the account's copy has already been deleted by the page)
+    async function forgetDevice() {
+        stopLive();
+        clearLocalData();
+        try { const { auth } = await init(); await auth.signOut(); } catch (e) {}
     }
 
     // ---------- Live sync: changes made on another device (website <-> app) arrive within seconds ----------
@@ -495,8 +501,8 @@
         currentUser,
         flush,
         pull,
-        afterSignIn,
-        signOut,
+        afterSignIn,        signOut,
+        forgetDevice,
         saveProfile,
         cachedProfile,
         signInUrl,

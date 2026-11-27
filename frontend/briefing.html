@@ -7,19 +7,19 @@
     <meta name="theme-color" content="#000000">
     <script src="pwa.js?v=20261125a" defer></script>
     <script src="native-app.js?v=20261125c"></script>
-    <script src="app-shell.js?v=20261126a"></script>
-    <script src="assistant.js?v=20261127b" defer></script>
+    <script src="app-shell.js?v=20261127c"></script>
+    <script src="assistant.js?v=20261127c" defer></script>
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts + online saving (must load before issue-scope.js) -->
     <script src="firebase-config.js?v=20261030c"></script>
-    <script src="neutrix-cloud.js?v=20261125a"></script>
+    <script src="neutrix-cloud.js?v=20261127c"></script>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261126h"></script>
+    <script src="issue-scope.js?v=20261127c"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Ask Doctor</title>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css?v=20261126h">
+    <link rel="stylesheet" href="skin.css?v=20261127c">
     <link rel="stylesheet" href="bobby-pages.css">
 </head>
 <body data-page="briefing" data-title-key="briefPageTitle">
@@ -97,7 +97,7 @@
                     <textarea class="modern-textarea" id="questions" rows="3" data-bt-ph="ph4" placeholder="List any queries about care adjustments, dosages, or side effects..."></textarea>
                 </div>
 
-                <label class="bb-include"><input type="checkbox" id="briefIncludeReports" checked> <span data-bt="includeReports">Add details from my reports (latest report, current medicines, recent medicine changes, next check-up)</span></label>
+                <label class="bb-include"><input type="checkbox" id="briefIncludeReports" checked> <span data-bt="includeReports">Add details from my reports and records (latest report, current medicines, recent changes, next check-up, symptoms, doses taken)</span></label>
                 <button id="createBriefBtn" type="submit" class="btn-primary action-btn" data-bt="createBtn">Create Doctor Message</button>
             </form>
             <!-- Every message sent to the doctor is kept here, like a sent-mail folder -->
@@ -141,11 +141,12 @@
 
     </main>
 
-    <script src="common.js?v=20261126h"></script>
+    <script src="common.js?v=20261127c"></script>
     <script src="account-menu.js?v=20261030e"></script>
     <script src="feedback.js?v=20261030c"></script>
     <script src="tracker&briefing.js"></script>
     <script src="history.js?v=20261126a"></script>
+    <script src="nx-care.js?v=20261127c"></script>
     <script>
         // ---------- Bobby's English / Malayalam text ----------
         const BT = {
@@ -179,7 +180,7 @@
                 tip2: 'Press "Create Doctor Message" and check the message.',
                 tip3: 'Type your doctor\'s email and press "Send to Doctor".',
                 toTracker: '📈 Recovery Tracker',
-                includeReports: 'Add details from my reports (latest report, current medicines, recent medicine changes, next check-up)',
+                includeReports: 'Add details from my reports and records (latest report, current medicines, recent changes, next check-up, symptoms, doses taken)',
                 sentTitle: 'Messages sent to your doctor', sentSub: 'Every message you sent, newest first.',
                 sentNone: 'No messages sent yet. Messages you send to your doctor are kept here.',
                 sentTo: 'To {to}', useAgain: 'Use this message again',
@@ -269,8 +270,15 @@
                     const h = l.replace(/^###\s*(📅\s*)?/, '').replace(/\*\*/g, '').trim();
                     const m = h.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
                     return m ? { iso: `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`, h } : null;
-                }).filter(x => x && x.iso >= today).sort((a, b) => a.iso.localeCompare(b.iso))[0];
-                if (next) out.push(`- Next check-up: ${next.h}`);
+                }).filter(x => x && x.iso >= today).sort((a, b) => a.iso.localeCompare(b.iso))[0];                if (next) out.push(`- Next check-up: ${next.h}`);
+            }
+            const since = Date.now() - 14 * 86400000;
+            const sym = (storeGet('neutrixSymptoms') || []).filter(x => new Date(x.at).getTime() >= since).slice(-6)
+                .map(x => `    • ${fmt(x.at)}: ${x.symptoms.join(', ')} (${x.severity})${x.note ? ': ' + x.note : ''}`);
+            if (sym.length) out.push('- Symptoms I logged (last 14 days):', ...sym);
+            if (window.NxCare) {
+                const a = NxCare.adherence(14);
+                if (a && a.pct != null) out.push(`- Medicines taken (last 14 days): ${a.pct}% of doses (${a.taken} of ${a.due})`);
             }
             return out;
         }

@@ -59,6 +59,11 @@ PAGES = {
     "exercise.html": "Exercise: safe exercises with a camera coach",
     "tracking.html": "Recovery Tracker: log blood pressure, sugar, symptoms and daily notes",
     "briefing.html": "Ask Doctor: write and send a message to the doctor (can add report details); every sent message is kept",
+    "care.html": "My Care: when to get help now (warning signs for the user's conditions + call 108 / 112), medicine safety check (unusual doses, same medicine twice, risky combinations), this week's doses, refills (tablets left, days left), food tips",
+    "doctor-card.html": "Doctor Card: one page for any doctor (medicines, recent changes, test results, home readings, symptoms, doses taken, check-ups) with PDF download, print and a QR code",
+    "family.html": "Family Sharing: the patient turns on sharing and gives a code to family",
+    "caregiver.html": "Looking after: a family member types a share code to see someone's doses, last 7 days, refills and alerts",
+    "privacy.html": "Privacy & consent: what is kept, what goes to Google's AI, and delete all my data",
     "progress.html": "Overall Progress Report",
     "body3d.html": "3D View: an interactive 3D human body with the problem areas from the report marked in red; tap one to learn what happened there; pick an earlier report and compare",
     "profile.html": "Patient Profile: name, age, contacts, doctor details",
@@ -104,7 +109,30 @@ Medical history (nothing is overwritten when a new report comes in; old versions
   doctor saw before.
 - Exercise: "Changes to your exercise list" shows exercises added or removed by newer reports.
 - My Improvements: "Your test results over time": each lab value from every report by date (e.g. HbA1c
-  9.2 -> 8.1) with a small chart and Better / Worse, copied exactly from the reports.
+  9.2 -> 8.1) with a small chart and Better / Worse, copied exactly from the reports. Also "Your home readings":
+  charts of BP, sugar, weight and temperature from the Recovery Tracker.
+
+Safety and daily care (added later):
+- "Where it says this" (🔎 button) on medicines, schedule doses, check-ups and test results: shows the exact line from
+  the user's own uploaded report, highlighted. If not found word for word, it says so and suggests checking the paper
+  report or asking the doctor. Suggest it whenever the user doubts what the app says.
+- My Care page (care.html): "When to get help now" with warning signs for the conditions in the report (heart attack,
+  heart failure, stroke BE FAST, diabetes low/high sugar, BP 180/120, kidneys, lungs, after surgery, bleeding on blood
+  thinners) and buttons to call 108 (ambulance) or 112. In an emergency tell the user to call 108 / 112 at once.
+  "Medicine safety check": unusual doses, the same medicine under two names, risky combinations (e.g. nitrate +
+  sildenafil, two blood thinners, painkillers with blood thinners). It never says to stop a medicine; always confirm
+  with the doctor or pharmacist. Also "This week" (percent of doses taken), "Refills" (type tablets left; warns 5 days
+  before running out) and "Food tips" only for conditions in the report.
+- Schedule: "Missed it? What to do" on doses whose time has passed (never take two doses together; check the leaflet or
+  ask the pharmacist), and "📷 Check a medicine with a photo": reads the printed label on a strip / box and says if it
+  matches a medicine in the schedule (never identifies loose pills).
+- Recovery Tracker: "Symptom diary": tap symptoms + how bad (mild / moderate / severe); serious ones show call buttons.
+- Doctor Card (doctor-card.html): one English page for any doctor, PDF / print / QR code.
+- Family Sharing (family.html): the patient turns it on and shares a 10-character code; family open "Looking after"
+  (caregiver.html), type the code and see today's doses (red if past time and not ticked), last 7 days, refills, alerts.
+  Only that summary is shared, never reports. It updates when doses are ticked; no push notifications.
+- Privacy & consent (privacy.html): what is kept, what goes to Google's Gemini AI, and "Delete all my data".
+- The dashboard shows alerts at the top: worrying readings, safety check items, medicines running low, warning signs.
 """
 
 SYSTEM = """You are "Emma", the AI assistant built into the Neutrix Health website: think of a film-style AI butler

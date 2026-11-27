@@ -602,3 +602,145 @@ body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
 .lt-card .nxc { margin: 8px 0 0; padding: 6px; border: 0; }
 .lt-card .nxc figcaption { display: none; }
 .lt-single { margin-top: 14px; } .lt-single-t { font-weight: 700; margin-bottom: 4px; } .lt-single ul { margin: 0; padding-left: 18px; line-height: 1.6; }
+
+/* ---------- My Care and safety helpers (nx-care.js) ---------- */
+.nxc-section { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+.nxc-section:first-of-type, #careWarn { margin-top: 0; padding-top: 0; border-top: 0; }
+.nxc-section:empty { display: none; }
+.nxc-urgent { border: 2px solid #dc2626; background: rgba(220, 38, 38, .08); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px; }
+.nxc-urgent b { color: #b91c1c; font-size: 16px; } [data-theme="dark"] .nxc-urgent b { color: #fca5a5; }
+.nxc-urgent p { margin: 6px 0; }
+.nxc-calls { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.nxc-call { display: inline-flex; align-items: center; gap: 6px; padding: 11px 18px; border-radius: 999px; font-weight: 800; text-decoration: none; background: #dc2626; color: #fff !important; font-size: 15px; }
+.nxc-call.alt { background: transparent; color: #dc2626 !important; border: 2px solid #dc2626; }
+[data-theme="dark"] .nxc-call.alt { color: #fca5a5 !important; border-color: #f87171; }
+.nxc-signs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 12px; margin: 10px 0; }
+.nxc-sign-group { border: 1px solid rgba(220, 38, 38, .35); border-left: 4px solid #dc2626; border-radius: var(--radius-md); padding: 10px 14px; background: var(--card-bg); }
+.nxc-sign-group h3 { margin: 0 0 6px; font-size: 15px; }
+.nxc-sign-group ul { margin: 0; padding-left: 18px; line-height: 1.5; font-size: 14px; }
+.nxc-issue { border-radius: var(--radius-md); padding: 10px 14px; margin: 8px 0; border: 1px solid #f59e0b; background: rgba(245, 158, 11, .08); }
+.nxc-issue.high { border-color: #dc2626; background: rgba(220, 38, 38, .07); }
+.nxc-issue p { margin: 4px 0 0; font-size: 14px; line-height: 1.45; }
+.nxc-ok { padding: 10px 14px; border-radius: var(--radius-md); background: rgba(22, 163, 74, .08); border: 1px solid rgba(22, 163, 74, .35); }
+.nxc-medlist { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.nxc-medlist li { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.nxc-src-btn { border: 1px solid var(--border-color); background: var(--pill-bg); color: var(--text-primary); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.nxc-src-btn:hover { border-color: var(--text-primary); }
+.nxc-modal { position: fixed; inset: 0; z-index: 2147483200; background: rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.nxc-modal-card { background: var(--card-bg, #fff); color: var(--text-primary, #111); border-radius: 16px; max-width: 560px; width: 100%; max-height: 85vh; overflow: auto; padding: 16px 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
+.nxc-modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.nxc-x { border: 0; background: var(--pill-bg); color: inherit; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 15px; }
+.nxc-what { font-weight: 700; margin: 8px 0; }
+.nxc-quote { border-left: 4px solid var(--text-primary); background: var(--pill-bg); border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 14px; line-height: 1.5; }
+.nxc-quote-src { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 4px; }
+.nxc-ctx { color: var(--text-muted); font-size: 13px; }
+.nxc-hit { font-weight: 600; }
+.nxc-hit mark, .nxc-ctx mark { background: #fde68a; color: #111; border-radius: 3px; padding: 0 2px; }
+.nxc-notfound { padding: 10px 12px; border-radius: 10px; background: rgba(245, 158, 11, .12); border: 1px solid #f59e0b; font-size: 14px; }
+.nxc-small { font-size: 12px; color: var(--text-muted); margin: 10px 0 0; }
+.nxc-pct { font-size: 22px; font-weight: 900; padding: 6px 14px; border-radius: 14px; background: var(--pill-bg); }
+.nxc-pct.good { color: #16a34a; } .nxc-pct.mid { color: #b45309; } .nxc-pct.low { color: #dc2626; }
+.nxc-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin: 10px 0; }
+.nxc-day { text-align: center; font-size: 12px; }
+.nxc-day.today .nxc-dl { font-weight: 800; }
+.nxc-bar { height: 80px; display: flex; align-items: flex-end; justify-content: center; }
+.nxc-bar > span { width: 26px; background: var(--pill-bg); border-radius: 6px; display: flex; align-items: flex-end; overflow: hidden; border: 1px solid var(--border-color); }
+.nxc-bar i { display: block; width: 100%; background: #16a34a; }
+.nxc-dl { margin-top: 4px; color: var(--text-muted); } .nxc-dn { font-weight: 700; }
+.nxc-refills { display: grid; gap: 8px; }
+.nxc-refill { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.nxc-refill.low { border-color: #f59e0b; background: rgba(245, 158, 11, .08); }
+.nxc-refill-st { font-size: 13px; margin-top: 3px; }
+.nxc-refill-in { display: flex; flex-direction: column; font-size: 12px; gap: 3px; }
+.nxc-refill-in input { width: 120px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary); font-size: 15px; }
+.nxc-tips { margin: 8px 0 0; padding-left: 20px; line-height: 1.6; }
+/* dashboard / schedule banners */
+.nxc-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-radius: var(--radius-md); margin: 0 0 14px; border: 1px solid var(--border-color); background: var(--card-bg); }
+.nxc-banner.red { border: 2px solid #dc2626; background: rgba(220, 38, 38, .07); }
+.nxc-banner.amber { border-color: #f59e0b; background: rgba(245, 158, 11, .08); }
+.nxc-banner a.btn-secondary { margin: 0; width: auto; }
+.nxc-missed-btn { border: 1px dashed #b45309; background: transparent; color: #b45309; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 6px; }
+[data-theme="dark"] .nxc-missed-btn { color: #fbbf24; border-color: #fbbf24; }
+/* Doctor card */
+.dc-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+.dc-actions .btn-primary, .dc-actions .btn-secondary { width: auto; margin: 0; }
+.dc-paper, .dc-pdf { background: #fff; color: #111; border: 1px solid #ddd; border-radius: 14px; padding: 22px 24px; font-size: 13.5px; line-height: 1.45; }
+.dc-paper h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; margin: 16px 0 6px; padding-bottom: 4px; border-bottom: 1.5px solid #111; color: #111; }
+.dc-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+.dc-title { font-size: 20px; font-weight: 900; }
+.dc-sub { font-size: 12px; color: #555; margin-top: 4px; max-width: 520px; }
+.dc-qr-print svg { width: 110px; height: 110px; }
+.dc-id, .dc-t { width: 100%; border-collapse: collapse; margin: 10px 0 4px; }
+.dc-id th, .dc-id td, .dc-t th, .dc-t td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; vertical-align: top; color: #111; }
+.dc-id th, .dc-t th { background: #f3f4f6; font-size: 12px; white-space: nowrap; }
+.dc-paper ul { margin: 4px 0; padding-left: 18px; }
+.dc-none { color: #666; font-style: italic; margin: 4px 0; }
+.dc-foot { margin-top: 18px; font-size: 11.5px; color: #555; border-top: 1px solid #ddd; padding-top: 8px; }
+.dc-qr { background: #fff; border-radius: 12px; padding: 10px; display: flex; justify-content: center; }
+.dc-qr svg { width: 100%; max-width: 240px; height: auto; }
+@media (max-width: 640px) { .dc-paper { padding: 14px; } .dc-head { flex-direction: column; } .dc-id th, .dc-t th { white-space: normal; } }
+@media print {
+    body[data-page="doctorcard"] * { visibility: hidden !important; }
+    body[data-page="doctorcard"] #dcPaper, body[data-page="doctorcard"] #dcPaper * { visibility: visible !important; }
+    #dcPaper { position: absolute; left: 0; top: 0; width: 100%; border: 0; }
+}
+/* Symptom diary */
+.sd-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+.sd-chip, .sd-sev { border: 1.5px solid var(--border-color); background: var(--card-bg); color: var(--text-primary); border-radius: 999px; padding: 7px 13px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.sd-chip.danger { border-color: rgba(220, 38, 38, .5); }
+.sd-chip.on, .sd-sev.on { background: var(--text-primary); color: var(--card-bg); border-color: var(--text-primary); }
+.sd-chip.danger.on { background: #dc2626; border-color: #dc2626; color: #fff; }
+.sd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.sd-lbl { font-weight: 700; font-size: 14px; margin-right: 4px; }
+.sd-note { margin-bottom: 10px; }
+.sd-save { width: auto !important; }
+.sd-save:disabled { opacity: .5; cursor: not-allowed; }
+.sd-list { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 6px; }
+.sd-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 14px; }
+.sd-tag { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--pill-bg); text-transform: uppercase; }
+.sd-tag.severe { background: #fee2e2; color: #991b1b; } .sd-tag.moderate { background: #fef3c7; color: #92400e; }
+.sd-del { border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 14px; }
+/* medicine photo check + dose tools */
+.pc-box { margin: 0 0 14px; }
+.pc-btn { width: auto !important; margin: 0 !important; }
+.pc-result:not(:empty) { margin-top: 10px; }
+.dose-tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.dose-tools .nxc-missed-btn { margin-top: 0; }
+/* Family sharing */
+.fam-preview { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 14px; margin: 8px 0 14px; }
+.fam-preview ul { margin: 6px 0; padding-left: 18px; line-height: 1.6; }
+.fam-on { width: auto !important; }
+.fam-code { font: 800 34px/1.1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em; padding: 16px; text-align: center; border: 2px dashed var(--text-primary); border-radius: 16px; margin: 10px 0 14px; user-select: all; }
+.fam-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.fam-actions .btn-secondary { width: auto; margin: 0; text-decoration: none; }
+.fam-add { display: flex; gap: 8px; margin: 6px 0 14px; }
+.fam-add input { max-width: 220px; text-transform: uppercase; letter-spacing: .08em; }
+.fam-cards { display: grid; gap: 12px; }
+.fam-card { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 14px; }
+.fam-card.warn { border-color: #f59e0b; }
+.fam-card-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.fam-today { margin: 6px 0; }
+/* Privacy page + consent */
+.pv-sec { margin: 18px 0; }
+.pv-sec h3 { margin: 0 0 6px; font-size: 16px; }
+.pv-sec ul { margin: 0; padding-left: 20px; line-height: 1.6; }
+.pv-danger { border: 1.5px solid #dc2626; border-radius: var(--radius-md); padding: 14px 16px; }
+.pv-confirm { display: flex; flex-direction: column; gap: 6px; font-weight: 600; margin: 10px 0; max-width: 260px; }
+.pv-del { width: auto !important; background: #dc2626 !important; border-color: #dc2626 !important; }
+.pv-del:disabled { opacity: .45; cursor: not-allowed; }
+.nx-consent { position: fixed; inset: 0; z-index: 2147483300; background: rgba(0, 0, 0, .6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.nx-consent-card { background: var(--card-bg, #fff); color: var(--text-primary, #111); border-radius: 18px; max-width: 520px; width: 100%; max-height: 90vh; overflow: auto; padding: 20px 22px; box-shadow: 0 20px 60px rgba(0, 0, 0, .4); }
+.nx-consent-card h2 { margin: 0 0 8px; font-size: 20px; }
+.nx-consent-card ul { padding-left: 20px; line-height: 1.55; margin: 8px 0 12px; }
+.nx-consent-card label { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; margin: 8px 0 14px; cursor: pointer; }
+.nx-consent-card label input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+.nx-consent-card .btn-primary { width: 100%; }
+.nx-consent-card .btn-primary:disabled { opacity: .45; }
+/* Section headings inside a page (not the page title, which the hero shows) stay visible */
+.nx-has-hero .ehr-card:not(.chart-card) .nxc-section .card-header,
+.nx-has-hero .ehr-card:not(.chart-card) .nxh-section .card-header,
+.nx-has-hero .ehr-card:not(.chart-card) .nxh-sent .card-header,
+.nx-has-hero .ehr-card:not(.chart-card) #famOwner .card-header,
+.nx-has-hero .ehr-card:not(.chart-card) #cgView .card-header,
+.nx-has-hero .ehr-card:not(.chart-card) #pvView .card-header { display: flex; }
+.nxc-section .card-header h2, .nxh-section .card-header h2, .nxh-sent .card-header h2, #famOwner .card-header h2, #famWatch .card-header h2, #cgView .card-header h2, #pvView .card-header h2 { font-size: 20px; }

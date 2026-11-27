@@ -64,9 +64,26 @@ function renderDay() {
 
     const ticks = ticksFor(viewKey);
     const list = document.getElementById('slotList');
-    list.innerHTML = '';
+    list.innerHTML = '';    const dayDoses = dosesForDay(schedule, viewKey);
 
-    const dayDoses = dosesForDay(schedule, viewKey);
+    // Today: safety check and refills that need attention (details on the My Care page)
+    if (window.NxCare && viewKey === todayKey) {
+        const issues = NxCare.safety(dayDoses);
+        const low = NxCare.refills().filter(r => r.low);
+        const L = NxCare.L;
+        if (issues.length) {
+            const b = el('div', 'nxc-banner ' + (issues.some(i => i.level === 'high') ? 'red' : 'amber'));
+            b.appendChild(el('span', '', '⚠️ ' + L(`Medicine safety check: ${issues.length} thing${issues.length === 1 ? '' : 's'} to confirm with your doctor or pharmacist`, `മരുന്ന് സുരക്ഷ: ഡോക്ടറോടോ ഫാർമസിസ്റ്റിനോടോ ഉറപ്പിക്കേണ്ട ${issues.length} കാര്യം`)));
+            const a = el('a', 'btn-secondary', L('See details', 'വിശദാംശങ്ങൾ')); a.href = 'care.html'; b.appendChild(a);
+            list.appendChild(b);
+        }
+        if (low.length) {
+            const b = el('div', 'nxc-banner amber');
+            b.appendChild(el('span', '', '🔁 ' + L(`Running low: ${low.map(r => `${r.name} (${r.daysLeft} day${r.daysLeft === 1 ? '' : 's'})`).join(', ')}`, `തീരാറായി: ${low.map(r => `${r.name} (${r.daysLeft} ദിവസം)`).join(', ')}`)));
+            const a = el('a', 'btn-secondary', L('Refills', 'റീഫിൽ')); a.href = 'care.html#careRefill'; b.appendChild(a);
+            list.appendChild(b);
+        }
+    }
 
     // Medicines changed on this day?
     const changed = scheduleVersions(schedule).some((v, i) => i > 0 && v.from === viewKey);
@@ -104,8 +121,18 @@ function renderDay() {
             const instr = [dose.dose, localized(dose, 'instruction')].filter(Boolean).join(' · ');
             if (instr) info.appendChild(el('div', 'dose-instr', instr));
             const purpose = localized(dose, 'purpose');
-            if (purpose) info.appendChild(el('div', 'dose-purpose', purpose));
-            if (dose.timing_assumed) info.appendChild(el('div', 'dose-warn', t('timingAssumed')));
+            if (purpose) info.appendChild(el('div', 'dose-purpose', purpose));            if (dose.timing_assumed) info.appendChild(el('div', 'dose-warn', t('timingAssumed')));
+            if (window.NxCare) {
+                const tools = el('div', 'dose-tools');
+                tools.appendChild(NxCare.sourceButton(`${dose.medicine} ${dose.strength || ''}`, [...NxCare.keyWords(dose.medicine).slice(0, 1), String(dose.strength || '').trim()].filter(Boolean)));
+                if (!takenAt && slotPassed(slot)) {
+                    const mb = el('button', 'nxc-missed-btn', NxCare.L('Missed it? What to do', 'വിട്ടുപോയോ? എന്ത് ചെയ്യണം'));
+                    mb.type = 'button';
+                    mb.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); NxCare.showMissed(dose); });
+                    tools.appendChild(mb);
+                }
+                info.appendChild(tools);
+            }
             row.appendChild(info);
 
             if (takenAt) {
@@ -124,16 +151,24 @@ function renderDay() {
     document.getElementById('downloadStatus').textContent = downloadMsgKey ? t(downloadMsgKey) : '';
 }
 
+// Has this time of day already gone by on the day being looked at? (for "Missed it?")
+function slotPassed(slot) {
+    if (viewKey < todayKey) return true;
+    if (viewKey > todayKey) return false;
+    const h = new Date().getHours();
+    return { morning: h >= 12, afternoon: h >= 16, evening: h >= 21 }[slot] || false;
+}
+
 function toggleDose(id, checked) {
     if (viewKey > todayKey) return;
     if (!schedule.ticks[viewKey]) schedule.ticks[viewKey] = {};
     if (checked) {
         schedule.ticks[viewKey][id] = new Date().toISOString();
-    } else {
-        delete schedule.ticks[viewKey][id];
+    } else {        delete schedule.ticks[viewKey][id];
     }
     save();
     renderAll();
+    if (window.NxFamily) NxFamily.update();          // family sharing: keep what they see up to date
 }
 
 // ---------- Sidebar ----------

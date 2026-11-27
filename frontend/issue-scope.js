@@ -32,7 +32,10 @@
         'neutrixHistory',
         'neutrixBodyMap',
         'neutrixCheckupStatus',
-        'neutrixLabTrends'
+        'neutrixLabTrends',
+        'neutrixSymptoms',
+        'neutrixRefills',
+        'neutrixShare'
     ];
     const ACTIVE_KEY = 'neutrixActiveIssue';
 
