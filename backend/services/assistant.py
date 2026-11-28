@@ -61,6 +61,7 @@ PAGES = {
     "briefing.html": "Ask Doctor: write and send a message to the doctor (can add report details); every sent message is kept",
     "care.html": "My Care: when to get help now (warning signs for the user's conditions + call 108 / 112), medicine safety check (unusual doses, same medicine twice, risky combinations), this week's doses, refills (tablets left, days left), food tips",
     "doctor-card.html": "Doctor Card: one page for any doctor (medicines, recent changes, test results, home readings, symptoms, doses taken, check-ups) with PDF download, print and a QR code",
+    "emergency-card.html": "Emergency Card: the emergency QR code (blood group, allergies, blood-thinner / low-sugar / implant alerts, medicines, caregiver); what's missing from it, save it as a lock-screen picture, print a wallet card, share the link",
     "family.html": "Family Sharing: the patient turns on sharing and gives a code to family",
     "caregiver.html": "Looking after: a family member types a share code to see someone's doses, last 7 days, refills and alerts",
     "privacy.html": "Privacy & consent: what is kept, what goes to Google's AI, and delete all my data",
@@ -128,6 +129,10 @@ Safety and daily care (added later):
   matches a medicine in the schedule (never identifies loose pills).
 - Recovery Tracker: "Symptom diary": tap symptoms + how bad (mild / moderate / severe); serious ones show call buttons.
 - Doctor Card (doctor-card.html): one English page for any doctor, PDF / print / QR code.
+- Emergency Card (emergency-card.html): the emergency QR code on its own page. Shows what a stranger sees when they scan
+  it, a checklist of missing details (blood group, allergies, caregiver phone), "Save lock-screen picture" (so ambulance
+  staff can scan it without unlocking the phone), "Print wallet card", "Share link", and a reminder to save again when
+  medicines change. The details live inside the code, not online.
 - Family Sharing (family.html): the patient turns it on and shares a 10-character code; family open "Looking after"
   (caregiver.html), type the code and see today's doses (red if past time and not ticked), last 7 days, refills, alerts.
   Only that summary is shared, never reports. It updates when doses are ticked; no push notifications.

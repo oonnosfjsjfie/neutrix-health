@@ -40,7 +40,7 @@
             tools: 'Recovery tools', account: 'Account & settings',
             upload: 'AI Summary', report: 'Reports', medplan: 'Medicine plan', schedule: 'Daily medicines', checkups: 'Check-ups',
             improvements: 'Improvements', exercise: 'Exercise coach', tracking: 'Recovery tracker', briefing: 'Ask Doctor',
-            progress: 'Progress report', body3d: '3D View', care: 'My Care', doctorcard: 'Doctor card', family: 'Family sharing', privacy: 'Privacy & data', issues: 'My issues', profile: 'My profile', admin: 'Admin',
+            progress: 'Progress report', body3d: '3D View', care: 'My Care', doctorcard: 'Doctor card', emergencycard: 'Emergency card', family: 'Family sharing', privacy: 'Privacy & data', issues: 'My issues', profile: 'My profile', admin: 'Admin',
             dashboard: 'Home', language: 'മലയാളം', dark: 'Dark mode', light: 'Light mode', problem: 'Report a problem',
             signout: 'Sign out', signingOut: 'Signing out…', back: 'Back', close: 'Close', pickIssue: 'Pick a medical issue first.'
         },
@@ -49,7 +49,7 @@
             tools: 'റിക്കവറി ടൂളുകൾ', account: 'അക്കൗണ്ട് & ക്രമീകരണങ്ങൾ',
             upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്ന് പ്ലാൻ', schedule: 'ദിവസേനയുള്ള മരുന്നുകൾ', checkups: 'പരിശോധനകൾ',
             improvements: 'പുരോഗതി', exercise: 'വ്യായാമ സഹായി', tracking: 'റിക്കവറി ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക',
-            progress: 'പുരോഗതി റിപ്പോർട്ട്', body3d: '3D വ്യൂ', care: 'എന്റെ പരിചരണം', doctorcard: 'ഡോക്ടർ കാർഡ്', family: 'കുടുംബം', privacy: 'സ്വകാര്യത', issues: 'എന്റെ പ്രശ്നങ്ങൾ', profile: 'എന്റെ പ്രൊഫൈൽ', admin: 'അഡ്മിൻ',
+            progress: 'പുരോഗതി റിപ്പോർട്ട്', body3d: '3D വ്യൂ', care: 'എന്റെ പരിചരണം', doctorcard: 'ഡോക്ടർ കാർഡ്', emergencycard: 'എമർജൻസി കാർഡ്', family: 'കുടുംബം', privacy: 'സ്വകാര്യത', issues: 'എന്റെ പ്രശ്നങ്ങൾ', profile: 'എന്റെ പ്രൊഫൈൽ', admin: 'അഡ്മിൻ',
             dashboard: 'ഹോം', language: 'English', dark: 'ഡാർക്ക് മോഡ്', light: 'ലൈറ്റ് മോഡ്', problem: 'പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക',
             signout: 'സൈൻ ഔട്ട്', signingOut: 'സൈൻ ഔട്ട് ചെയ്യുന്നു…', back: 'പിന്നോട്ട്', close: 'അടയ്ക്കുക', pickIssue: 'ആദ്യം ഒരു പ്രശ്നം തിരഞ്ഞെടുക്കുക.'
         }
@@ -62,7 +62,7 @@
     const PAGE_BY_FILE = {
         'index.html': 'dashboard', 'summary.html': 'upload', 'report.html': 'report', 'medplan.html': 'medplan',
         'schedule.html': 'schedule', 'checkups.html': 'checkups', 'improvements.html': 'improvements', 'exercise.html': 'exercise',
-        'tracking.html': 'tracking', 'briefing.html': 'briefing', 'progress.html': 'progress', 'issues.html': 'issues', 'body3d.html': 'body3d', 'care.html': 'care', 'doctor-card.html': 'doctorcard', 'family.html': 'family', 'privacy.html': 'privacy',
+        'tracking.html': 'tracking', 'briefing.html': 'briefing', 'progress.html': 'progress', 'issues.html': 'issues', 'body3d.html': 'body3d', 'care.html': 'care', 'doctor-card.html': 'doctorcard', 'emergency-card.html': 'emergencycard', 'family.html': 'family', 'privacy.html': 'privacy',
         'profile.html': 'profile', 'admin.html': 'admin', 'signin.html': 'signin'
     };
     const page = PAGE_BY_FILE[page0] || 'other';
@@ -101,6 +101,15 @@
             <div class="nx-ab-titles"><div class="nx-ab-title"></div><div class="nx-ab-sub"></div></div>
             <button type="button" class="nx-ab-me" aria-label="${esc(t('more'))}"></button>`;
         document.body.prepend(bar);
+        // Emergency Card: red button at the top of Home and My Issues
+        if (['dashboard', 'issues'].includes(page)) {
+            const sos = document.createElement('a');
+            sos.className = 'nx-ab-sos';
+            sos.href = 'emergency-card.html';
+            sos.setAttribute('aria-label', t('emergencycard'));
+            sos.innerHTML = `<span aria-hidden="true">🆘</span><span>${esc(t('emergencycard'))}</span>`;
+            bar.insertBefore(sos, bar.querySelector('.nx-ab-me'));
+        }
         bar.querySelector('.nx-ab-back').addEventListener('click', goBack);
         bar.querySelector('.nx-ab-me').addEventListener('click', openMore);
 
@@ -197,6 +206,7 @@
             ['🩺', 'tracking', 'tracking.html'],
             ['✉️', 'briefing', 'briefing.html'],            ['📊', 'progress', 'progress.html'],
             hasReport() && ['🛡️', 'care', 'care.html'],
+            ['🆘', 'emergencycard', 'emergency-card.html'],
             hasReport() && ['🪪', 'doctorcard', 'doctor-card.html'],
             ['👨‍👩‍👧', 'family', 'family.html'],
             ['💬', 'chat', '#chat']
@@ -277,6 +287,9 @@
         background: linear-gradient(135deg, #a855f7, #3b82f6) !important; color: #fff !important; font: 700 16px system-ui, sans-serif; flex-shrink: 0; }
     .nx-ab-me img { width: 100%; height: 100%; object-fit: cover; }
     .nx-ab-me[hidden] { display: none; }
+    .nx-ab-sos { display: flex; align-items: center; gap: 5px; height: 36px; padding: 0 12px; border-radius: 999px; background: #dc2626; color: #fff !important;
+        text-decoration: none; font: 700 13px system-ui, sans-serif; white-space: nowrap; flex: none; margin-right: 8px; box-shadow: 0 4px 12px rgba(220, 38, 38, .3); }
+    @media (max-width: 360px) { .nx-ab-sos span:last-child { display: none; } .nx-ab-sos { padding: 0 10px; } }
 
     /* tab bar */
     .nx-tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4000; height: calc(68px + var(--nx-bottom)); padding: 0 4px var(--nx-bottom);

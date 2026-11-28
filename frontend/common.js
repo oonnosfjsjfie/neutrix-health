@@ -857,7 +857,7 @@ langBtn.addEventListener('click', () => {
 const NX_LAYOUT = {
     English: {
         nav: { dashboard: 'Dashboard', upload: 'AI Summary', report: 'Reports', medplan: 'Medicines', schedule: 'Schedule',
-               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Ask Doctor', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website', body3d: '3D View', care: 'My Care', doctorcard: 'Doctor Card', family: 'Family Sharing', privacy: 'Privacy', progress: 'Progress Report' },
+               checkups: 'Check-ups', improvements: 'Improvements', tracking: 'Tracker', briefing: 'Ask Doctor', exercise: 'Exercise', progress: 'Progress Report', issues: 'My Issues', website: 'Website', body3d: '3D View', care: 'My Care', doctorcard: 'Doctor Card', emergencycard: 'Emergency Card', family: 'Family Sharing', privacy: 'Privacy', progress: 'Progress Report' },
         hero: {
             issues:       ['MY MEDICAL ISSUES', 'Your recovery, one issue at a time.', 'Pick an issue to continue, or add a new one. Each issue keeps its own reports, plans and history.'],
             upload:       ['AI DISCHARGE SUMMARY', 'Upload. Understand. Recover.', 'Add your discharge summary, lab reports and pharmacy bills. Neutrix turns them into a simple summary.'],
@@ -872,6 +872,7 @@ const NX_LAYOUT = {
             body3d:       ['3D VIEW', 'See inside. Understand more.', 'Your body in 3D, with the areas your report talks about lit up in red. Tap one to learn what happened there.'],
             progress:     ['OVERALL PROGRESS REPORT', 'Everything, in one report.', 'Your medicines, readings, exercise and reports, turned into one clear report for your doctor.'],
             care:         ['MY CARE', 'Stay safe at home.', 'When to get help now, a safety check of your medicines, your week, refills and food tips.'],
+            emergencycard: ['EMERGENCY CARD', 'If something happens, they’ll know.', 'Your emergency QR code: anyone who scans it sees your blood group, allergies, medicines and who to call. Keep it on your lock screen and in your wallet.'],
             doctorcard:   ['DOCTOR CARD', 'Everything a new doctor needs, on one page.', 'Your medicines, recent changes, test results, readings, symptoms and missed doses. Print it, save it as a PDF, or show the QR code.'],
             family:       ['FAMILY SHARING', 'Let family help.', 'Share how the medicines are going with a son, daughter or carer, or look after someone who shared with you.'],
             privacy:      ['PRIVACY & CONSENT', 'Your data, your choice.', 'What Neutrix keeps, where it goes, and how to delete it.'],
@@ -882,7 +883,7 @@ const NX_LAYOUT = {
     },
     Malayalam: {
         nav: { dashboard: 'ഡാഷ്ബോർഡ്', upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്നുകൾ', schedule: 'ഷെഡ്യൂൾ',
-               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്', body3d: '3D വ്യൂ', care: 'എന്റെ പരിചരണം', doctorcard: 'ഡോക്ടർ കാർഡ്', family: 'കുടുംബ പങ്കിടൽ', privacy: 'സ്വകാര്യത', progress: 'പുരോഗതി റിപ്പോർട്ട്' },
+               checkups: 'പരിശോധനകൾ', improvements: 'പുരോഗതി', tracking: 'ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക', exercise: 'വ്യായാമം', progress: 'പുരോഗതി റിപ്പോർട്ട്', issues: 'എന്റെ പ്രശ്നങ്ങൾ', website: 'വെബ്സൈറ്റ്', body3d: '3D വ്യൂ', care: 'എന്റെ പരിചരണം', doctorcard: 'ഡോക്ടർ കാർഡ്', emergencycard: 'എമർജൻസി കാർഡ്', family: 'കുടുംബ പങ്കിടൽ', privacy: 'സ്വകാര്യത', progress: 'പുരോഗതി റിപ്പോർട്ട്' },
         hero: {
             issues:       ['എന്റെ ആരോഗ്യ പ്രശ്നങ്ങൾ', 'ഓരോ പ്രശ്നവും, ഓരോ ചുവടും.', 'തുടരാൻ ഒരു പ്രശ്നം തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ പുതിയത് ചേർക്കുക.'],
             upload:       ['AI ഡിസ്ചാർജ് സംഗ്രഹം', 'അപ്‌ലോഡ് ചെയ്യൂ. മനസ്സിലാക്കൂ.', 'ഡിസ്ചാർജ് സമ്മറി, ലാബ് റിപ്പോർട്ടുകൾ, ഫാർമസി ബില്ലുകൾ എന്നിവ ചേർക്കുക.'],
@@ -897,6 +898,7 @@ const NX_LAYOUT = {
             body3d:       ['3D വ്യൂ', 'ഉള്ളിലേക്ക് നോക്കൂ. കൂടുതൽ മനസ്സിലാക്കൂ.', 'റിപ്പോർട്ടിൽ പറയുന്ന ഭാഗങ്ങൾ ചുവപ്പിൽ കാണിക്കുന്ന നിങ്ങളുടെ 3D ശരീരം. കൂടുതൽ അറിയാൻ ടാപ്പ് ചെയ്യുക.'],
             progress:     ['മൊത്തം പുരോഗതി റിപ്പോർട്ട്', 'എല്ലാം, ഒരു റിപ്പോർട്ടിൽ.', 'മരുന്നുകൾ, റീഡിംഗുകൾ, വ്യായാമം, റിപ്പോർട്ടുകൾ — ഡോക്ടർക്കായി ഒരു വ്യക്തമായ റിപ്പോർട്ട്.'],
             care:         ['എന്റെ പരിചരണം', 'വീട്ടിൽ സുരക്ഷിതരായിരിക്കൂ.', 'എപ്പോൾ ഉടൻ സഹായം തേടണം, മരുന്ന് സുരക്ഷാ പരിശോധന, ഈ ആഴ്ച, മരുന്ന് തീരുന്നത്, ഭക്ഷണ നിർദ്ദേശങ്ങൾ.'],
+            emergencycard: ['എമർജൻസി കാർഡ്', 'എന്തെങ്കിലും സംഭവിച്ചാൽ, അവർ അറിയും.', 'നിങ്ങളുടെ എമർജൻസി QR കോഡ്: സ്കാൻ ചെയ്യുന്ന ആർക്കും രക്തഗ്രൂപ്പ്, അലർജി, മരുന്നുകൾ, ആരെ വിളിക്കണം എന്നിവ കാണാം. ലോക്ക് സ്ക്രീനിലും പഴ്സിലും സൂക്ഷിക്കുക.'],
             doctorcard:   ['ഡോക്ടർ കാർഡ്', 'പുതിയ ഡോക്ടർക്ക് വേണ്ടതെല്ലാം ഒരു പേജിൽ.', 'മരുന്നുകൾ, മാറ്റങ്ങൾ, ടെസ്റ്റ് ഫലങ്ങൾ, റീഡിംഗുകൾ, ലക്ഷണങ്ങൾ, വിട്ടുപോയ ഡോസുകൾ. പ്രിന്റ്, PDF, അല്ലെങ്കിൽ QR കോഡ്.'],
             family:       ['കുടുംബവുമായി പങ്കിടൽ', 'കുടുംബം സഹായിക്കട്ടെ.', 'മരുന്നുകൾ എങ്ങനെ പോകുന്നുവെന്ന് മകനോ മകളോ പരിചാരകനോടോ പങ്കിടുക.'],
             privacy:      ['സ്വകാര്യതയും സമ്മതവും', 'നിങ്ങളുടെ ഡാറ്റ, നിങ്ങളുടെ തീരുമാനം.', 'Neutrix എന്ത് സൂക്ഷിക്കുന്നു, എവിടെ പോകുന്നു, എങ്ങനെ ഇല്ലാതാക്കാം.'],
@@ -939,12 +941,12 @@ const NX_LAYOUT = {
     navbar.querySelector('.hospital-brand').insertAdjacentElement('afterend', pills);
 
     const ICON = { dashboard: '🏠', upload: '✨', report: '📄', body3d: '🫀', medplan: '💊', checkups: '📅', care: '🛡️', improvements: '📈',
-        exercise: '🏃', tracking: '🩺', briefing: '💬', doctorcard: '🪪', family: '👨‍👩‍👧', progress: '📊', privacy: '🔒', issues: '📁', website: '🌐' };
+        exercise: '🏃', tracking: '🩺', briefing: '💬', doctorcard: '🪪', emergencycard: '🆘', family: '👨‍👩‍👧', progress: '📊', privacy: '🔒', issues: '📁', website: '🌐' };
     const MORE_SUB = {
         English: { upload: 'Upload reports, get the summary', body3d: 'Your body in 3D', improvements: 'Old vs new reports, test trends', exercise: 'Safe exercises with a coach',
-            doctorcard: 'One page + emergency QR', family: 'Share with family, or look after someone', progress: 'One report for your doctor', privacy: 'Your data and consent', more: 'More' },
+            doctorcard: 'One page for any doctor, PDF', emergencycard: 'QR for lock screen and wallet', family: 'Share with family, or look after someone', progress: 'One report for your doctor', privacy: 'Your data and consent', more: 'More' },
         Malayalam: { upload: 'റിപ്പോർട്ട് അപ്‌ലോഡ്, സംഗ്രഹം', body3d: 'നിങ്ങളുടെ ശരീരം 3D-യിൽ', improvements: 'പഴയതും പുതിയതും, ടെസ്റ്റ് ട്രെൻഡ്', exercise: 'കോച്ചിനൊപ്പം സുരക്ഷിത വ്യായാമം',
-            doctorcard: 'ഒരു പേജ് + എമർജൻസി QR', family: 'കുടുംബവുമായി പങ്കിടുക', progress: 'ഡോക്ടർക്കുള്ള റിപ്പോർട്ട്', privacy: 'നിങ്ങളുടെ ഡാറ്റയും സമ്മതവും', more: 'കൂടുതൽ' }
+            doctorcard: 'ഡോക്ടർക്കുള്ള ഒരു പേജ്, PDF', emergencycard: 'ലോക്ക് സ്ക്രീനിനും പഴ്സിനും QR', family: 'കുടുംബവുമായി പങ്കിടുക', progress: 'ഡോക്ടർക്കുള്ള റിപ്പോർട്ട്', privacy: 'നിങ്ങളുടെ ഡാറ്റയും സമ്മതവും', more: 'കൂടുതൽ' }
     };
     function navItems() {
         if (!inIssue) return { main: [['issues', 'issues.html'], ['website', 'home.html']], more: [['privacy', 'privacy.html']] };
@@ -959,6 +961,7 @@ const NX_LAYOUT = {
         if (hasReport) more.push(['upload', 'summary.html'], ['body3d', 'body3d.html']);
         if (hasProgress) more.push(['improvements', 'improvements.html']);
         if (ex && ex.exercises.length) more.push(['exercise', 'exercise.html']);
+        more.push(['emergencycard', 'emergency-card.html']);
         if (hasReport) more.push(['doctorcard', 'doctor-card.html']);
         more.push(['family', 'family.html']);
         if (hasReport) more.push(['progress', 'progress.html']);
@@ -977,7 +980,7 @@ const NX_LAYOUT = {
         ['health', ['dashboard', 'report', 'upload', 'body3d', 'improvements', 'progress']],
         ['meds', ['medplan', 'care', 'checkups']],
         ['daily', ['tracking', 'exercise']],
-        ['people', ['briefing', 'doctorcard', 'family']],
+        ['people', ['emergencycard', 'briefing', 'doctorcard', 'family']],
         ['app', ['issues', 'website']]
     ];
     const GROUP_NAME = {
@@ -1151,7 +1154,26 @@ const NX_LAYOUT = {
         topBtn.textContent = f.top;
     }
 
+    // Emergency Card button at the top of My Issues and the dashboard
+    function renderSos() {
+        const controls = navbar.querySelector('.system-controls');
+        if (!controls || !['dashboard', 'issues', 'emergencycard'].includes(page)) return;
+        let a = controls.querySelector('.nx-sos-btn');
+        if (!a) {
+            a = document.createElement('a');
+            a.className = 'nx-sos-btn';
+            a.href = 'emergency-card.html';
+            controls.prepend(a);
+        }
+        if (page === 'emergencycard') a.classList.add('active');
+        const label = window.neutrixLang === 'Malayalam' ? 'എമർജൻസി കാർഡ്' : 'Emergency Card';
+        a.innerHTML = `<span aria-hidden="true">🆘</span><span class="nx-sos-lbl"></span>`;
+        a.querySelector('.nx-sos-lbl').textContent = label;
+        a.title = label; a.setAttribute('aria-label', label);
+    }
+
     function renderLayout() {
+        renderSos();
         renderNav();
         renderHero();
         renderFooter();

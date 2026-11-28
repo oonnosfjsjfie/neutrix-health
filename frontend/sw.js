@@ -8,20 +8,20 @@
 //   when the internet comes back.
 // - Never cached: the AI (/api/...), sign-in and the database (Firebase) — they need the internet.
 // =====================================================
-const VERSION = 'neutrix-v32';
+const VERSION = 'neutrix-v33';
 const CACHE = VERSION;
 
 // Saved on the first visit, so every page works offline even if it was never opened before
 const PAGES = [
     '/', 'home.html', 'signin.html', 'issues.html', 'index.html', 'summary.html', 'report.html', 'medplan.html',
     'schedule.html', 'checkups.html', 'improvements.html', 'exercise.html', 'tracking.html', 'briefing.html',
-    'progress.html', 'profile.html', 'body3d.html', 'care.html', 'doctor-card.html', 'family.html', 'caregiver.html', 'privacy.html', 'emergency.html', 'offline.html'
+    'progress.html', 'profile.html', 'body3d.html', 'care.html', 'doctor-card.html', 'family.html', 'caregiver.html', 'privacy.html', 'emergency.html', 'emergency-card.html', 'offline.html'
 ];
 const FILES = [
     'common.js', 'issue-scope.js', 'neutrix-cloud.js', 'firebase-config.js', 'account-menu.js', 'feedback.js', 'chat.js',
     'nx-charts.js', 'visuals.js', 'camera-capture.js', 'calendar-reminders.js', 'checkup-calendar.js', 'ai-sections.js', 'history.js',
     'summary.js', 'report.js', 'schedule.js', 'checkups.js', 'improvements.js', 'exercise.js', 'exercise-pose.js',
-    'issues.js', 'profile.js', 'signin.js', 'home.js', 'tracker&briefing.js', 'pwa.js', 'native-app.js', 'app-shell.js', 'assistant.js', 'nx-care.js', 'care.js', 'doctor-card.js', 'family.js', 'family-page.js', 'caregiver.js', 'privacy.js', 'symptoms.js', 'pill-photo.js', 'vendor/qrcode.js', 'body3d.js', 'body3d.css', 'assets/body/body.bin',
+    'issues.js', 'profile.js', 'signin.js', 'home.js', 'tracker&briefing.js', 'pwa.js', 'native-app.js', 'app-shell.js', 'assistant.js', 'nx-care.js', 'care.js', 'doctor-card.js', 'emergency-card.js', 'family.js', 'family-page.js', 'caregiver.js', 'privacy.js', 'symptoms.js', 'pill-photo.js', 'vendor/qrcode.js', 'body3d.js', 'body3d.css', 'assets/body/body.bin',
     'style.css', 'skin.css', 'pages.css', 'theme.css', 'home.css', 'bobby-pages.css', 'tracker&briefing.css',
     'manifest.webmanifest', 'assets/favicon.png', 'assets/neutrix-icon.png', 'assets/neutrix-logo.png',
     'assets/app/icon-192.png', 'assets/app/icon-512.png'

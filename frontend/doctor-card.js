@@ -91,24 +91,54 @@
         lines.push('From patient records in the Neutrix app. Verify with original documents.');
         return lines.join('\n').replace(/[^\x20-\x7E\n]/g, '').slice(0, 1100);
     }    // Emergency card (emergency.html): the details go inside the link after "#" (never sent to a server)
-    function emergencyData(f) {
+    // Emergency card: EVERYTHING the patient has (all medical issues, not only the open one),
+    // because in an emergency the doctor needs the whole picture.
+    function allIssues() {
+        const raw = k => { try { return JSON.parse(Storage.prototype.getItem.call(localStorage, k) || 'null'); } catch (e) { return null; } };
+        const list = raw('neutrixIssues') || [];
+        const today = dayKey(new Date());
+        return list.map(iss => {
+            const rec = raw('neutrixReport::' + iss.id), sch = raw('neutrixSchedule::' + iss.id), bm = raw('neutrixBodyMap::' + iss.id);
+            let meds = [];
+            if (rec && sch && sch.reportId === rec.createdAt && window.NxHist) {
+                try { meds = [...NxHist.group(dosesForDay(sch, today)).values()].map(x => ({ name: x.name, strength: x.strength, dose: x.dose, when: SLOTS.filter(sl => x.slots.has(sl)).join(', ') })); } catch (e) {}
+            }
+            let text = '';
+            try { text = rec ? (fullReportText(rec) || '') : ''; } catch (e) {}
+            const found = ((bm && bm.data && bm.data.areas) || []).map(x => x.label).filter(Boolean);
+            return { id: iss.id, title: String(iss.title || '').trim(), found, meds, text };
+        });
+    }
+    function emergencyData() {
         const p = profile();
+        const iss = allIssues();
         const SLOT_WORD = { morning: 'morning', afternoon: 'afternoon', evening: 'evening', night: 'night' };
-        const meds = f.meds.slice(0, 14).map(m => [`${m.name.replace(/^(tab|cap|inj|syp|syr)\.?\s+/i, '')} ${m.strength}`.trim(),
+        const seen = new Set(), all = [];
+        iss.forEach(i => i.meds.forEach(m => {
+            const k = (m.name + '|' + m.strength).toLowerCase().replace(/\s+/g, ' ');
+            if (!seen.has(k)) { seen.add(k); all.push(m); }
+        }));
+        const meds = all.slice(0, 20).map(m => [`${m.name.replace(/^(tab|cap|inj|syp|syr)\.?\s+/i, '')} ${m.strength}`.trim(),
             [m.dose, m.when.split(', ').map(w => SLOT_WORD[w] || '').filter(Boolean).join(' & ')].filter(Boolean).join(', ')]);
-        // Short, clear condition: the profile's condition and the diagnoses the 3D body map found (not a summary sentence)
-        const bm = storeGet('neutrixBodyMap');
-        const found = ((bm && bm.data && bm.data.areas) || []).map(x => x.label).filter(Boolean);
-        const cond = [...new Set([p.condition, f.problem, ...found].map(x => String(x || '').trim()).filter(x => x && !/^(none|other|select)/i.test(x)))].join(', ').slice(0, 220);
-        const d = { n: f.name, g: f.sex, a: f.age || '', b: p.dob || '', bg: f.blood, al: f.allergies, c: cond, m: meds, u: new Date().toISOString().slice(0, 10) };
-        // Short alerts for whoever helps in an emergency, only from the medicines and reports (never guessed)
-        const gen = f.meds.map(m => { try { return window.NxCare ? NxCare.generic(m.name) : ''; } catch (e) { return ''; } });
+        // Conditions: one line per medical issue ("Heart attack: NSTEMI, stent"), plus the profile's own conditions
+        const clean = x => String(x || '').trim();
+        const bad = x => !x || /^(none|other|select|not provided)/i.test(x);
+        const lines = iss.map(i => {
+            const extra = [...new Set(i.found.map(clean).filter(x => !bad(x) && x.toLowerCase() !== i.title.toLowerCase()))];
+            return i.title ? i.title + (extra.length ? ': ' + extra.join(', ') : '') : extra.join(', ');
+        }).filter(Boolean);
+        const pc = clean(p.condition || p.conditions);
+        if (!bad(pc) && !lines.some(l => l.toLowerCase().includes(pc.toLowerCase()))) lines.unshift(pc);
+        const cond = lines.join('\n').slice(0, 450);
+        const age = p.age || '';
+        const d = { n: p.patientName || '', g: p.gender || '', a: age, b: p.dob || '', bg: p.bloodGroup || '', al: p.allergies || 'Not recorded', c: cond, m: meds, u: new Date().toISOString().slice(0, 10) };
+        // Short alerts for whoever helps, only from the medicines and reports (never guessed)
+        const gen = all.map(m => { try { return window.NxCare ? NxCare.generic(m.name) : ''; } catch (e) { return ''; } });
         const thin = [...new Set(gen.filter(g => ['aspirin', 'clopidogrel', 'ticagrelor', 'prasugrel', 'warfarin', 'acenocoumarol', 'apixaban', 'rivaroxaban', 'dabigatran'].includes(g)))];
         const lowSugar = [...new Set(gen.filter(g => ['glimepiride', 'gliclazide', 'glibenclamide', 'glipizide'].includes(g)))]
-            .concat(f.meds.some(m => /insulin|mixtard|lantus|huminsulin|novomix|actrapid/i.test(m.name)) ? ['insulin'] : []);
-        let rtext = '';
-        try { rtext = (window.fullReportText ? fullReportText(loadReport() || {}) : '') || ''; } catch (e) {}
-        const devices = [['stent', /\bstent/i], ['pacemaker', /pacemaker/i], ['ICD (defibrillator)', /\bicd\b|defibrillator implant/i], ['artificial heart valve', /valve replacement|\b(avr|mvr)\b|prosthetic valve/i]]
+            .concat(all.some(m => /insulin|mixtard|lantus|huminsulin|novomix|actrapid/i.test(m.name)) ? ['insulin'] : []);
+        const rtext = iss.map(i => i.text).join('\n');
+        const devices = [['stent', /\bstent/i], ['pacemaker', /pacemaker/i], ['ICD (defibrillator)', /\bicd\b|defibrillator implant/i], ['artificial heart valve', /valve replacement|\b(avr|mvr)\b|prosthetic valve/i], ['joint replacement', /(knee|hip|joint) replacement|arthroplasty/i]]
             .filter(([, re]) => re.test(rtext)).map(([n]) => n);
         const w = [];
         if (thin.length) w.push(['bleed', thin.join(', ')]);
@@ -137,6 +167,14 @@
         qr.make();
         return qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true, alt: 'QR code: emergency medical info' });
     }
+
+    // Shared with the Emergency Card page
+    window.NxEmergency = {
+        profile, gather, qrSvg,
+        build: async () => { const d = emergencyData(); return { data: d, link: await emergencyLink(d), issues: allIssues() }; },
+        qr: text => { const q = qrcode(0, 'M'); q.addData(text, 'Byte'); q.make(); return q; }
+    };
+    if (!$('dcPaper')) return;            // Emergency Card page: only the helpers above
 
     function render() {
         const f = gather();
@@ -173,11 +211,11 @@
         const text = asText(f);
         const qrBox = $('dcQr');
         qrBox.innerHTML = `<p class="hint">${esc(L('Making the QR code…', 'QR കോഡ് ഉണ്ടാക്കുന്നു…'))}</p>`;
-        emergencyLink(emergencyData(f)).then(link => {
+        emergencyLink(emergencyData()).then(link => {
             window.__nxEmergencyLink = link;
             let svg = '';
             try { svg = qrSvg(link); } catch (e) { console.warn('[doctor card] QR', e); }
-            qrBox.innerHTML = svg ? svg + `<a class="btn-secondary dc-open" href="${esc(link)}" target="_blank" rel="noopener">${esc(L('Open the emergency card', 'എമർജൻസി കാർഡ് തുറക്കുക'))}</a>`
+            qrBox.innerHTML = svg ? svg + `<a class="btn-secondary dc-open" href="emergency-card.html">🆘 ${esc(L('Emergency Card: lock screen & wallet card', 'എമർജൻസി കാർഡ്: ലോക്ക് സ്ക്രീൻ & വാലറ്റ് കാർഡ്'))}</a>`
                 : `<p class="hint">${esc(L('Could not make the QR code.', 'QR കോഡ് ഉണ്ടാക്കാനായില്ല.'))}</p>`;
             const pq = $('dcPaper').querySelector('.dc-qr-print');
             if (pq && svg) pq.innerHTML = svg + '<div class="dc-qr-cap">Scan for emergency info</div>';
