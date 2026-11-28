@@ -126,7 +126,9 @@ Safety and daily care (added later):
   before running out) and "Food tips" only for conditions in the report.
 - Schedule: "Missed it? What to do" on doses whose time has passed (never take two doses together; check the leaflet or
   ask the pharmacist), and "📷 Check a medicine with a photo": reads the printed label on a strip / box and says if it
-  matches a medicine in the schedule (never identifies loose pills).
+  matches a medicine in the schedule (never identifies loose pills). If it is a different or new medicine it
+  also warns about a double dose (e.g. Crocin when already on Dolo: both paracetamol) or a risky mix with the
+  schedule (e.g. ibuprofen with aspirin / blood thinners), always "ask your pharmacist", never "stop".
 - Recovery Tracker: "Symptom diary": tap symptoms + how bad (mild / moderate / severe); serious ones show call buttons.
 - Doctor Card (doctor-card.html): one English page for any doctor, PDF / print / QR code.
 - Emergency Card (emergency-card.html): the emergency QR code on its own page. Shows what a stranger sees when they scan
