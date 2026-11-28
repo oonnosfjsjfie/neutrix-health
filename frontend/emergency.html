@@ -38,6 +38,11 @@
         .calls a.alt { background: transparent; border: 2px solid #dc2626; color: #ff8a95; }
         .foot { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 18px; }
         .empty { text-align: center; padding: 60px 10px; color: var(--muted); font-size: 17px; }
+        .callbox { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+        .callbox > div { background: var(--card); border: 1px solid var(--red-line); border-radius: 18px; padding: 20px; max-width: 400px; width: 100%; text-align: center; }
+        .callbox .num { font: 900 64px/1.1 ui-monospace, Menlo, Consolas, monospace; color: var(--red); letter-spacing: .06em; margin: 8px 0 2px; }
+        .callbox p { color: var(--muted); line-height: 1.5; }
+        .callbox button, .callbox a { display: inline-block; margin: 4px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: #fff; font: 600 15px Inter, system-ui, sans-serif; cursor: pointer; text-decoration: none; }
         .hidden { display: none; }
         @media print { body { background: #fff; color: #000; } .card { background: #fff; border-color: #999; } .card .val, h1 { color: #000; } .calls { display: none; } }
     </style>
@@ -94,6 +99,30 @@
         <div class="calls"><a href="tel:108">📞 Call 108 (ambulance)</a><a class="alt" href="tel:112">🆘 Call 112</a></div>
         <p class="foot">Shared by the patient from the Neutrix Health app${d.u ? ' · updated ' + esc(new Date(d.u).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })) : ''}.
         These are the patient's own records, not a doctor's note. Check medicines and allergies with the patient's doctor or hospital records when possible.</p>`;
+})();
+</script>
+<script>
+// A computer can't make calls; "tel:" links get passed to whatever Windows/macOS app is set (sometimes a Google app).
+// On computers show the number big instead. Phones open the dialer as normal.
+(function () {
+    const isPhone = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900);
+    document.addEventListener('click', e => {
+        const a = e.target.closest && e.target.closest('a[href^="tel:"]');
+        if (!a || isPhone() || a.dataset.force) return;
+        e.preventDefault();
+        const num = decodeURIComponent(a.getAttribute('href').slice(4));
+        const what = num === '108' ? 'Ambulance' : num === '112' ? 'All emergencies' : '';
+        const box = document.createElement('div');
+        box.className = 'callbox';
+        box.innerHTML = '<div role="dialog" aria-modal="true"><b>📞 Call from your phone</b><div class="num"></div>' + (what ? '<div><b>' + what + '</b></div>' : '') +
+            '<p>A computer can’t make phone calls. Dial this number on any phone now.' + (what ? ' It’s free and works even without balance.' : '') + '</p>' +
+            '<button type="button" class="cp">Copy number</button><a class="try" data-force="1">Try from this computer</a> <button type="button" class="cl">Close</button></div>';
+        box.querySelector('.num').textContent = num;
+        box.querySelector('.try').href = 'tel:' + num;
+        box.querySelector('.cp').onclick = async ev => { try { await navigator.clipboard.writeText(num); ev.target.textContent = 'Copied'; } catch (err) {} };
+        box.addEventListener('click', ev => { if (ev.target === box || ev.target.classList.contains('cl')) box.remove(); });
+        document.body.appendChild(box);
+    }, true);
 })();
 </script>
 </body>

@@ -1128,3 +1128,42 @@ const NX_LAYOUT = {
     });
     setTimeout(() => tick.focus(), 50);
 })();
+
+// ---------- Call buttons on computers ----------
+// A computer can't make phone calls: "tel:" links get handed to whatever app Windows / macOS has for calls
+// (sometimes a Google app, or nothing). On computers, show the number big and clear instead; phones and the
+// Neutrix app keep opening the dialer straight away.
+(function callLinksOnComputers() {
+    const isPhone = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
+        || (matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900);
+    document.addEventListener('click', e => {
+        const a = e.target.closest && e.target.closest('a[href^="tel:"]');
+        if (!a || isPhone() || a.classList.contains('nx-calltry')) return;
+        e.preventDefault();
+        const num = decodeURIComponent(a.getAttribute('href').slice(4));
+        const ml = window.neutrixLang === 'Malayalam';
+        const what = num === '108' ? (ml ? 'ആംബുലൻസ്' : 'Ambulance') : num === '112' ? (ml ? 'അടിയന്തര സഹായം' : 'All emergencies') : '';
+        const old = document.getElementById('nxCallBox');
+        if (old) old.remove();
+        const box = document.createElement('div');
+        box.id = 'nxCallBox';
+        box.className = 'nxc-modal';
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-modal', 'true');
+        box.innerHTML = `<div class="nxc-modal-card nx-callbox">
+            <div class="nxc-modal-head"><b>📞 ${ml ? 'നിങ്ങളുടെ ഫോണിൽ നിന്ന് വിളിക്കുക' : 'Call from your phone'}</b><button type="button" class="nxc-x" aria-label="${ml ? 'അടയ്ക്കുക' : 'Close'}">✕</button></div>
+            <div class="nx-callnum"></div>${what ? `<div class="nx-callwhat">${what}</div>` : ''}
+            <p>${ml ? 'കമ്പ്യൂട്ടറിന് ഫോൺ വിളിക്കാൻ കഴിയില്ല. ഏത് ഫോണിൽ നിന്നും ഈ നമ്പർ ഡയൽ ചെയ്യുക.' : 'A computer can’t make phone calls. Dial this number on any phone now.'}${num === '108' || num === '112' ? (ml ? ' ഇത് സൗജന്യമാണ്, ബാലൻസ് ഇല്ലാതെയും പ്രവർത്തിക്കും.' : ' It’s free and works even without balance.') : ''}</p>
+            <div class="nx-callrow"><button type="button" class="btn-secondary nx-callcopy">${ml ? 'നമ്പർ പകർത്തുക' : 'Copy number'}</button><a class="btn-secondary nx-calltry">${ml ? 'ഈ കമ്പ്യൂട്ടറിൽ നിന്ന് വിളിക്കാൻ ശ്രമിക്കുക' : 'Try calling from this computer'}</a></div>
+        </div>`;
+        box.querySelector('.nx-callnum').textContent = num;
+        box.querySelector('.nx-calltry').href = 'tel:' + num;
+                box.querySelector('.nx-callcopy').addEventListener('click', async ev => { try { await navigator.clipboard.writeText(num); ev.target.textContent = ml ? 'പകർത്തി' : 'Copied'; } catch (err) {} });
+        const close = () => { box.remove(); document.removeEventListener('keydown', onKey); };
+        const onKey = ev => { if (ev.key === 'Escape') close(); };
+        box.addEventListener('click', ev => { if (ev.target === box || ev.target.closest('.nxc-x')) close(); });
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(box);
+        box.querySelector('.nxc-x').focus();
+    }, true);
+})();
