@@ -1141,7 +1141,8 @@
     }
 
     // ---------- Instant commands: done right here, no waiting for the AI ----------
-    const NAV = [        ['care.html', /\b(my care|warning signs?|danger signs?|when to (go to|call|get) (hospital|help|emergency|ambulance)|emergency signs?|safety check|medicine safety|drug interactions?|interactions?|refills?|running (low|out)|diet( tips)?|food tips|what (should i|can i|to) eat)\b/],
+    const NAV = [        ['report.html#teachBack', /\b(quiz|test me|teach.?back|check (if|that) i understood|did i understand)\b/],
+        ['care.html', /\b(weather|air quality|aqi|heat|humid|pollution|my care|warning signs?|danger signs?|when to (go to|call|get) (hospital|help|emergency|ambulance)|emergency signs?|safety check|medicine safety|drug interactions?|interactions?|refills?|running (low|out)|diet( tips)?|food tips|what (should i|can i|to) eat)\b/],
         ['emergency-card.html', /\b(emergency (card|info|qr|id)|medical id|qr code|lock ?screen|wallet card|sos card)\b/],
         ['doctor-card.html', /\b(doctor card|doctor summary|one ?page summary|summary for (the |my |a )?(new )?doctor|medical card)\b/],
         ['caregiver.html', /\b(look(ing)? after|caregiver view|people i look after|family member'?s? (medicines|doses))\b/],

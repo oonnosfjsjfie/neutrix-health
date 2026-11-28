@@ -940,3 +940,42 @@ html.nx-app-ui body.nx-has-side { padding-left: 0 !important; }
 [data-theme="dark"] .dc-qr .dc-open { background: #1b1b1b !important; color: #fff !important; border-color: #333 !important; }
 .dc-qr .dc-open:hover { border-color: var(--text-primary) !important; }
 @media print { .dc-qr svg { box-shadow: none; } }
+
+/* ---------- Weather & air alerts (nx-env.js) ---------- */
+.nxe-setup { border: 1px dashed var(--border-color); border-radius: 16px; padding: 14px 16px; display: grid; gap: 10px; }
+.nxe-setup p { margin: 4px 0 0; color: var(--text-secondary); font-size: 14px; line-height: 1.45; }
+.nxe-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.nxe-row .btn-secondary { width: auto; margin: 0; }
+.nxe-town { display: flex; gap: 6px; flex: 1 1 240px; min-width: 0; }
+.nxe-town input { flex: 1; min-width: 0; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg, #fff); color: var(--text-primary); font: inherit; }
+.nxe-msg { margin: 0; font-size: 13px; color: var(--text-muted); }
+.nxe-msg:empty { display: none; }
+.nxe-now { font-weight: 700; font-size: 15px; margin: 4px 0 10px; white-space: pre-wrap; font-variant-numeric: tabular-nums; }
+.nxe-credit { font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+.nxe-credit a { color: inherit; }
+.nxc-ok-line { color: var(--text-secondary); }
+#careEnv .card-header .btn-secondary { width: auto; margin: 0; }
+
+/* ---------- Teach-back quiz (teachback.js) ---------- */
+#teachBack:empty { display: none; }
+.tb-card { margin-top: 18px; border: 1px solid var(--border-color); border-radius: 18px; padding: 16px 18px; display: grid; gap: 12px; background: var(--pill-bg); }
+.tb-head { display: flex; gap: 12px; align-items: flex-start; }
+.tb-head p { margin: 4px 0 0; color: var(--text-secondary); line-height: 1.45; }
+.tb-ic { font-size: 26px; line-height: 1; }
+.tb-card .btn-primary, .tb-card .btn-secondary { width: auto; justify-self: start; margin: 0; }
+.tb-progress { font: 800 11.5px Inter, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+.tb-q { font-size: 18px; font-weight: 700; line-height: 1.35; color: var(--text-primary); }
+.tb-opts { display: grid; gap: 8px; }
+.tb-opt { text-align: left; padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--border-color); background: var(--card-bg, #fff); color: var(--text-primary); font: 500 15.5px/1.4 Inter, system-ui, sans-serif; cursor: pointer; min-height: 48px; }
+.tb-opt:hover:not(:disabled) { border-color: var(--text-primary); }
+.tb-opt:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+.tb-opt:disabled { cursor: default; opacity: .75; }
+.tb-opt.right { border-color: #16a34a; background: rgba(22, 163, 74, .1); opacity: 1; }
+.tb-opt.wrong { border-color: #dc2626; background: rgba(220, 38, 38, .08); opacity: 1; }
+.tb-feedback:empty { display: none; }
+.tb-feedback { display: grid; gap: 10px; }
+.tb-good { font-weight: 700; color: #15803d; }
+[data-theme="dark"] .tb-good { color: #86efac; }
+.tb-explain { border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, .1); border-radius: 0 12px 12px 0; padding: 10px 14px; }
+.tb-explain p { margin: 6px 0 0; line-height: 1.5; color: var(--text-primary); }
+.tb-done { font-size: 34px; }

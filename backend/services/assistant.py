@@ -62,6 +62,7 @@ PAGES = {
     "care.html": "My Care: when to get help now (warning signs for the user's conditions + call 108 / 112), medicine safety check (unusual doses, same medicine twice, risky combinations), this week's doses, refills (tablets left, days left), food tips",
     "doctor-card.html": "Doctor Card: one page for any doctor (medicines, recent changes, test results, home readings, symptoms, doses taken, check-ups) with PDF download, print and a QR code",
     "emergency-card.html": "Emergency Card: the emergency QR code (blood group, allergies, blood-thinner / low-sugar / implant alerts, medicines, caregiver); what's missing from it, save it as a lock-screen picture, print a wallet card, share the link",
+    "report.html#teachBack": "Check you understood: a 3-question teach-back quiz on the Reports page about the user's own medicine times, warning signs and next check-up; a wrong answer is explained again more simply",
     "family.html": "Family Sharing: the patient turns on sharing and gives a code to family",
     "caregiver.html": "Looking after: a family member types a share code to see someone's doses, last 7 days, refills and alerts",
     "privacy.html": "Privacy & consent: what is kept, what goes to Google's AI, and delete all my data",
@@ -135,6 +136,12 @@ Safety and daily care (added later):
   it, a checklist of missing details (blood group, allergies, caregiver phone), "Save lock-screen picture" (so ambulance
   staff can scan it without unlocking the phone), "Print wallet card", "Share link", and a reminder to save again when
   medicines change. The details live inside the code, not online.
+- My Care also shows "Weather and air today": the user sets their town (or "Use my location") and gets heat,
+  humidity and air-quality (AQI) alerts tailored to the conditions in their reports (e.g. skip the outdoor walk when
+  the air is bad and they have a heart or lung condition). Data from Open-Meteo. Bad days also show on the dashboard.
+- 3D View: serious problems glow red, smaller ones amber, gone ones green; tapping an organ also shows its test results
+  from the reports (value, normal range, high/low, change since the last report, "Where it says this").
+- Reports page: "Check you understood", 3 quick questions (teach-back) from the user's own data.
 - Family Sharing (family.html): the patient turns it on and shares a 10-character code; family open "Looking after"
   (caregiver.html), type the code and see today's doses (red if past time and not ticked), last 7 days, refills, alerts.
   Only that summary is shared, never reports. It updates when doses are ticked; no push notifications.

@@ -35,7 +35,8 @@
         'neutrixLabTrends',
         'neutrixSymptoms',
         'neutrixRefills',
-        'neutrixShare'
+        'neutrixShare',
+        'neutrixTeachBack'
     ];
     const ACTIVE_KEY = 'neutrixActiveIssue';
 

@@ -111,6 +111,7 @@
             return;
         }
         renderUrgent(); renderWarn(); renderSafety(); renderWeek(); renderRefill(); renderDiet();
+        if (window.NxEnv) NxEnv.render($('careEnv'));
     }
     render();
     document.addEventListener('neutrix:langchange', render);

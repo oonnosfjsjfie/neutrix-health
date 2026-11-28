@@ -23,7 +23,7 @@
         English: {
             scan: 'NEUTRIX · BODY SCAN', s1: 'Mapping nervous system', s2: 'Building body', s3: 'Placing organs', s4: 'Reading your report',
             found: n => (n ? `${n} area${n > 1 ? 's' : ''} found` : 'No problem areas found'), tap: 'Tap to open 3D View',
-            noReport: 'Upload a report to see your body map', what: 'What happened', cause: 'What may have caused it', fix: 'What your report says to do',
+            noReport: 'Upload a report to see your body map', tests: 'Your test results', testsNote: 'Copied from your reports. Ask your doctor what they mean for you.', normalR: 'normal', hi: 'High', lo: 'Low', ok: 'In range', better: 'better', worse: 'worse', testsLoad: 'Reading the test results in your reports…', what: 'What happened', cause: 'What may have caused it', fix: 'What your report says to do',
             high: 'Main problem', medium: 'Watch', low: 'Minor', listen: 'Listen', close: 'Close', overview: 'Your body map',
             layers: 'Layers', nerves: 'Nerves', organs: 'Organs', skin: 'Body', vessels: 'Blood vessels', replay: 'Replay scan', reset: 'Reset view',
             hint: 'Drag to turn · scroll or pinch to zoom · tap a red area to learn more', pick: 'Tap a red area (or one below) to learn more.',
@@ -38,7 +38,7 @@
         Malayalam: {
             scan: 'NEUTRIX · ബോഡി സ്കാൻ', s1: 'നാഡീവ്യൂഹം', s2: 'ശരീരം', s3: 'അവയവങ്ങൾ', s4: 'റിപ്പോർട്ട് വായിക്കുന്നു',
             found: n => (n ? `${n} ഭാഗങ്ങൾ കണ്ടെത്തി` : 'പ്രശ്നമുള്ള ഭാഗങ്ങൾ ഇല്ല'), tap: '3D വ്യൂ തുറക്കാൻ ടാപ്പ് ചെയ്യുക',
-            noReport: 'ബോഡി മാപ്പ് കാണാൻ ഒരു റിപ്പോർട്ട് അപ്‌ലോഡ് ചെയ്യുക', what: 'എന്താണ് സംഭവിച്ചത്', cause: 'കാരണം എന്തായിരിക്കാം', fix: 'റിപ്പോർട്ട് പറയുന്നത്',
+            noReport: 'ബോഡി മാപ്പ് കാണാൻ ഒരു റിപ്പോർട്ട് അപ്‌ലോഡ് ചെയ്യുക', tests: 'നിങ്ങളുടെ ടെസ്റ്റ് ഫലങ്ങൾ', testsNote: 'റിപ്പോർട്ടുകളിൽ നിന്ന് പകർത്തിയത്. അർത്ഥം ഡോക്ടറോട് ചോദിക്കുക.', normalR: 'സാധാരണ', hi: 'കൂടുതൽ', lo: 'കുറവ്', ok: 'സാധാരണ പരിധിയിൽ', better: 'മെച്ചം', worse: 'മോശം', testsLoad: 'റിപ്പോർട്ടിലെ ടെസ്റ്റ് ഫലങ്ങൾ വായിക്കുന്നു…', what: 'എന്താണ് സംഭവിച്ചത്', cause: 'കാരണം എന്തായിരിക്കാം', fix: 'റിപ്പോർട്ട് പറയുന്നത്',
             high: 'പ്രധാന പ്രശ്നം', medium: 'ശ്രദ്ധിക്കുക', low: 'ചെറുത്', listen: 'കേൾക്കുക', close: 'അടയ്ക്കുക', overview: 'നിങ്ങളുടെ ബോഡി മാപ്പ്',
             layers: 'ലെയറുകൾ', nerves: 'നാഡികൾ', organs: 'അവയവങ്ങൾ', skin: 'ശരീരം', vessels: 'രക്തക്കുഴലുകൾ', replay: 'വീണ്ടും സ്കാൻ', reset: 'റീസെറ്റ്',
             hint: 'തിരിക്കാൻ വലിക്കുക · സൂം ചെയ്യുക · ചുവന്ന ഭാഗം ടാപ്പ് ചെയ്യുക', pick: 'കൂടുതൽ അറിയാൻ ഒരു ചുവന്ന ഭാഗം ടാപ്പ് ചെയ്യുക.',
@@ -179,7 +179,9 @@
     // =====================================================================
     // The 3D scene
     // =====================================================================
-    const CYAN = 0x38d8ff, NERVE = 0xffe58a, RED = 0xff2a3d, GREEN = 0x2ee59d;
+    const CYAN = 0x38d8ff, NERVE = 0xffe58a, RED = 0xff2a3d, GREEN = 0x2ee59d, AMBER = 0xffa31a;
+    // serious problem red, smaller ones amber, gone since an earlier report green (healthy organs stay uncoloured)
+    const areaColor = a => a.gone ? GREEN : a.severity === 'high' ? RED : AMBER;
     const ease = x => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3));
     const back = x => { if (x <= 0) return 0; if (x >= 1) return 1; const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
     const span = (t, a, b) => Math.max(0, Math.min(1, (t - a) / (b - a)));
@@ -734,6 +736,7 @@
             this.areas = (areas || []).filter(a => this.organs[a.key] || a.key === 'skin' || a.key === 'blood_vessels' || a.key === 'thyroid');
             this.glowGroup.clear();
             this.labels.forEach(l => l.el.remove()); this.labels = [];            this.areaKeys = new Set(this.areas.filter(a => !a.gone).map(a => a.key));
+            this.areaColors = {}; this.areas.filter(a => !a.gone).forEach(a => { this.areaColors[a.key] = areaColor(a); });
             for (const a of this.areas) {
                 const meshes = this.organs[a.key] || [];
                 const center = new THREE.Vector3();
@@ -742,12 +745,12 @@
                 else if (a.key === 'blood_vessels') center.set(0.22, 1.23, 0.045);   // upper-arm artery (where blood pressure is measured)
                 else if (a.key === 'thyroid') center.set(0, 1.5, 0.05);
                 else center.set(-0.12, 1.02, 0.1);                                     // skin of the belly
-                const glows = meshes.slice(0, 8).filter(m => !m.userData.quietPart).map(m => {                    const g = new THREE.Mesh(m.geometry, holoMaterial(a.gone ? GREEN : RED, a.gone ? 0.8 : 1.6));
+                const glows = meshes.slice(0, 8).filter(m => !m.userData.quietPart).map(m => {                    const g = new THREE.Mesh(m.geometry, holoMaterial(areaColor(a), a.gone ? 0.8 : a.severity === 'high' ? 1.6 : 1.35));
                     g.position.copy(m.position); g.rotation.copy(m.rotation); g.scale.copy(m.userData.baseScale).multiplyScalar(1.45);
                     g.userData.area = a.key; this.glowGroup.add(g); return g;
                 });
                 // a pulsing ring marker in front of the area
-                const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.036, 40), new THREE.MeshBasicMaterial({ color: a.gone ? GREEN : RED, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.036, 40), new THREE.MeshBasicMaterial({ color: areaColor(a), transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
                 ring.position.copy(center); ring.userData.area = a.key; this.glowGroup.add(ring);
                 const el = document.createElement('button');
                 el.type = 'button';                el.className = 'nxb-label sev-' + (a.gone ? 'gone' : (a.severity || 'medium')) + (a.isNew ? ' is-new' : '');
@@ -846,7 +849,7 @@
                     m.scale.copy(m.userData.baseScale).multiplyScalar(Math.max(0.001, back(p)));
                     const quiet = (k === 'spine' || k === 'bones_joints' || k === 'eyes') && !(this.areaKeys && this.areaKeys.has(k));
                     m.material.opacity = (m.userData.quietPart ? 0.14 : quiet ? 0.32 : 0.74) * ease(p);
-                    if (bad) { m.material.color.lerpColors(m.userData.color, new THREE.Color(RED), pRed); m.material.emissive.copy(m.material.color); m.material.emissiveIntensity = 0.25 + pRed * (0.25 + 0.45 * Math.sin(now * 5)); }
+                    if (bad) { m.material.color.lerpColors(m.userData.color, new THREE.Color((this.areaColors && this.areaColors[k]) || RED), pRed); m.material.emissive.copy(m.material.color); m.material.emissiveIntensity = 0.25 + pRed * (0.25 + 0.45 * Math.sin(now * 5)); }
                     else { m.material.color.copy(m.userData.color); m.material.emissive.copy(m.userData.color); m.material.emissiveIntensity = this.selected ? 0.12 : 0.25; }
                 });
             });
@@ -1070,7 +1073,91 @@
         }
         list.addEventListener('click', e => { const b = e.target.closest('.nxb-item'); if (b) { if (body) body.pick(b.dataset.key); else showInfo(b.dataset.key); } });
         side.querySelector('.nxb-side-x').addEventListener('click', () => { closeSide(); if (body) body.resetView(); });
+        // ---------- test values for the tapped organ (fixed list of which test belongs where; never AI-guessed) ----------
+        const ORGAN_TESTS = {
+            heart: /troponin|ck-?mb|\bbnp\b|nt-?pro|ldl|hdl|cholesterol|triglycer|lipid|ejection|lvef|\bef\b/i,
+            blood_vessels: /blood pressure|\bbp\b|systolic|diastolic|ldl|cholesterol|triglycer/i,
+            kidneys: /creatinine|egfr|\burea\b|\bbun\b|uric acid|potassium|sodium|microalbumin|urine albumin|acr\b/i,
+            liver: /sgpt|sgot|\balt\b|\bast\b|bilirubin|alkaline phosphatase|\balp\b|\bggt\b|albumin|inr|prothrombin/i,
+            pancreas: /hba1c|a1c|glucose|sugar|\bfbs\b|\bppbs\b|\brbs\b|amylase|lipase|c-?peptide/i,
+            thyroid: /\btsh\b|\bt3\b|\bt4\b|thyrox/i,
+            lungs: /spo2|oxygen sat|saturation|\bpo2\b|\bpco2\b|fev1|peak flow/i,
+            brain: /sodium|glucose|sugar/i,
+            stomach: /h\.? ?pylori|hemoglobin|haemoglobin|\bhb\b/i,
+            bones_joints: /vitamin d|calcium|uric acid|esr|\bcrp\b|rheumatoid|\bra factor/i,
+            intestines: /hemoglobin|haemoglobin|\bhb\b|stool|occult/i,
+            bladder: /urine|pus cells|\bwbc\b.*urine|culture/i,
+            reproductive: /\bpsa\b|hcg|estrogen|testosterone|fsh|\blh\b/i,
+            skin: /\bige\b|eosinophil/i
+        };
+        const record = window.loadReport ? loadReport() : null;
+        let labData = null, labLoading = false;
+        function labTests() {
+            if (labData) return labData;
+            const saved = storeGet('neutrixLabTrends');
+            if (saved && saved.data && saved.version === reportVersion(record || {})) labData = saved.data.tests || [];
+            else if (saved && saved.data) labData = saved.data.tests || [];        // older results are better than none
+            return labData;
+        }
+        async function fetchLabs(then) {
+            if (labLoading || !record || !navigator.onLine) return;
+            labLoading = true;
+            try {
+                const res = await fetch(`${API_BASE}/api/lab-trends`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ report: fullReportText(record) }) });
+                if (!res.ok) throw new Error('lab trends ' + res.status);
+                const d = await res.json();
+                if (d && Array.isArray(d.tests)) { storeSet('neutrixLabTrends', { version: reportVersion(record), data: d, at: new Date().toISOString() }); labData = d.tests; }
+            } catch (e) { console.warn('[3d] lab trends', e); labData = labData || []; }
+            labLoading = false;
+            then();
+        }
+        // "4.0-5.6", "< 100", "up to 40", "> 60" -> {lo, hi}
+        function range(txt) {
+            const t = String(txt || '').replace(/,/g, '');
+            let m = t.match(/(-?\d+(?:\.\d+)?)\s*(?:-|–|to)\s*(-?\d+(?:\.\d+)?)/);
+            if (m) return { lo: +m[1], hi: +m[2] };
+            m = t.match(/(?:<|≤|below|less than|up to|upto)\s*=?\s*(\d+(?:\.\d+)?)/i); if (m) return { lo: null, hi: +m[1] };
+            m = t.match(/(?:>|≥|above|more than|over)\s*=?\s*(\d+(?:\.\d+)?)/i); if (m) return { lo: +m[1], hi: null };
+            return null;
+        }
+        function testsHtml(key) {
+            const re = ORGAN_TESTS[key];
+            if (!re) return '';
+            const all = labTests();
+            if (!all) {
+                if (record && navigator.onLine) { fetchLabs(() => { if (openKey === key) showInfo(key); }); return `<div class="nxb-sec"><div class="nxb-sec-t">🧪 ${esc(tx('tests'))}</div><p class="nxb-muted">${esc(tx('testsLoad'))}</p></div>`; }
+                return '';
+            }
+            const tests = all.filter(t => re.test(t.name || '')).slice(0, 6);
+            if (!tests.length) return '';
+            const rows = tests.map(t => {
+                const pts = (t.points || []).slice().sort((a, b) => (a.date && b.date) ? a.date.localeCompare(b.date) : (a.doc || 0) - (b.doc || 0));
+                const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+                if (!last) return '';
+                const v = parseFloat(String(last.value).split('/')[0]);
+                const r = range(t.normal);
+                let tag = '', cls = '';
+                if (r && isFinite(v)) {
+                    if (r.hi != null && v > r.hi) { tag = tx('hi'); cls = 'hi'; }
+                    else if (r.lo != null && v < r.lo) { tag = tx('lo'); cls = 'lo'; }
+                    else { tag = tx('ok'); cls = 'ok'; }
+                }
+                let trend = '';
+                const pv = prev ? parseFloat(String(prev.value).split('/')[0]) : NaN;
+                if (prev && isFinite(pv) && isFinite(v) && pv !== v) {
+                    const arrow = v > pv ? '↑' : '↓';
+                    const good = t.better ? (t.better === 'lower' ? v < pv : v > pv) : null;
+                    trend = `<span class="nxb-t-trend ${good == null ? '' : good ? 'good' : 'bad'}">${arrow} ${esc(prev.value)} → ${esc(last.value)}${good == null ? '' : ' · ' + esc(good ? tx('better') : tx('worse'))}</span>`;
+                }
+                return `<div class="nxb-test"><div class="nxb-t-row"><b>${esc(t.name)}</b><span class="nxb-t-val">${esc(last.value)} ${esc(t.unit || '')}</span>${tag ? `<span class="nxb-t-tag ${cls}">${esc(tag)}</span>` : ''}</div>
+                    <div class="nxb-t-sub">${t.normal ? `${esc(tx('normalR'))}: ${esc(t.normal)}` : ''}${last.date ? ` · ${esc(fmtDay(last.date))}` : ''}</div>${trend}
+                    <span class="nxb-t-src" data-test="${esc(t.name)}" data-val="${esc(last.value)}" data-unit="${esc(t.unit || '')}"></span></div>`;
+            }).join('');
+            return `<div class="nxb-sec nxb-tests"><div class="nxb-sec-t">🧪 ${esc(tx('tests'))}</div>${rows}<p class="nxb-muted">${esc(tx('testsNote'))}</p></div>`;
+        }
+        let openKey = null;
         function showInfo(key) {
+            openKey = key;
             const a = areas.find(x => x.key === key); if (!a) return;
             if (body && !body.areasOn) return;
             page.classList.remove('no-side');
@@ -1082,8 +1169,14 @@
                 <div class="nxb-sec"><div class="nxb-sec-t">🩺 ${esc(tx('what'))}</div><p>${esc(a.what_happened)}</p></div>
                 <div class="nxb-sec"><div class="nxb-sec-t">🔍 ${esc(tx('cause'))}</div><p>${esc(a.cause)}</p></div>
                 <div class="nxb-sec"><div class="nxb-sec-t">💊 ${esc(tx('fix'))}</div><p>${esc(a.treatment)}</p></div>
+                ${testsHtml(a.key)}
                 <button type="button" class="nxb-listen">🔊 ${esc(tx('listen'))}</button>`;
             info.classList.remove('hidden');
+            // "Where it says this" next to each test value
+            if (window.NxCare && NxCare.sourceButton) info.querySelectorAll('.nxb-t-src').forEach(sp => {
+                const n = sp.dataset.test, v = sp.dataset.val;
+                sp.appendChild(NxCare.sourceButton(`${n}: ${v} ${sp.dataset.unit}`, [n.split(/[\s(]/)[0], String(v).split('/')[0]]));
+            });
             info.querySelector('.nxb-x').onclick = () => { closeSide(); if (body) body.resetView(); };
             info.querySelector('.nxb-listen').onclick = () => {
                 const say = `${a.label}. ${a.what_happened} ${a.cause} ${a.treatment}`;

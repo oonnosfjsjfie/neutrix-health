@@ -8,7 +8,7 @@
     <script src="pwa.js?v=20261125a" defer></script>
     <script src="native-app.js?v=20261125c"></script>
     <script src="app-shell.js?v=20261128c"></script>
-    <script src="assistant.js?v=20261128a" defer></script>
+    <script src="assistant.js?v=20261128b" defer></script>
     <link rel="apple-touch-icon" href="assets/neutrix-icon.png">
     <!-- Accounts + online saving (must load before issue-scope.js) -->
     <script src="firebase-config.js?v=20261030c"></script>
@@ -16,10 +16,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neutrix | Dashboard</title>
     <!-- Login check, per-issue data and the issue bar -->
-    <script src="issue-scope.js?v=20261127c"></script>
+    <script src="issue-scope.js?v=20261128a"></script>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pages.css">
-    <link rel="stylesheet" href="skin.css?v=20261128e">
+    <link rel="stylesheet" href="skin.css?v=20261128f">
     <style>
         /* Hero header, like the website */
         .dash-hero { text-align: left; padding: 6px 0 26px; border-bottom: 1px solid var(--border-color); margin-bottom: 26px; }
@@ -130,7 +130,7 @@
                 <span class="dash-eyebrow">NEUTRIX HEALTH • <span class="live" data-dt="eyebrow">YOUR RECOVERY DASHBOARD</span></span>
                 <h1 class="dash-title" id="welcomeLine"></h1>
                 <p class="dash-sub" data-dt="heroSub">Small signals. Clear recovery.</p>
-            </div>            <div id="dashAlerts"></div>
+            </div>            <div id="dashAlerts"></div><div id="dashEnv"></div>
             <div class="section-title" data-dt="toolsSection">Your Recovery Tools</div>
             <div class="dash-grid" id="toolTiles"></div>
             <p id="lockedHint" class="hint hidden" style="margin-top: 14px;"></p>
@@ -177,9 +177,10 @@
 
     </main>
 
-    <script src="common.js?v=20261128c"></script>
+    <script src="common.js?v=20261128e"></script>
     <script src="account-menu.js?v=20261030e"></script>    <script src="feedback.js?v=20261030c"></script>
     <script src="nx-care.js?v=20261127c"></script>
+    <script src="nx-env.js?v=20261128a"></script>
     <script src="family.js?v=20261127c"></script>
     <script>
         // Things that need attention: worrying readings, medicine safety, refills, warning signs
@@ -196,11 +197,14 @@
                 if (issues.length) out.push(`<div class="nxc-banner ${issues.some(i => i.level === 'high') ? 'red' : 'amber'}"><span>💊 ${esc(L(`Medicine safety check: ${issues.length} thing${issues.length === 1 ? '' : 's'} to confirm with your doctor or pharmacist`, `മരുന്ന് സുരക്ഷ: ഉറപ്പിക്കേണ്ട ${issues.length} കാര്യം`))}</span><a class="btn-secondary" href="care.html">${esc(L('See details', 'വിശദാംശങ്ങൾ'))}</a></div>`);
                 const low = C.refills().filter(r => r.low);
                 if (low.length) out.push(`<div class="nxc-banner amber"><span>🔁 ${esc(L('Running low: ', 'തീരാറായി: ') + low.map(r => `${r.name} (${r.daysLeft}d)`).join(', '))}</span><a class="btn-secondary" href="care.html#careRefill">${esc(L('Refills', 'റീഫിൽ'))}</a></div>`);
+                const tb = storeGet('neutrixTeachBack'), rec = loadReport();
+                if (rec && !(tb && tb.version === reportVersion(rec))) out.push(`<div class="nxc-banner"><span>🎓 ${esc(L('3 quick questions to check you understood your medicines and care.', 'മരുന്നുകളും പരിചരണവും മനസ്സിലായോ എന്ന് നോക്കാൻ 3 ചെറിയ ചോദ്യങ്ങൾ.'))}</span><a class="btn-secondary" href="report.html#teachBack">${esc(L('Start', 'തുടങ്ങുക'))}</a></div>`);
                 if (C.warnings().length) out.push(`<div class="nxc-banner"><span>🚨 ${esc(L('Know the warning signs for your condition, and when to call 108.', 'നിങ്ങളുടെ രോഗത്തിന്റെ അപകട ലക്ഷണങ്ങളും 108 വിളിക്കേണ്ട സമയവും അറിയുക.'))}</span><a class="btn-secondary" href="care.html">${esc(L('Warning signs', 'അപകട ലക്ഷണങ്ങൾ'))}</a></div>`);
                 box.innerHTML = out.join('');
             }
             render();
             document.addEventListener('neutrix:langchange', render);
+            if (window.NxEnv) { const env = () => NxEnv.render(document.getElementById('dashEnv'), { compact: true }); env(); document.addEventListener('neutrix:langchange', env); }
         })();
     </script>
     <script>
