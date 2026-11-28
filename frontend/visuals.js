@@ -15,10 +15,12 @@
         English: { button: '🖼 Show visual representation', title: 'Pictures from your report', of: '{n} of {total}',
                    from: 'From {file}{page}', page: ', page {p}', labels: 'Labels', prev: '← Previous', next: 'Next →', close: 'Close',
                    note: 'Explained by AI from your report. Ask your doctor what these pictures mean for you.',
+                   warnTitle: 'Check this picture', warnSub: 'AI thinks this may not be a real scan from your report, or it is hard to read. Neutrix cannot prove a picture is genuine: check the original with your hospital or doctor.', diagram: 'This looks like a drawing or diagram, not a real scan.',
                    saving: 'Saving pictures from your report…' },
         Malayalam: { button: '🖼 ദൃശ്യങ്ങൾ കാണിക്കുക', title: 'നിങ്ങളുടെ റിപ്പോർട്ടിലെ ചിത്രങ്ങൾ', of: '{total}-ൽ {n}',
                      from: '{file}{page} നിന്ന്', page: ', പേജ് {p}', labels: 'ലേബലുകൾ', prev: '← മുമ്പത്തേത്', next: 'അടുത്തത് →', close: 'അടയ്ക്കുക',
                      note: 'നിങ്ങളുടെ റിപ്പോർട്ടിൽ നിന്ന് AI വിശദീകരിച്ചത്. ഈ ചിത്രങ്ങൾ നിങ്ങൾക്ക് എന്താണ് അർത്ഥമാക്കുന്നതെന്ന് ഡോക്ടറോട് ചോദിക്കുക.',
+                     warnTitle: 'ഈ ചിത്രം പരിശോധിക്കുക', warnSub: 'ഇത് നിങ്ങളുടെ റിപ്പോർട്ടിലെ യഥാർത്ഥ സ്കാൻ ആയിരിക്കില്ല, അല്ലെങ്കിൽ വായിക്കാൻ പ്രയാസമാണ് എന്ന് AI കരുതുന്നു. ചിത്രം യഥാർത്ഥമാണോ എന്ന് Neutrix-ന് തെളിയിക്കാനാവില്ല: ആശുപത്രിയിലോ ഡോക്ടറോടോ ഒറിജിനൽ പരിശോധിക്കുക.', diagram: 'ഇത് യഥാർത്ഥ സ്കാൻ അല്ല, ഒരു വരയോ ഡയഗ്രമോ ആണെന്ന് തോന്നുന്നു.',
                      saving: 'റിപ്പോർട്ടിലെ ചിത്രങ്ങൾ സേവ് ചെയ്യുന്നു…' }
     };
     const L = () => T[window.neutrixLang] || T.English;
@@ -122,6 +124,9 @@
             const v = items[i];
             const labels = (v.labels || []).filter(x => x.text_en || x.text_ml);
             const where = fill(l.from, { file: v.file || '', page: v.page ? fill(l.page, { p: v.page }) : '' });
+            // warning sign: the AI thinks this may not be a genuine / usable picture from the report
+            const why = pick(v, 'concern') || (v.image_type === 'diagram' ? l.diagram : '');
+            const warn = (v.concern || v.image_type === 'diagram') ? `<div class="vis-warn" role="alert"><span class="vis-warn-ic" aria-hidden="true">⚠️</span><div><b>${esc(l.warnTitle)}</b>${why ? `<p class="vis-warn-why">${esc(why)}</p>` : ''}<p>${esc(l.warnSub)}</p></div></div>` : '';
             wrap.innerHTML = `
                 <div class="vis-box" role="dialog" aria-modal="true">
                     <button class="vis-x" type="button" aria-label="${esc(l.close)}">×</button>
@@ -130,8 +135,9 @@
                         <h3>${esc(pick(v, 'title') || v.kind)}</h3>
                         <div class="vis-from">${esc(where)}${v.kind ? ' · ' + esc(v.kind) : ''}</div>
                     </div>
+                    ${warn}
                     <div class="vis-body">
-                        <div class="vis-stage">
+                        <div class="vis-stage${warn ? ' doubt' : ''}">
                             <img src="${esc(v.image)}" alt="${esc(pick(v, 'title'))}">
                             ${labels.map((lab, n) => lab.box ? `<div class="vis-mark" style="top:${lab.box[0] / 10}%;left:${lab.box[1] / 10}%;height:${(lab.box[2] - lab.box[0]) / 10}%;width:${(lab.box[3] - lab.box[1]) / 10}%"><span>${n + 1}</span></div>` : '').join('')}
                         </div>
@@ -200,6 +206,12 @@
         .vis-labels { margin: 0 0 12px; padding-left: 22px; font-size: 14px; }
         .vis-labels li::marker { font-weight: 800; color: #d97706; }
         .vis-note { font-size: 12px; color: var(--text-muted); margin: 0; }
+        .vis-warn { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #f59e0b; background: rgba(245, 158, 11, .12); color: var(--text-primary); }
+        .vis-warn-ic { font-size: 22px; line-height: 1.1; }
+        .vis-warn b { display: block; font-size: 15px; }
+        .vis-warn p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--text-secondary, inherit); }
+        .vis-warn p.vis-warn-why { color: var(--text-primary); font-weight: 600; }
+        .vis-stage.doubt { outline: 3px solid #f59e0b; outline-offset: -3px; }
         .vis-foot { display: flex; justify-content: space-between; gap: 8px; margin-top: 16px; }
         .vis-btn { padding: 10px 18px; border-radius: 30px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary);
             font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }

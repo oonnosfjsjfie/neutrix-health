@@ -170,6 +170,7 @@ def check_photo(data: bytes, name: str) -> dict:
       "labels": [{"text_en": "short label", "text_ml": "...", "box": [ymin, xmin, ymax, xmax] (0-1000, on this photo)}]}
     Labels: only parts that are clearly marked or named on the picture or in the page text (max 6); else [].
     Never diagnose beyond what is written. Empty list if there are no such pictures.
+    """ + PICTURE_CHECK + """
 
     How to decide:
     - "clear": almost all text (about 90% or more) can be read with confidence, including medicine names,
@@ -238,6 +239,25 @@ def read_scanned_pdf(data: bytes) -> str:
 # ---------- Pictures inside reports (X-ray, scans, ECG...) for "Show visual representation" ----------
 MAX_VISUALS = 8
 
+# Asked for every picture: does it look like a genuine, usable picture from THIS report? (warning signs only:
+# nobody can prove a picture is genuine from the image alone, so the app only ever warns, never "verifies")
+PICTURE_CHECK = '''
+For EACH picture also add:
+  "image_type": "scan" (X-ray / CT / MRI / ultrasound / echo image) | "ecg" (ECG or other trace) | "photo" (wound, skin,
+                endoscopy photo) | "chart" (graph or table of the patient's results) | "diagram" (drawing, illustration,
+                clip-art, textbook or hand-drawn sketch) | "other",
+  "concern": true or false,
+  "concern_en": "one short plain sentence saying what looks wrong, or ''", "concern_ml": "the same in Malayalam, or ''".
+Set "concern": true ONLY if at least one of these is clearly true:
+  - it is a drawing, illustration, clip-art or textbook-style picture, not a real scan, trace or photo of a patient
+  - its body part or type does not match what the report text says (e.g. the report is about the chest, the image is a knee)
+  - a patient name, ID, date or hospital printed ON the image is different from the report
+  - it has a watermark, website address, stock-photo or textbook marks
+  - it looks computer-generated or edited (pasted parts, odd edges, repeated patterns)
+  - it is too blurry, dark, small, cropped, distorted or damaged to be read (a broken / unusable image)
+Otherwise "concern": false and empty concern text. A chart printed by the lab or hospital is fine (not a concern).
+'''
+
 
 def _box(value):
     """[ymin, xmin, ymax, xmax] in 0-1000, or None."""
@@ -269,6 +289,10 @@ def clean_visuals(items):
             "explanation_en": str(v.get("explanation_en") or "")[:900],
             "explanation_ml": str(v.get("explanation_ml") or v.get("explanation_en") or "")[:1200],
             "labels": labels,
+            "image_type": str(v.get("image_type") or "")[:20],
+            "concern": v.get("concern") is True,
+            "concern_en": str(v.get("concern_en") or "")[:300] if v.get("concern") is True else "",
+            "concern_ml": str(v.get("concern_ml") or v.get("concern_en") or "")[:400] if v.get("concern") is True else "",
         })
     return out
 
@@ -375,6 +399,7 @@ def extract_visuals(docs: list, report_hint: str = "") -> list:
         is_medical_visual is false for logos, stamps, signatures, QR codes, decorations and photos of people's faces.
         Boxes are 0-1000 on that picture. Labels only for parts clearly marked/named on the picture or in the report
         (max 6), else []. Never diagnose beyond what the report says.
+        {PICTURE_CHECK}
         REPORT TEXT (for context):
         {hint}
         """
@@ -411,6 +436,7 @@ def extract_visuals(docs: list, report_hint: str = "") -> list:
               "title_ml": "...", "explanation_en": "2-4 simple sentences", "explanation_ml": "...",
               "labels": [{{"text_en": "...", "text_ml": "...", "box": [ymin, xmin, ymax, xmax]}}]}}]}}
             Boxes are 0-1000 on this page. Labels only for clearly marked/named parts (max 6). Empty list if none.
+            {PICTURE_CHECK}
             REPORT TEXT (for context):
             {hint}
             """

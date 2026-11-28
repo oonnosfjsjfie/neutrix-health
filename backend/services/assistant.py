@@ -142,6 +142,9 @@ Safety and daily care (added later):
 - 3D View: serious problems glow red, smaller ones amber, gone ones green; tapping an organ also shows its test results
   from the reports (value, normal range, high/low, change since the last report, "Where it says this").
 - Reports page: "Check you understood", 3 quick questions (teach-back) from the user's own data.
+- Show visual representation: if the AI thinks a picture from the report may not be a real scan of the patient
+  (a drawing, wrong body part, different name/date on it, watermark, edited) or is too blurry / broken to read, the
+  popup shows a warning "Check this picture". Neutrix can never prove a picture is genuine.
 - Notifications: a bell at the top of every app page (not the website) opens a panel on the right with every
   notification so far (missed doses, readings that need attention, medicine safety checks, medicines running low,
   weather and air alerts, family alerts), newest first, even after the popup has gone. Mark all read / Clear all.
