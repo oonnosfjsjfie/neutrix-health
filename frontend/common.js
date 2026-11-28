@@ -967,10 +967,88 @@ const NX_LAYOUT = {
     }
     const isCurrent = key => key === (page === 'dashboard' ? 'dashboard' : page) || (key === 'medplan' && page === 'schedule') || (key === 'family' && page === 'family');
 
+    // ---------- Computers: grouped side menu (the top bar keeps only the buttons) ----------
+    const side = document.createElement('aside');
+    side.className = 'nx-side';
+    side.setAttribute('aria-label', 'Main');
+    document.body.appendChild(side);
+    document.body.classList.add('nx-has-side');
+    const SIDE_GROUPS = [
+        ['health', ['dashboard', 'report', 'upload', 'body3d', 'improvements', 'progress']],
+        ['meds', ['medplan', 'care', 'checkups']],
+        ['daily', ['tracking', 'exercise']],
+        ['people', ['briefing', 'doctorcard', 'family']],
+        ['app', ['issues', 'website']]
+    ];
+    const GROUP_NAME = {
+        English: { health: 'My health', meds: 'Medicines', daily: 'Daily', people: 'Doctor & family', app: 'Neutrix', mini: 'Collapse menu', full: 'Expand menu' },
+        Malayalam: { health: 'എന്റെ ആരോഗ്യം', meds: 'മരുന്നുകൾ', daily: 'ദിവസേന', people: 'ഡോക്ടറും കുടുംബവും', app: 'ന്യൂട്രിക്സ്', mini: 'മെനു ചുരുക്കുക', full: 'മെനു വലുതാക്കുക' }
+    };
+    const miniPref = () => { try { const v = localStorage.getItem('nxSideMini'); return v === null ? null : v === '1'; } catch (e) { return null; } };
+    const applyMini = () => {
+        const pref = miniPref();
+        document.body.classList.toggle('nx-side-mini', pref === null ? innerWidth < 1180 : pref);
+    };
+    applyMini();
+    addEventListener('resize', applyMini, { passive: true });
+    function renderSide() {
+        const labels = L().nav, g = GROUP_NAME[window.neutrixLang] || GROUP_NAME.English;
+        const { main, more } = navItems();
+        const all = new Map(main.concat(more));
+        const link = (key, href) => {
+            const a = document.createElement('a');
+            a.href = href;
+            a.className = 'nx-side-item' + (isCurrent(key) ? ' active' : '');
+            if (isCurrent(key)) a.setAttribute('aria-current', 'page');
+            a.innerHTML = `<span class="nx-side-ic" aria-hidden="true">${ICON[key] || '•'}</span><span class="nx-side-lbl"></span>`;
+            a.querySelector('.nx-side-lbl').textContent = labels[key];
+            a.dataset.label = labels[key];
+            a.setAttribute('aria-label', labels[key]);
+            return a;
+        };
+        side.innerHTML = '';
+        const logo = document.createElement('div');
+        logo.className = 'nx-side-logo';
+        logo.innerHTML = NEUTRIX_LOGO;
+        side.appendChild(logo);
+        const list = document.createElement('div');
+        list.className = 'nx-side-list';
+        SIDE_GROUPS.forEach(([gk, keys]) => {
+            const items = keys.filter(k => all.has(k));
+            if (!items.length) return;
+            const h = document.createElement('div');
+            h.className = 'nx-side-grp';
+            h.textContent = g[gk];
+            list.appendChild(h);
+            items.forEach(k => list.appendChild(link(k, all.get(k))));
+        });
+        side.appendChild(list);
+        const foot = document.createElement('div');
+        foot.className = 'nx-side-foot';
+        if (all.has('privacy')) foot.appendChild(link('privacy', all.get('privacy')));
+        const tog = document.createElement('button');
+        tog.type = 'button';
+        tog.className = 'nx-side-item nx-side-toggle';
+        const mini = document.body.classList.contains('nx-side-mini');
+        tog.innerHTML = `<span class="nx-side-ic" aria-hidden="true">${mini ? '»' : '«'}</span><span class="nx-side-lbl"></span>`;
+        tog.querySelector('.nx-side-lbl').textContent = mini ? g.full : g.mini;
+        tog.dataset.label = mini ? g.full : g.mini;
+        tog.setAttribute('aria-label', tog.dataset.label);
+        tog.addEventListener('click', () => {
+            const next = !document.body.classList.contains('nx-side-mini');
+            try { localStorage.setItem('nxSideMini', next ? '1' : '0'); } catch (e) {}
+            applyMini();
+            renderSide();
+        });
+        foot.appendChild(tog);
+        side.appendChild(foot);
+    }
+
     function renderNav() {
         const labels = L().nav, sub = MORE_SUB[window.neutrixLang] || MORE_SUB.English;
         const { main, more } = navItems();
         pills.innerHTML = '';
+        renderSide();
         const row = document.createElement('div');
         row.className = 'nx-nav-links';
         main.forEach(([key, href]) => {

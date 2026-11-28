@@ -12,24 +12,31 @@
     const qs = new URLSearchParams(location.search);
     try {
         if (qs.get('appui') === '1') sessionStorage.setItem('nxAppUI', '1');
-        if (qs.get('appui') === '0') sessionStorage.removeItem('nxAppUI');
+        if (qs.get('appui') === '0') sessionStorage.setItem('nxAppUI', '0');
     } catch (e) {}
-    const preview = (() => { try { return sessionStorage.getItem('nxAppUI') === '1'; } catch (e) { return false; } })();
+    const pref = (() => { try { return sessionStorage.getItem('nxAppUI'); } catch (e) { return null; } })();
+    const preview = pref === '1';
     const installed = window.matchMedia && matchMedia('(display-mode: standalone)').matches && window.innerWidth < 900;
-    const on = !!(window.NxNative && NxNative.isApp) || preview || installed;
-    window.NxAppUI = { on };
+    const native = !!(window.NxNative && NxNative.isApp);
+    // The website on a phone gets the same layout: app bar on top, tab bar at the bottom
+    // (screen size, because the page width isn't settled yet this early)
+    const phoneWeb = pref !== '0' && !!window.matchMedia && Math.min(screen.width, screen.height) <= 600
+        && (matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPod|Mobile/i.test(navigator.userAgent));
+    const page0 = location.pathname.split('/').pop() || '';
+    const marketing = /^(home\.html)?$/.test(page0);
+    const on = native || preview || installed || (phoneWeb && !marketing);
+    window.NxAppUI = { on, web: !(native || installed) };
     if (!on) return;
 
-    const page0 = location.pathname.split('/').pop() || '';
     // The marketing website isn't part of the app
-    if (/^(home\.html)?$/.test(page0)) { location.replace('issues.html'); return; }
+    if (marketing) { location.replace('issues.html'); return; }
 
     document.documentElement.classList.add('nx-app-ui');
 
     // ---------- Words ----------
     const T = {
         English: {
-            home: 'Home', medicines: 'Medicines', ai: 'Ask AI', tracker: 'Tracker', more: 'More',
+            home: 'Home', medicines: 'Medicines', ai: 'Ask AI', emma: 'Emma', chat: 'AI chat', tracker: 'Tracker', more: 'More',
             tools: 'Recovery tools', account: 'Account & settings',
             upload: 'AI Summary', report: 'Reports', medplan: 'Medicine plan', schedule: 'Daily medicines', checkups: 'Check-ups',
             improvements: 'Improvements', exercise: 'Exercise coach', tracking: 'Recovery tracker', briefing: 'Ask Doctor',
@@ -38,7 +45,7 @@
             signout: 'Sign out', signingOut: 'Signing out…', back: 'Back', close: 'Close', pickIssue: 'Pick a medical issue first.'
         },
         Malayalam: {
-            home: 'ഹോം', medicines: 'മരുന്നുകൾ', ai: 'AI-യോട്', tracker: 'ട്രാക്കർ', more: 'കൂടുതൽ',
+            home: 'ഹോം', medicines: 'മരുന്നുകൾ', ai: 'AI-യോട്', emma: 'എമ്മ', chat: 'AI ചാറ്റ്', tracker: 'ട്രാക്കർ', more: 'കൂടുതൽ',
             tools: 'റിക്കവറി ടൂളുകൾ', account: 'അക്കൗണ്ട് & ക്രമീകരണങ്ങൾ',
             upload: 'AI സംഗ്രഹം', report: 'റിപ്പോർട്ടുകൾ', medplan: 'മരുന്ന് പ്ലാൻ', schedule: 'ദിവസേനയുള്ള മരുന്നുകൾ', checkups: 'പരിശോധനകൾ',
             improvements: 'പുരോഗതി', exercise: 'വ്യായാമ സഹായി', tracking: 'റിക്കവറി ട്രാക്കർ', briefing: 'ഡോക്ടറോട് ചോദിക്കുക',
@@ -76,6 +83,7 @@
         medicines: '<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M12 8v8"/>',
         ai: '<path d="M4 5h16v11H8l-4 4z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/>',
         tracker: '<path d="M3 12h4l3-7 4 14 3-7h4"/>',
+        emma: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
         more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
         back: '<path d="M15 5l-7 7 7 7"/>'
     };
@@ -101,8 +109,8 @@
             const tabs = document.createElement('nav');
             tabs.className = 'nx-tabbar';
             tabs.innerHTML = [
-                ['home', 'home'], ['medicines', 'medicines'], ['ai', 'ai'], ['tracker', 'tracker'], ['more', 'more']
-            ].map(([key, icon]) => `<button type="button" class="nx-tab" data-tab="${key}">${svg(icon, false)}<span></span></button>`).join('');
+                ['home', 'home'], ['medicines', 'medicines'], ['emma', 'emma'], ['tracker', 'tracker'], ['more', 'more']
+            ].map(([key, icon]) => `<button type="button" class="nx-tab" data-tab="${key}">${key === 'emma' ? `<i class="nx-tab-emma">${svg(icon, true)}</i>` : svg(icon, false)}<span></span></button>`).join('');
             document.body.appendChild(tabs);
             tabs.addEventListener('click', e => {
                 const b = e.target.closest('.nx-tab');
@@ -137,7 +145,7 @@
 
         document.querySelectorAll('.nx-tab').forEach(b => {
             b.querySelector('span').textContent = t(b.dataset.tab);
-            const current = { home: ['dashboard', 'issues'], medicines: ['schedule', 'medplan'], tracker: ['tracking'], ai: [], more: [] }[b.dataset.tab] || [];
+            const current = { home: ['dashboard', 'issues'], medicines: ['schedule', 'medplan'], tracker: ['tracking'], emma: [], more: [] }[b.dataset.tab] || [];
             b.classList.toggle('active', current.includes(page));
         });
     }
@@ -152,6 +160,7 @@
         if (key === 'home') location.href = issue ? 'index.html' : 'issues.html';
         else if (key === 'medicines') needIssue('schedule.html');
         else if (key === 'tracker') needIssue('tracking.html');
+        else if (key === 'emma') { if (window.NxAssistant) NxAssistant.open(); else openChat(false); }
         else if (key === 'ai') openChat(false);
         else if (key === 'more') openMore();
     }
@@ -189,7 +198,8 @@
             ['✉️', 'briefing', 'briefing.html'],            ['📊', 'progress', 'progress.html'],
             hasReport() && ['🛡️', 'care', 'care.html'],
             hasReport() && ['🪪', 'doctorcard', 'doctor-card.html'],
-            ['👨‍👩‍👧', 'family', 'family.html']
+            ['👨‍👩‍👧', 'family', 'family.html'],
+            ['💬', 'chat', '#chat']
         ].filter(Boolean) : [];
         let isAdmin = false;
         try { const p = NeutrixCloud.cachedProfile(); isAdmin = !!(p && NeutrixCloud.isAdminEmail(p.email)); } catch (e) {}
@@ -225,7 +235,8 @@
             const href = a.getAttribute('href');
             if (!href.startsWith('#')) return;                 // normal pages: just go
             e.preventDefault();
-            if (href === '#lang') { close(); clickFirst('#langToggle', '#langToggleBtn'); setTimeout(paint, 50); }
+            if (href === '#chat') { close(); openChat(false); }
+            else if (href === '#lang') { close(); clickFirst('#langToggle', '#langToggleBtn'); setTimeout(paint, 50); }
             else if (href === '#theme') { close(); clickFirst('#themeToggle', '#themeToggleBtn'); }
             else if (href === '#problem') { close(); clickFirst('#nxReportBtn'); }
             else if (href === '#signout') {
@@ -277,6 +288,12 @@
     .nx-tab.active { color: var(--text-primary); }
     .nx-tab.active svg { background: var(--pill-bg, #f1f5f9); border-radius: 14px; padding: 3px 16px; box-sizing: content-box; }
     .nx-tab[data-tab="ai"] svg { color: #a855f7; }
+    /* Emma: raised round button in the middle */
+    .nx-tab[data-tab="emma"] { justify-content: flex-end; padding-bottom: 9px; color: var(--text-primary); }
+    .nx-tab-emma { display: grid; place-items: center; width: 52px; height: 52px; margin-top: -26px; border-radius: 50%; color: #fff;
+        background: linear-gradient(135deg, #6d28d9, #2563eb); border: 4px solid var(--card-bg, #fff); box-shadow: 0 6px 18px rgba(79, 70, 229, .35); }
+    .nx-tab-emma svg { width: 24px !important; height: 24px !important; background: none !important; padding: 0 !important; }
+    html.nx-app-ui #nxaButton.nxa-ab { display: none !important; }
 
     /* phone-sized content */
     html.nx-app-ui .nx-hero { padding: 14px 16px 2px !important; margin: 0 !important; text-align: left !important; min-height: 0 !important; }

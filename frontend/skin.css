@@ -828,3 +828,42 @@ body:has(.chat-fab) .nx-top-btn { left: 96px; bottom: 34px; }
 .nx-callbox p { color: var(--text-secondary); line-height: 1.5; }
 .nx-callrow { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .nx-callrow .btn-secondary { width: auto; margin: 0; text-decoration: none; }
+
+/* ---------- Side menu on computers (design C) ---------- */
+.nx-side { display: none; }
+@media (min-width: 901px) {
+    body.nx-has-side { --side-w: 240px; padding-left: var(--side-w); }
+    body.nx-has-side.nx-side-mini { --side-w: 76px; }
+    body.nx-has-side .ehr-navbar .hospital-brand, body.nx-has-side .ehr-navbar .nx-nav { display: none !important; }
+    body.nx-has-side .ehr-navbar { padding-top: 10px; padding-bottom: 10px; }
+    body.nx-has-side .nav-container { max-width: none; min-height: 44px; }
+    body.nx-has-side .chat-fab, body.nx-has-side .chat-panel { left: calc(var(--side-w) + 24px); }
+    .nx-side { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; width: var(--side-w); z-index: 102;
+        background: var(--bg-page); border-right: 1px solid var(--border-color); padding: 14px 12px 12px; box-sizing: border-box; transition: width .18s ease; }
+    .nx-side-logo { display: block; margin: 0 4px 10px; text-decoration: none; }
+    .nx-side-logo .brand-logo-svg { height: 40px; }
+    .nx-side-list { flex: 1; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; margin: 0 -4px; padding: 0 4px; }
+    .nx-side-grp { font: 800 10.5px/1 Inter, system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin: 16px 10px 6px; white-space: nowrap; }
+    .nx-side-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; margin: 1px 0; border: 0; background: none; border-radius: 11px;
+        font: 500 14px/1.2 Inter, system-ui, sans-serif; color: var(--text-secondary); text-decoration: none; cursor: pointer; white-space: nowrap; position: relative; box-sizing: border-box; text-align: left; }
+    .nx-side-item:hover { background: var(--pill-bg); color: var(--text-primary); }
+    .nx-side-item.active { background: var(--pill-bg); color: var(--text-primary); font-weight: 650; box-shadow: inset 3px 0 0 var(--text-primary); }
+    .nx-side-item:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+    .nx-side-ic { width: 24px; flex: none; text-align: center; font-size: 17px; line-height: 1; }
+    .nx-side-lbl { overflow: hidden; text-overflow: ellipsis; }
+    .nx-side-foot { border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px; }
+    .nx-side-toggle .nx-side-ic { font-size: 18px; font-weight: 700; color: var(--text-muted); }
+    /* collapsed: icons only, name on hover */
+    .nx-side-mini .nx-side { padding-left: 10px; padding-right: 10px; }
+    .nx-side-mini .nx-side-lbl { display: none; }
+    .nx-side-mini .nx-side-item { justify-content: center; padding: 10px 0; }
+    .nx-side-mini .nx-side-grp { font-size: 0; height: 1px; background: var(--border-color); margin: 10px 8px; }
+    .nx-side-mini .nx-side-logo { margin: 0 0 6px; }
+    .nx-side-mini .nx-side-logo .brand-logo-svg { width: 54px; height: auto; }
+    .nx-side-mini .nx-side-list { overflow: visible; }
+    .nx-side-mini .nx-side-item::after { content: attr(data-label); position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%); white-space: nowrap;
+        background: var(--text-primary); color: var(--bg-page); font: 600 12.5px Inter, system-ui, sans-serif; padding: 6px 10px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 5; }
+    .nx-side-mini .nx-side-item:hover::after, .nx-side-mini .nx-side-item:focus-visible::after { opacity: 1; }
+}
+html.nx-app-ui .nx-side { display: none !important; }
+html.nx-app-ui body.nx-has-side { padding-left: 0 !important; }
