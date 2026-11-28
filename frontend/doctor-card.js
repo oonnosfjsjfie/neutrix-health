@@ -101,6 +101,20 @@
         const found = ((bm && bm.data && bm.data.areas) || []).map(x => x.label).filter(Boolean);
         const cond = [...new Set([p.condition, f.problem, ...found].map(x => String(x || '').trim()).filter(x => x && !/^(none|other|select)/i.test(x)))].join(', ').slice(0, 220);
         const d = { n: f.name, g: f.sex, a: f.age || '', b: p.dob || '', bg: f.blood, al: f.allergies, c: cond, m: meds, u: new Date().toISOString().slice(0, 10) };
+        // Short alerts for whoever helps in an emergency, only from the medicines and reports (never guessed)
+        const gen = f.meds.map(m => { try { return window.NxCare ? NxCare.generic(m.name) : ''; } catch (e) { return ''; } });
+        const thin = [...new Set(gen.filter(g => ['aspirin', 'clopidogrel', 'ticagrelor', 'prasugrel', 'warfarin', 'acenocoumarol', 'apixaban', 'rivaroxaban', 'dabigatran'].includes(g)))];
+        const lowSugar = [...new Set(gen.filter(g => ['glimepiride', 'gliclazide', 'glibenclamide', 'glipizide'].includes(g)))]
+            .concat(f.meds.some(m => /insulin|mixtard|lantus|huminsulin|novomix|actrapid/i.test(m.name)) ? ['insulin'] : []);
+        let rtext = '';
+        try { rtext = (window.fullReportText ? fullReportText(loadReport() || {}) : '') || ''; } catch (e) {}
+        const devices = [['stent', /\bstent/i], ['pacemaker', /pacemaker/i], ['ICD (defibrillator)', /\bicd\b|defibrillator implant/i], ['artificial heart valve', /valve replacement|\b(avr|mvr)\b|prosthetic valve/i]]
+            .filter(([, re]) => re.test(rtext)).map(([n]) => n);
+        const w = [];
+        if (thin.length) w.push(['bleed', thin.join(', ')]);
+        if (lowSugar.length) w.push(['sugar', [...new Set(lowSugar)].join(', ')]);
+        if (devices.length) w.push(['device', devices.join(', ')]);
+        if (w.length) d.w = w;
         if (p.caregiverName || (p.caregiverPhone && p.caregiverPhone !== 'Not provided') || p.caregiverEmail)
             d.cg = { n: p.caregiverName || '', p: p.caregiverPhone && p.caregiverPhone !== 'Not provided' ? p.caregiverPhone : '', e: p.caregiverEmail || '' };
         Object.keys(d).forEach(k => { if (d[k] === '' || (Array.isArray(d[k]) && !d[k].length)) delete d[k]; });
