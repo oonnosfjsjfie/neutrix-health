@@ -1105,3 +1105,17 @@ body {
     input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px !important; }
 }
 textarea, input, select, button { font-family: inherit; }
+
+/* Scrollbars that match the theme everywhere (light and dark), incl. the page's own scrollbar */
+:root:not([data-theme="dark"]) { color-scheme: light; scrollbar-color: #c9c4bb #f3f1ed; }
+:root:not([data-theme="dark"]) *:not(.output-text):not(.chat-box):not(.history-list) { scrollbar-color: #c9c4bb transparent; }
+:root:not([data-theme="dark"]) ::-webkit-scrollbar { width: 10px; height: 10px; }
+:root:not([data-theme="dark"]) ::-webkit-scrollbar-track { background: #f3f1ed; }
+:root:not([data-theme="dark"]) ::-webkit-scrollbar-thumb { background: #c9c4bb; border-radius: 10px; border: 2px solid #f3f1ed; }
+:root:not([data-theme="dark"]) ::-webkit-scrollbar-thumb:hover { background: #a8a296; }
+:root[data-theme="dark"] { scrollbar-color: #353b45 #0b0d10; }
+[data-theme="dark"] { color-scheme: dark; }
+[data-theme="dark"] *:not(.nav-links) { scrollbar-color: #3a414d transparent; }
+[data-theme="dark"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: #0b0d10; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #353b45; border-radius: 10px; border: 2px solid #0b0d10; }

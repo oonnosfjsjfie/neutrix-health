@@ -878,9 +878,10 @@ html.nx-app-ui body.nx-has-side { padding-left: 0 !important; }
 [data-theme="dark"] .ec-stale { background: #1c1405; color: #fcd34d; border-color: #5c4310; }
 .ec-grid { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 26px; align-items: start; }
 .ec-cap { font: 800 11.5px Inter, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; text-align: center; }
-.ec-phone { width: 100%; max-width: 340px; aspect-ratio: 9 / 18.5; margin: 0 auto; border-radius: 38px; border: 10px solid #111; background: #000; overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, .25); }
+.ec-phone { position: relative; width: 100%; max-width: 340px; aspect-ratio: 9 / 18.5; margin: 0 auto; border-radius: 38px; border: 10px solid #111; background: #000; overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, .25); }
 [data-theme="dark"] .ec-phone { border-color: #2a2a2a; }
-.ec-phone iframe { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+/* drawn at a real phone width (390px) and shrunk to fit, so it looks exactly like on a phone */
+.ec-phone iframe { position: absolute; top: 0; left: 0; width: 390px; height: 802px; border: 0; display: block; background: #000; transform-origin: 0 0; }
 .ec-h { font: 700 17px Inter, system-ui, sans-serif; margin: 2px 0 10px; color: var(--text-primary); }
 .ec-check { list-style: none; margin: 0 0 22px; padding: 0; border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; }
 .ec-check li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--border-color); font-size: 15px; color: var(--text-primary); }
@@ -919,3 +920,12 @@ html.nx-app-ui body.nx-has-side { padding-left: 0 !important; }
     .ecw-back { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1mm; font-size: 7pt; }
     .ecw-back svg { width: 40mm; height: 40mm; }
 }
+
+/* Scrollbars that match the theme everywhere (light and dark), incl. the page's own scrollbar */
+:root:not([data-theme="dark"]) { color-scheme: light; scrollbar-color: #c9c4bb #f3f1ed; }
+:root:not([data-theme="dark"]) *:not(.output-text):not(.chat-box):not(.history-list) { scrollbar-color: #c9c4bb transparent; }
+:root:not([data-theme="dark"]) ::-webkit-scrollbar { width: 10px; height: 10px; }
+:root:not([data-theme="dark"]) ::-webkit-scrollbar-track { background: #f3f1ed; }
+:root:not([data-theme="dark"]) ::-webkit-scrollbar-thumb { background: #c9c4bb; border-radius: 10px; border: 2px solid #f3f1ed; }
+:root:not([data-theme="dark"]) ::-webkit-scrollbar-thumb:hover { background: #a8a296; }
+:root[data-theme="dark"] { scrollbar-color: #353b45 #0b0d10; }

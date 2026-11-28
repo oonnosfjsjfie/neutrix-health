@@ -181,6 +181,17 @@
         paintStale();
     }
 
+    // Preview: a real 390px-wide phone screen, scaled to the frame
+    const fitPreview = () => {
+        const fr = $('ecPreview'), box = fr.parentElement;
+        const k = box.clientWidth / 390;
+        fr.style.transform = `scale(${k})`;
+        fr.style.height = (box.clientHeight / k) + 'px';
+    };
+    if (window.ResizeObserver) new ResizeObserver(fitPreview).observe($('ecPreview').parentElement);
+    addEventListener('resize', fitPreview, { passive: true });
+    fitPreview();
+
     $('ecWall').addEventListener('click', () => cur && savePng());
     $('ecWallet').addEventListener('click', () => cur && printWallet());
     $('ecShare').addEventListener('click', () => cur && share());

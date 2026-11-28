@@ -8,7 +8,7 @@
 //   when the internet comes back.
 // - Never cached: the AI (/api/...), sign-in and the database (Firebase) — they need the internet.
 // =====================================================
-const VERSION = 'neutrix-v33';
+const VERSION = 'neutrix-v34';
 const CACHE = VERSION;
 
 // Saved on the first visit, so every page works offline even if it was never opened before
