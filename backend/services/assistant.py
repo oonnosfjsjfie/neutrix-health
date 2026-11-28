@@ -142,6 +142,9 @@ Safety and daily care (added later):
 - 3D View: serious problems glow red, smaller ones amber, gone ones green; tapping an organ also shows its test results
   from the reports (value, normal range, high/low, change since the last report, "Where it says this").
 - Reports page: "Check you understood", 3 quick questions (teach-back) from the user's own data.
+- Notifications: a bell at the top of every app page (not the website) opens a panel on the right with every
+  notification so far (missed doses, readings that need attention, medicine safety checks, medicines running low,
+  weather and air alerts, family alerts), newest first, even after the popup has gone. Mark all read / Clear all.
 - Family Sharing (family.html): the patient turns it on and shares a 10-character code; family open "Looking after"
   (caregiver.html), type the code and see today's doses (red if past time and not ticked), last 7 days, refills, alerts.
   Only that summary is shared, never reports. It updates live (within seconds of a tick, reading or symptom) and shows a

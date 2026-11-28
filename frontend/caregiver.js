@@ -54,6 +54,7 @@
         el.querySelector('.cg-pop-view').onclick = () => { el.remove(); const c = document.getElementById('cg-' + code); if (c) { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); c.classList.add('flash'); setTimeout(() => c.classList.remove('flash'), 1800); } };
         stack.prepend(el);
         while (stack.children.length > 4) stack.lastChild.remove();
+        if (window.NxNotify) NxNotify.add({ id: `family|${code}|${ev.id}`, icon: '👨‍👩‍👧', level: ev.level, title: ev.level === 'red' ? L('Family: needs attention', 'കുടുംബം: ശ്രദ്ധിക്കുക') : L('Family: dose missed', 'കുടുംബം: ഡോസ് വിട്ടുപോയി'), text: ev.text, href: 'caregiver.html', issue: '', silent: true });
         beep(ev.level === 'red');
         if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
             try { const n = new Notification(ev.level === 'red' ? L('Neutrix: needs attention', 'Neutrix: ശ്രദ്ധിക്കുക') : L('Neutrix: dose missed', 'Neutrix: ഡോസ് വിട്ടുപോയി'), { body: ev.text, tag: code + ev.id, icon: 'assets/neutrix-icon.png' }); n.onclick = () => { window.focus(); n.close(); }; } catch (e) {}

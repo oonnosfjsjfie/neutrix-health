@@ -158,6 +158,7 @@
         }
         const d = await load(force);
         const list = alerts(d);
+        if (window.NxNotify && d && !d.stale) { const day = new Date().toDateString(); list.forEach(a => NxNotify.add({ id: `env|${day}|${a.title}`, icon: a.icon, level: a.level, title: a.title, text: a.text, href: 'care.html#careEnv', silent: true })); }
         if (opts.compact) {
             box.innerHTML = list.map(a => `<div class="nxc-banner ${a.level}"><span>${a.icon} ${esc(a.title)}. ${esc(a.text)}</span><a class="btn-secondary" href="care.html#careEnv">${esc(L('More', 'കൂടുതൽ'))}</a></div>`).join('');
             return;
