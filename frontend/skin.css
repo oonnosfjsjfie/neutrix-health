@@ -979,3 +979,26 @@ html.nx-app-ui body.nx-has-side { padding-left: 0 !important; }
 .tb-explain { border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, .1); border-radius: 0 12px 12px 0; padding: 10px 14px; }
 .tb-explain p { margin: 6px 0 0; line-height: 1.5; color: var(--text-primary); }
 .tb-done { font-size: 34px; }
+
+/* ---------- Looking after: live + alert popups ---------- */
+.cg-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cg-live { display: inline-flex; align-items: center; gap: 6px; font: 700 12.5px Inter, system-ui, sans-serif; color: var(--text-muted); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border-color); }
+.cg-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #9ca3af; }
+.cg-live.on { color: #15803d; border-color: rgba(22, 163, 74, .4); }
+.cg-live.on::before { background: #16a34a; box-shadow: 0 0 0 0 rgba(22, 163, 74, .6); animation: cgPulse 1.8s infinite; }
+[data-theme="dark"] .cg-live.on { color: #86efac; }
+@keyframes cgPulse { 70% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); } }
+.cg-pops { position: fixed; top: 84px; right: 16px; z-index: 5000; display: grid; gap: 10px; width: min(380px, calc(100vw - 32px)); }
+.cg-pop { display: flex; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--card-bg, #fff); color: var(--text-primary); border: 1.5px solid #f59e0b; box-shadow: 0 18px 50px rgba(0, 0, 0, .25); animation: cgIn .25s ease-out; }
+.cg-pop.red { border-color: #dc2626; }
+[data-theme="dark"] .cg-pop { background: #161616; box-shadow: 0 18px 50px rgba(0, 0, 0, .6); }
+.cg-pop-ic { font-size: 24px; line-height: 1; }
+.cg-pop-txt { min-width: 0; flex: 1; }
+.cg-pop-txt p { margin: 4px 0 10px; line-height: 1.45; color: var(--text-secondary); }
+.cg-pop-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.cg-pop-btns button { width: auto !important; margin: 0 !important; padding: 7px 14px !important; }
+.fam-card.flash { animation: cgFlash 1.6s ease; }
+@keyframes cgIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes cgFlash { 0%, 60% { box-shadow: 0 0 0 4px rgba(245, 158, 11, .55); } 100% { box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .cg-pop, .fam-card.flash, .cg-live.on::before { animation: none; } }
+@media (max-width: 760px) { .cg-pops { top: auto; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); right: 16px; left: 16px; width: auto; } }

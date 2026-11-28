@@ -84,11 +84,28 @@
         const snap = await d.collection('shares').doc(cleanCode(code)).get();
         return snap.exists ? snap.data() : null;
     }
+    // Live: calls back with the shared summary every time the patient's phone updates it (and once at the start)
+    async function watch(code, onData, onError) {
+        const { db: d } = await db();
+        return d.collection('shares').doc(cleanCode(code)).onSnapshot(
+            snap => onData(snap.exists ? snap.data() : null),
+            e => { if (onError) onError(e); });
+    }
+    // Keep the shared copy fresh when the patient logs readings or symptoms, ticks doses or updates refills
+    (function pushOnChange() {
+        const KEYS = /^(neutrixSchedule|neutrixTracker|neutrixSymptoms|neutrixRefills)(::|$)/;
+        const set = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (k, v) {
+            const r = set.apply(this, arguments);
+            try { if (this === localStorage && KEYS.test(String(k)) && storeGet('neutrixShare')) update(); } catch (e) {}
+            return r;
+        };
+    })();
     // People I look after (on this device, for this account)
     const watching = () => { try { return JSON.parse(localStorage.getItem('neutrixWatching') || '[]'); } catch (e) { return []; } };
     const setWatching = list => { try { localStorage.setItem('neutrixWatching', JSON.stringify(list.slice(0, 10))); } catch (e) {} };
 
-    window.NxFamily = { update, start, stop, read, summary, watching, setWatching, fmtCode, cleanCode };
+    window.NxFamily = { update, start, stop, read, watch, summary, watching, setWatching, fmtCode, cleanCode };
     // keep the shared copy fresh whenever a page with it opens
     if (storeGet('neutrixShare')) setTimeout(update, 1500);
 })();

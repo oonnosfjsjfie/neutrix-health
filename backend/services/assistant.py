@@ -144,7 +144,9 @@ Safety and daily care (added later):
 - Reports page: "Check you understood", 3 quick questions (teach-back) from the user's own data.
 - Family Sharing (family.html): the patient turns it on and shares a 10-character code; family open "Looking after"
   (caregiver.html), type the code and see today's doses (red if past time and not ticked), last 7 days, refills, alerts.
-  Only that summary is shared, never reports. It updates when doses are ticked; no push notifications.
+  Only that summary is shared, never reports. It updates live (within seconds of a tick, reading or symptom) and shows a
+  popup with a sound when a dose is missed or something needs attention, plus browser alerts if allowed, while the
+  Looking after page is open (no alerts when it is fully closed).
 - Privacy & consent (privacy.html): what is kept, what goes to Google's Gemini AI, and "Delete all my data".
 - The dashboard shows alerts at the top: worrying readings, safety check items, medicines running low, warning signs.
 """
